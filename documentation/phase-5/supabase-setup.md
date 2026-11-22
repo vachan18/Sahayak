@@ -59,12 +59,16 @@ npx supabase link --project-ref <your-project-id>
 npx supabase db push
 ```
 
-### 3.2 Applying Migrations via Supabase Dashboard SQL Editor
-Alternatively, open the [Supabase Dashboard](https://supabase.com/dashboard) -> Select Project -> **SQL Editor** -> Paste and run each file in sequence:
-1. `20261122000001_initial_schema.sql`
-2. `20261122000002_rls_policies.sql`
-3. `20261122000003_storage_bucket.sql`
-4. `20261122000004_seed_schemes.sql`
+### 3.2 Applying Migrations via Supabase Dashboard SQL Editor (1-Click)
+Open the [Supabase Dashboard](https://supabase.com/dashboard) -> Select Project (`jqoceggpxejagpsetjzi`) -> **SQL Editor** -> **New Query**:
+- Open [supabase/full_schema_setup.sql](file:///C:/Users/vacha/.gemini/antigravity/scratch/pixel-theory/supabase/full_schema_setup.sql), copy its contents, paste into the editor, and click **Run**.
+- This applies the entire schema, zero-trust RLS policies, private storage bucket configuration, and seeds all 7 verified government schemes in a single transaction.
+
+Alternatively, you may run each migration individually in numerical sequence:
+1. `supabase/migrations/20261122000001_initial_schema.sql`
+2. `supabase/migrations/20261122000002_rls_policies.sql`
+3. `supabase/migrations/20261122000003_storage_bucket.sql`
+4. `supabase/migrations/20261122000004_seed_schemes.sql`
 
 ---
 

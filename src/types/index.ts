@@ -18,6 +18,43 @@ export interface LifeEvent {
 
 export type BenefitType = 'dbt_cash' | 'health_insurance' | 'credit_loan' | 'scholarship' | 'pension';
 
+export type BenefitCategory = 
+  | 'annual_cash_transfer'
+  | 'one_time_cash'
+  | 'health_insurance_cover'
+  | 'loan_credit_facility'
+  | 'subsidy'
+  | 'scholarship'
+  | 'non_financial';
+
+export type SchemeVerificationStatus = 'VERIFIED' | 'NEEDS_REVIEW' | 'DEMONSTRATION';
+
+export interface SchemeFeeStructure {
+  governmentFee: number;
+  isStatutoryFree: boolean;
+  statutoryRuleCitation?: string;
+  cscAssistanceServiceCharge?: {
+    standardRate: number;
+    description: string;
+  };
+}
+
+export interface SchemeProcessingTimeline {
+  slaDays: number;
+  isStatutoryGuarantee: boolean;
+  timelineType: 'statutory_citizen_charter' | 'administrative_estimate';
+  authorityCitation?: string;
+}
+
+export interface CategorizedBenefitSummary {
+  annualCashTransferTotal: number;
+  oneTimeCashTotal: number;
+  healthInsuranceCoverTotal: number;
+  loanCreditFacilityTotal: number;
+  subsidyTotal: number;
+  hasNonFinancialBenefits: boolean;
+}
+
 export interface DocumentSpec {
   id: string;
   nameKey: string;
@@ -41,6 +78,8 @@ export interface Scheme {
   lifeEventId: LifeEventId;
   ministryKey: string;
   benefitType: BenefitType;
+  benefitCategory: BenefitCategory;
+  verificationStatus: SchemeVerificationStatus;
   financialBenefit: {
     amount: number;
     frequencyKey: string;
@@ -50,7 +89,10 @@ export interface Scheme {
     amount: number;
     isFree: boolean;
     statutoryRuleCitation: string;
+    cscAuthorizedCharge?: string;
   };
+  feeStructure?: SchemeFeeStructure;
+  processingTimeline?: SchemeProcessingTimeline;
   sourceAttribution: string;
   lastVerifiedDate: string;
   processingSlaDays: number;
@@ -67,10 +109,24 @@ export interface Scheme {
     maxLandholdingAcres?: number;
     socialCategories?: ('general' | 'obc' | 'sc' | 'st' | 'minority' | 'all')[];
     stateSpecific?: string[];
+    requiresLandTitle?: boolean;
+    requiresSeccOrBplRationCard?: boolean;
+    requiresMaternityStatus?: boolean;
+    requiresStreetVendorCertificate?: boolean;
+    requiresStudentEnrollment?: boolean;
   };
   keyBenefitsListKeys: string[];
   whoIsEligibleListKeys: string[];
   whoIsNotEligibleListKeys: string[];
+}
+
+export interface SchemeEvaluationOutcome {
+  scheme: Scheme;
+  status: 'potentially_eligible' | 'additional_verification_required' | 'not_established';
+  explanation: string;
+  satisfiedCriteria: string[];
+  missingCriteria: string[];
+  disqualifyingExclusions: string[];
 }
 
 export interface EligibilityQuestion {
@@ -99,11 +155,16 @@ export type EligibilityAssessmentStatus =
 export interface EligibilityAssessmentResult {
   status: EligibilityAssessmentStatus;
   eligibleSchemes: Scheme[];
+  additionalVerificationSchemes: SchemeEvaluationOutcome[];
+  notEstablishedSchemes: SchemeEvaluationOutcome[];
   partialMatchSchemes: {
     scheme: Scheme;
     missingRequirementKey: string;
   }[];
+  categorizedBenefits: CategorizedBenefitSummary;
+  totalAnnualCashBenefit: number;
   totalAnnualBenefitValue: number;
+  evaluations: Record<string, SchemeEvaluationOutcome>;
   disclaimerKey: string;
   assessmentTimestamp?: string;
 }

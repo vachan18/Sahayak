@@ -36,11 +36,21 @@ export const SchemeCard: React.FC<SchemeCardProps> = ({ scheme }) => {
       className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-6 lg:p-7 shadow-crisp-sm hover:shadow-crisp-lg hover:border-amber-400 dark:hover:border-amber-500 transition-all flex flex-col justify-between group"
     >
       <div>
-        {/* Header: Department Badge & Bookmark */}
+        {/* Header: Department Badge, Verification Tag & Bookmark */}
         <div className="flex items-start justify-between gap-3 mb-3">
-          <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
-            {scheme.ministryKey}
-          </span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
+              {scheme.ministryKey}
+            </span>
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider ${
+              scheme.verificationStatus === 'VERIFIED'
+                ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
+                : 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700'
+            }`}>
+              <ShieldCheck className="w-3 h-3" />
+              <span>{scheme.verificationStatus}</span>
+            </span>
+          </div>
           <button
             type="button"
             onClick={() => toggleSaveScheme(scheme.id)}

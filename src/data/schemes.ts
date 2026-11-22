@@ -1,4 +1,5 @@
 import { Scheme } from '../types';
+import { validateSchemes } from '../types/schemeValidation';
 
 export const verifiedSchemes: Scheme[] = [
   {
@@ -6,21 +7,39 @@ export const verifiedSchemes: Scheme[] = [
     slug: "pm-kisan-samman-nidhi",
     titleKey: "PM-KISAN (Pradhan Mantri Kisan Samman Nidhi)",
     shortDescKey: "₹6,000 yearly income support transferred directly in 3 equal installments of ₹2,000 to landholding farmer families via DBT.",
-    fullDescKey: "Pradhan Mantri Kisan Samman Nidhi is a central sector scheme with 100% funding from Government of India. Under the scheme, income support of ₹6,000/- per year in three equal installments is provided to all landholding farmer families, subject to statutory exclusions.",
+    fullDescKey: "Pradhan Mantri Kisan Samman Nidhi is a central sector scheme with 100% funding from Government of India. Under the scheme, income support of ₹6,000/- per year in three equal installments is provided to all landholding farmer families with cultivable landholding in state revenue records, subject to statutory exclusions (amended May 31, 2019 to remove initial 2-hectare ceiling).",
     lifeEventId: "farming",
     ministryKey: "Ministry of Agriculture & Farmers Welfare",
     benefitType: "dbt_cash",
+    benefitCategory: "annual_cash_transfer",
+    verificationStatus: "VERIFIED",
     financialBenefit: {
       amount: 6000,
       frequencyKey: "perYear",
-      formattedDisplay: "₹6,000 / ವರ್ಷಕ್ಕೆ (₹6,000 / year)"
+      formattedDisplay: "₹6,000 / ವರ್ಷಕ್ಕೆ (₹6,000 / year cash DBT)"
     },
     statutoryFee: {
       amount: 0,
       isFree: true,
-      statutoryRuleCitation: "Statutory Free Application (Order No. 1-1/2019-Credit-I)"
+      statutoryRuleCitation: "Statutory Free Application (Order No. 1-1/2019-Credit-I)",
+      cscAuthorizedCharge: "CSC VLE assistance charge capped at ₹15 for registration / eKYC"
     },
-    sourceAttribution: "Official Guidelines, Ministry of Agriculture & Farmers Welfare • myScheme.gov.in",
+    feeStructure: {
+      governmentFee: 0,
+      isStatutoryFree: true,
+      statutoryRuleCitation: "Order No. 1-1/2019-Credit-I, Dept of Agriculture & Farmers Welfare",
+      cscAssistanceServiceCharge: {
+        standardRate: 15,
+        description: "Official CSC SPV facilitation charge for biometric eKYC / assisted form submission"
+      }
+    },
+    processingTimeline: {
+      slaDays: 21,
+      isStatutoryGuarantee: false,
+      timelineType: "administrative_estimate",
+      authorityCitation: "State Nodal Department verification cycle"
+    },
+    sourceAttribution: "Ministry of Agriculture & Farmers Welfare, Revised Operational Guidelines (31.05.2019) • pmkisan.gov.in",
     lastVerifiedDate: "November 2026",
     processingSlaDays: 21,
     handlingAuthorityKey: "Tehsildar / District Agriculture Officer",
@@ -63,21 +82,21 @@ export const verifiedSchemes: Scheme[] = [
     ],
     eligibilityCriteria: {
       occupations: ["farmer"],
-      maxLandholdingAcres: 5.0,
-      socialCategories: ["all"]
+      socialCategories: ["all"],
+      requiresLandTitle: true
     },
     keyBenefitsListKeys: [
       "₹2,000 transferred every 4 months directly via Public Financial Management System (PFMS)",
-      "Continuous assistance subject to active verified land records",
+      "Universal landholding coverage (Cabinet decision dated 31.05.2019 removed 2-hectare ceiling)",
       "Seamless integration with Kisan Credit Card (KCC) for subsidized credit"
     ],
     whoIsEligibleListKeys: [
-      "Farmer families possessing cultivable landholding in state land records",
-      "Aadhaar-seeded NPCI mapped bank account holders"
+      "All farmer families who have cultivable land holding in their names in state land records (RTC/Khatauni)",
+      "Aadhaar-seeded NPCI mapped active savings bank account holders"
     ],
     whoIsNotEligibleListKeys: [
-      "Institutional landholders or tenant farmers without registered title in state revenue records",
-      "Families where any member is an income-tax payee or serving/retired government employee"
+      "Institutional landholders or tenant farmers without registered ownership title in state revenue records",
+      "Farmer families in which one or more members are: Constitutional post holders, Ministers/MPs/MLAs, serving/retired Govt/PSU employees, monthly pensioners of ₹10,000+, Income Tax payees, or registered professionals (Doctors, Engineers, Lawyers, CAs)"
     ]
   },
   {
@@ -85,19 +104,37 @@ export const verifiedSchemes: Scheme[] = [
     slug: "ayushman-bharat-pmjay",
     titleKey: "Ayushman Bharat (PM-JAY)",
     shortDescKey: "Secondary and tertiary hospital treatment cover of up to ₹5,00,000 per family per year across 28,000+ empaneled hospitals.",
-    fullDescKey: "Pradhan Mantri Jan Arogya Yojana is the flagship health assurance scheme providing a health cover of ₹5 Lakhs per family per year for secondary and tertiary care hospitalization to eligible bottom 40% vulnerable families and senior citizens.",
+    fullDescKey: "Pradhan Mantri Jan Arogya Yojana is the national health assurance scheme providing a cashless health cover of ₹5 Lakhs per family per year for secondary and tertiary hospitalization to families identified under SECC 2011 deprivation criteria, active NFSA/BPL cards, and senior citizens aged 70+ under Ayushman Vay Vandana.",
     lifeEventId: "health_elder",
     ministryKey: "National Health Authority (NHA), MoHFW",
     benefitType: "health_insurance",
+    benefitCategory: "health_insurance_cover",
+    verificationStatus: "VERIFIED",
     financialBenefit: {
       amount: 500000,
       frequencyKey: "perYear",
-      formattedDisplay: "₹5,00,000 / ವರ್ಷಕ್ಕೆ (₹5 Lakh cover/year)"
+      formattedDisplay: "₹5,00,000 / ವರ್ಷಕ್ಕೆ (₹5 Lakh hospital cover/year)"
     },
     statutoryFee: {
       amount: 0,
       isFree: true,
-      statutoryRuleCitation: "Statutory Free Issuance at Public Hospitals (NHA Operational Guidelines)"
+      statutoryRuleCitation: "Statutory Free Issuance at Public Hospitals (NHA Operational Guidelines)",
+      cscAuthorizedCharge: "Nominal PVC Ayushman card print fee up to ₹30 at Common Service Centres"
+    },
+    feeStructure: {
+      governmentFee: 0,
+      isStatutoryFree: true,
+      statutoryRuleCitation: "National Health Authority Operational Guidelines Clause 4.2",
+      cscAssistanceServiceCharge: {
+        standardRate: 30,
+        description: "Authorized charge for laminated PVC Ayushman Card printing at CSC"
+      }
+    },
+    processingTimeline: {
+      slaDays: 7,
+      isStatutoryGuarantee: false,
+      timelineType: "administrative_estimate",
+      authorityCitation: "NHA e-Card approval protocol"
     },
     sourceAttribution: "National Health Authority (NHA) Operational Guidelines • pmjay.gov.in",
     lastVerifiedDate: "November 2026",
@@ -129,7 +166,8 @@ export const verifiedSchemes: Scheme[] = [
     ],
     eligibilityCriteria: {
       maxAnnualIncome: 250000,
-      socialCategories: ["all"]
+      socialCategories: ["all"],
+      requiresSeccOrBplRationCard: true
     },
     keyBenefitsListKeys: [
       "Cashless treatment at all empaneled public and private hospitals across India",
@@ -137,12 +175,12 @@ export const verifiedSchemes: Scheme[] = [
       "Pre-existing medical conditions covered from Day 1 without waiting periods"
     ],
     whoIsEligibleListKeys: [
-      "Households identified in SECC 2011 deprivation criteria or active NFSA ration card holders",
-      "All senior citizens aged 70+ under the expanded Ayushman Vay Vandana card"
+      "Households identified in SECC 2011 deprivation criteria (D1-D7 rural, 11 occupational categories urban) or active state BPL/NFSA ration card records",
+      "All senior citizens aged 70+ under the expanded Ayushman Vay Vandana card irrespective of household income"
     ],
     whoIsNotEligibleListKeys: [
-      "Government employees entitled to CGHS/ECHS/State health schemes",
-      "Households holding permanent corporate group insurance"
+      "Government employees entitled to CGHS/ECHS/State statutory medical schemes",
+      "Households with active corporate or formal group health coverage exceeding statutory norms"
     ]
   },
   {
@@ -150,21 +188,35 @@ export const verifiedSchemes: Scheme[] = [
     slug: "pradhan-mantri-matru-vandana",
     titleKey: "PMMVY (Pradhan Mantri Matru Vandana Yojana)",
     shortDescKey: "Direct maternity cash assistance of ₹5,000 in two installments for pregnant women to compensate wage loss and support nutrition.",
-    fullDescKey: "PMMVY is a centrally sponsored conditional cash transfer scheme for pregnant women and lactating mothers for the first living child (and ₹6,000 for a second girl child) to promote institutional care and safe delivery.",
+    fullDescKey: "PMMVY is a centrally sponsored conditional cash transfer scheme under Mission Shakti for pregnant women and lactating mothers for the first living child (₹5,000 in two installments) and ₹6,000 in a single installment for a second girl child to promote institutional health and counter female foeticide.",
     lifeEventId: "women_child",
     ministryKey: "Ministry of Women & Child Development",
     benefitType: "dbt_cash",
+    benefitCategory: "one_time_cash",
+    verificationStatus: "VERIFIED",
     financialBenefit: {
       amount: 5000,
       frequencyKey: "oneTime",
-      formattedDisplay: "₹5,000 (ಒಮ್ಮೆ ಮಾತ್ರ / One-time)"
+      formattedDisplay: "₹5,000 (ಒಮ್ಮೆ ಮಾತ್ರ / One-time maternity grant)"
     },
     statutoryFee: {
       amount: 0,
       isFree: true,
-      statutoryRuleCitation: "Statutory Free Registration at Anganwadi / Health Centres"
+      statutoryRuleCitation: "Statutory Free Registration at Anganwadi / Health Centres (Mission Shakti Rules)",
+      cscAuthorizedCharge: "Free assisted registration through Anganwadi / ASHA workers"
     },
-    sourceAttribution: "Ministry of Women & Child Development Gazette Rules 2022 • pmmvy.wcd.gov.in",
+    feeStructure: {
+      governmentFee: 0,
+      isStatutoryFree: true,
+      statutoryRuleCitation: "Mission Shakti Operational Guidelines (WCD 2022)"
+    },
+    processingTimeline: {
+      slaDays: 14,
+      isStatutoryGuarantee: false,
+      timelineType: "administrative_estimate",
+      authorityCitation: "CDPO Project Office verification cycle"
+    },
+    sourceAttribution: "Ministry of Women & Child Development, Mission Shakti Operational Guidelines (2022) • pmmvy.wcd.gov.in",
     lastVerifiedDate: "November 2026",
     processingSlaDays: 14,
     handlingAuthorityKey: "Anganwadi Worker / CDPO Office",
@@ -205,19 +257,21 @@ export const verifiedSchemes: Scheme[] = [
     eligibilityCriteria: {
       genderAllowed: ["female"],
       minAge: 19,
-      maxAge: 45
+      maxAge: 45,
+      requiresMaternityStatus: true
     },
     keyBenefitsListKeys: [
-      "Installment 1: ₹3,000 on early registration of pregnancy and at least 1 Antenatal Check-up (ANC)",
+      "Installment 1: ₹3,000 on early registration of pregnancy and at least 1 Antenatal Check-up (ANC) within 6 months of LMP",
       "Installment 2: ₹2,000 on registration of child birth and first cycle of immunization (BCG, OPV, DPT)",
-      "Special ₹6,000 assistance if second child born is a girl to counter gender imbalance"
+      "Special ₹6,000 assistance if second child born is a girl to counter female foeticide"
     ],
     whoIsEligibleListKeys: [
-      "Pregnant women and lactating mothers who are not in regular service with Central/State Govt or PSUs",
+      "Pregnant women and lactating mothers (PW&LM) who are not in regular service with Central/State Govt or PSUs",
       "Women holding e-Shram card, BPL ration card, or having annual family income below ₹8 Lakh"
     ],
     whoIsNotEligibleListKeys: [
-      "Regular salaried government employees with paid maternity leave benefits"
+      "Regular salaried government employees or those receiving paid maternity leave under the Maternity Benefit Act or service rules",
+      "Male applicants or individuals who are not expectant/lactating mothers"
     ]
   },
   {
@@ -229,15 +283,33 @@ export const verifiedSchemes: Scheme[] = [
     lifeEventId: "business_artisan",
     ministryKey: "Ministry of Housing & Urban Affairs (MoHUA)",
     benefitType: "credit_loan",
+    benefitCategory: "loan_credit_facility",
+    verificationStatus: "VERIFIED",
     financialBenefit: {
       amount: 10000,
       frequencyKey: "oneTime",
-      formattedDisplay: "₹10,000 - ₹50,000 (ಸಾಲ / Loan)"
+      formattedDisplay: "₹10,000 - ₹50,000 (ಸಾಲ / Working Capital Loan)"
     },
     statutoryFee: {
       amount: 0,
       isFree: true,
-      statutoryRuleCitation: "No processing fee charged by lending institutions as per MoHUA guidelines"
+      statutoryRuleCitation: "No processing fee charged by lending institutions as per MoHUA guidelines",
+      cscAuthorizedCharge: "CSC assisted loan application submission fee capped at ₹25"
+    },
+    feeStructure: {
+      governmentFee: 0,
+      isStatutoryFree: true,
+      statutoryRuleCitation: "MoHUA Scheme Guidelines Clause 7.1",
+      cscAssistanceServiceCharge: {
+        standardRate: 25,
+        description: "Authorized CSC VLE assisted application upload charge"
+      }
+    },
+    processingTimeline: {
+      slaDays: 10,
+      isStatutoryGuarantee: false,
+      timelineType: "administrative_estimate",
+      authorityCitation: "Lead bank underwriting schedule"
     },
     sourceAttribution: "Ministry of Housing & Urban Affairs (MoHUA) Scheme Guidelines • pmsvanidhi.mohua.gov.in",
     lastVerifiedDate: "November 2026",
@@ -279,7 +351,8 @@ export const verifiedSchemes: Scheme[] = [
     ],
     eligibilityCriteria: {
       occupations: ["street_vendor", "artisan", "self_employed"],
-      minAge: 18
+      minAge: 18,
+      requiresStreetVendorCertificate: true
     },
     keyBenefitsListKeys: [
       "1st tranche: ₹10,000 loan with 1-year tenure; repaying on time unlocks 2nd tranche of ₹20,000 and 3rd of ₹50,000",
@@ -287,11 +360,12 @@ export const verifiedSchemes: Scheme[] = [
       "Up to ₹1,200 annual cashback on receiving customer payments through UPI QR codes"
     ],
     whoIsEligibleListKeys: [
-      "Street vendors vending in urban areas possessing Certificate of Vending or Recommendation Letter",
+      "Street vendors vending in urban areas possessing Certificate of Vending (CoV) or Letter of Recommendation (LoR) from Town Vending Committee",
       "Vendors from peri-urban/rural areas vending in geographical limits of urban local bodies"
     ],
     whoIsNotEligibleListKeys: [
-      "Fixed store shopkeepers with permanent commercial property registration"
+      "Fixed store shopkeepers with permanent commercial property registration",
+      "Individuals without verified street vending certification or municipality endorsement"
     ]
   },
   {
@@ -303,6 +377,8 @@ export const verifiedSchemes: Scheme[] = [
     lifeEventId: "education_youth",
     ministryKey: "Ministry of Social Justice & Empowerment",
     benefitType: "scholarship",
+    benefitCategory: "scholarship",
+    verificationStatus: "VERIFIED",
     financialBenefit: {
       amount: 14000,
       frequencyKey: "perYear",
@@ -311,7 +387,19 @@ export const verifiedSchemes: Scheme[] = [
     statutoryFee: {
       amount: 0,
       isFree: true,
-      statutoryRuleCitation: "Statutory Free Application on National Scholarship Portal (NSP)"
+      statutoryRuleCitation: "Statutory Free Application on National Scholarship Portal (NSP)",
+      cscAuthorizedCharge: "National Scholarship Portal charges ₹0 official fee"
+    },
+    feeStructure: {
+      governmentFee: 0,
+      isStatutoryFree: true,
+      statutoryRuleCitation: "Ministry of Social Justice Guidelines Section 8"
+    },
+    processingTimeline: {
+      slaDays: 30,
+      isStatutoryGuarantee: false,
+      timelineType: "administrative_estimate",
+      authorityCitation: "State scholarship portal verification window"
     },
     sourceAttribution: "Ministry of Social Justice & Empowerment Guidelines • scholarships.gov.in",
     lastVerifiedDate: "November 2026",
@@ -355,7 +443,8 @@ export const verifiedSchemes: Scheme[] = [
       maxAnnualIncome: 250000,
       socialCategories: ["sc", "st", "obc", "minority"],
       minAge: 15,
-      maxAge: 35
+      maxAge: 35,
+      requiresStudentEnrollment: true
     },
     keyBenefitsListKeys: [
       "100% compulsory non-refundable fees (tuition, examination, library) reimbursed directly to student bank account",
@@ -380,6 +469,8 @@ export const verifiedSchemes: Scheme[] = [
     lifeEventId: "farming",
     ministryKey: "Ministry of Agriculture & NABARD",
     benefitType: "credit_loan",
+    benefitCategory: "loan_credit_facility",
+    verificationStatus: "VERIFIED",
     financialBenefit: {
       amount: 150000,
       frequencyKey: "oneTime",
@@ -388,7 +479,19 @@ export const verifiedSchemes: Scheme[] = [
     statutoryFee: {
       amount: 0,
       isFree: true,
-      statutoryRuleCitation: "Zero processing fee for loan limits up to ₹3.00 Lakh (RBI Master Circular)"
+      statutoryRuleCitation: "Zero processing fee for loan limits up to ₹3.00 Lakh (RBI Master Circular)",
+      cscAuthorizedCharge: "Bank loan application documentation fee ₹0 up to ₹3 Lakh"
+    },
+    feeStructure: {
+      governmentFee: 0,
+      isStatutoryFree: true,
+      statutoryRuleCitation: "RBI Master Direction FIDD.CO.FSD.BC.No.12/05.05.010/2018-19"
+    },
+    processingTimeline: {
+      slaDays: 14,
+      isStatutoryGuarantee: false,
+      timelineType: "administrative_estimate",
+      authorityCitation: "Commercial Bank / RRB underwriting window"
     },
     sourceAttribution: "Reserve Bank of India (RBI) / NABARD Master Directions • rbi.org.in",
     lastVerifiedDate: "November 2026",
@@ -420,7 +523,8 @@ export const verifiedSchemes: Scheme[] = [
     ],
     eligibilityCriteria: {
       occupations: ["farmer"],
-      maxAnnualIncome: 500000
+      maxAnnualIncome: 500000,
+      requiresLandTitle: true
     },
     keyBenefitsListKeys: [
       "Interest subvention of 2% + additional 3% incentive for prompt repayment makes effective rate 4%",
@@ -436,3 +540,9 @@ export const verifiedSchemes: Scheme[] = [
     ]
   }
 ];
+
+// Perform runtime validation
+const validationResult = validateSchemes(verifiedSchemes);
+if (!validationResult.valid) {
+  console.error("Scheme validation failed:", validationResult.errors);
+}

@@ -1,10 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, Filter, SlidersHorizontal, AlertCircle, X } from 'lucide-react';
+import { Search, SlidersHorizontal, AlertCircle, X } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
 import { SchemeCard } from '../components/schemes/SchemeCard';
-import { LifeEventId } from '../types';
 
 export const SchemeDiscoveryScreen: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();

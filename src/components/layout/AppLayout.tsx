@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Bot, Sparkles } from 'lucide-react';
+import { Bot } from 'lucide-react';
 import { TopUtilityBar } from '../navigation/TopUtilityBar';
 import { BottomNavBar } from '../navigation/BottomNavBar';
 import { LanguageModal } from '../navigation/LanguageModal';

@@ -1,8 +1,8 @@
 import React from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { 
-  ShieldCheck, Clock, CheckCircle2, AlertTriangle, FileText, 
-  ArrowRight, Phone, ExternalLink, HelpCircle, Share2, Shield 
+  Clock, CheckCircle2, FileText, 
+  ArrowRight, Phone, ExternalLink, Share2 
 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
@@ -11,7 +11,6 @@ import { StatutoryFeeBadge } from '../components/feedback/StatutoryFeeBadge';
 
 export const SchemeDetailScreen: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const { schemes } = useAppStore();
 

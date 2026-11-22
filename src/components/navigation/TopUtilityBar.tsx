@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Globe, Bell, Sun, Moon, Volume2, User, ChevronLeft } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';

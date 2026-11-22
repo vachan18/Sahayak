@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, ShieldCheck, AlertCircle, ArrowRight, CheckCircle2, ChevronRight, FileText } from 'lucide-react';
+import { Clock, AlertCircle, ArrowRight, CheckCircle2, ChevronRight } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
 import { AudioListenButton } from '../components/feedback/AudioListenButton';
 
 export const ApplicationTrackerScreen: React.FC = () => {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const { applications } = useAppStore();
 
   return (

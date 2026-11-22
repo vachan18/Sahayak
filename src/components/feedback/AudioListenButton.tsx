@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Volume2, VolumeX, Sparkles } from 'lucide-react';
+import { Volume2, VolumeX } from 'lucide-react';
 import { speakVernacularText, stopSpeech } from '../../utils/audioSpeech';
 import { useAppStore } from '../../store/useAppStore';
 

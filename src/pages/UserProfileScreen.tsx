@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { User, Users, Plus, Shield, Check, Edit2, RotateCcw } from 'lucide-react';
+import { Users, Plus } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
 
 export const UserProfileScreen: React.FC = () => {
   const { t } = useTranslation();
-  const { profiles, activeProfileId, setActiveProfileId, addProfile, updateProfile } = useAppStore();
+  const { profiles, activeProfileId, setActiveProfileId, addProfile } = useAppStore();
 
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberRelation, setNewMemberRelation] = useState<'self' | 'father' | 'mother' | 'spouse' | 'child' | 'other'>('child');
-  const [newMemberAge, setNewMemberAge] = useState(20);
-  const [newMemberOccupation, setNewMemberOccupation] = useState('student');
+  const [newMemberAge] = useState(20);
+  const [newMemberOccupation] = useState('student');
 
   const activeProfile = profiles.find(p => p.id === activeProfileId) || profiles[0];
 

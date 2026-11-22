@@ -1,11 +1,9 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { QrCode, ShieldCheck, Printer, Download, ArrowRight, Share2, AlertCircle } from 'lucide-react';
-import { useTranslation } from '../hooks/useTranslation';
+import { QrCode, Printer, ArrowRight } from 'lucide-react';
 
 export const CscSlipScreen: React.FC = () => {
   const { tokenId } = useParams<{ tokenId: string }>();
-  const { t } = useTranslation();
 
   const handlePrint = () => {
     window.print();

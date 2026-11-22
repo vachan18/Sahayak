@@ -1,6 +1,5 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAppStore } from '../store/useAppStore';
 import { AppLayout } from '../components/layout/AppLayout';
 import { WelcomeScreen } from '../pages/WelcomeScreen';
 import { LanguageSelectionScreen } from '../pages/LanguageSelectionScreen';
@@ -19,8 +18,6 @@ import { UserProfileScreen } from '../pages/UserProfileScreen';
 import { NotificationsScreen } from '../pages/NotificationsScreen';
 
 export const AppRoutes: React.FC = () => {
-  const { hasCompletedOnboarding } = useAppStore();
-
   return (
     <Routes>
       {/* Root redirect to Main Dashboard */}

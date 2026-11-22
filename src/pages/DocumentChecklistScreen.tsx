@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { 
-  FileCheck, Shield, Camera, Upload, AlertCircle, CheckCircle2, 
-  HelpCircle, X, ExternalLink, ArrowRight 
+  Shield, Camera, AlertCircle, CheckCircle2, 
+  HelpCircle, X, ArrowRight 
 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
-import { AudioListenButton } from '../components/feedback/AudioListenButton';
 
 export const DocumentChecklistScreen: React.FC = () => {
   const [searchParams] = useSearchParams();

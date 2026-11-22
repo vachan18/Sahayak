@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Mic, Send, Bot, Sparkles, Volume2 } from 'lucide-react';
+import { X, Mic, Send, Bot, Volume2 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useTranslation } from '../../hooks/useTranslation';
 import { speakVernacularText } from '../../utils/audioSpeech';

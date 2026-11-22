@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Bell, CheckCheck, Clock, ArrowRight, ArrowLeft } from 'lucide-react';
+import { CheckCheck, Clock, ArrowRight } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
 import { AudioListenButton } from '../components/feedback/AudioListenButton';

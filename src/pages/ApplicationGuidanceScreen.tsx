@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ShieldCheck, Smartphone, QrCode, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ShieldCheck, Smartphone, QrCode, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
 

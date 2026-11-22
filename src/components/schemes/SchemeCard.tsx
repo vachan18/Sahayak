@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, ShieldCheck, ArrowRight, Bookmark, BookmarkCheck, FileText, CheckCircle2 } from 'lucide-react';
+import { Clock, ShieldCheck, ArrowRight, Bookmark, BookmarkCheck, CheckCircle2 } from 'lucide-react';
 import { Scheme, BenefitType } from '../../types';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useAppStore } from '../../store/useAppStore';

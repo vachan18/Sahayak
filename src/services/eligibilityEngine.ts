@@ -52,13 +52,35 @@ export const assessEligibility = (answers: AssessmentAnswers): EligibilityAssess
     // Check occupation
     if (scheme.eligibilityCriteria.occupations && answers.occupation) {
       if (!scheme.eligibilityCriteria.occupations.includes(answers.occupation)) {
-        if (scheme.id === 'pm-kisan' && answers.occupation !== 'farmer') {
-          isFullyEligible = false;
+        isFullyEligible = false;
+        if (scheme.id === 'pm-kisan') {
           missingReason = "Requires registered agricultural land cultivation title.";
-        } else if (scheme.id === 'pm-svanidhi' && answers.occupation !== 'street_vendor') {
-          isFullyEligible = false;
+        } else if (scheme.id === 'pm-svanidhi') {
           missingReason = "Restricted to urban street vendors holding Certificate of Vending or ULB recommendation.";
+        } else {
+          missingReason = `Scheme is intended for: ${scheme.eligibilityCriteria.occupations.join(', ')}.`;
         }
+      }
+    }
+
+    // Check age limits
+    if (answers.age !== undefined) {
+      if (scheme.eligibilityCriteria.minAge !== undefined && answers.age < scheme.eligibilityCriteria.minAge) {
+        isFullyEligible = false;
+        missingReason = `Minimum eligible age is ${scheme.eligibilityCriteria.minAge} years.`;
+      }
+      if (scheme.eligibilityCriteria.maxAge !== undefined && answers.age > scheme.eligibilityCriteria.maxAge) {
+        isFullyEligible = false;
+        missingReason = `Maximum eligible age is ${scheme.eligibilityCriteria.maxAge} years.`;
+      }
+    }
+
+    // Check social category if restricted
+    if (scheme.eligibilityCriteria.socialCategories && answers.socialCategory) {
+      if (!scheme.eligibilityCriteria.socialCategories.includes('all') &&
+          !scheme.eligibilityCriteria.socialCategories.includes(answers.socialCategory as any)) {
+        isFullyEligible = false;
+        missingReason = `Scheme restricted to categories: ${scheme.eligibilityCriteria.socialCategories.join(', ').toUpperCase()}.`;
       }
     }
 

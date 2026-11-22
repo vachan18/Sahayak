@@ -1,16 +1,13 @@
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Mic, ArrowRight, ArrowLeft, CheckCircle2, RotateCcw, Volume2, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Mic, ArrowRight, ArrowLeft, CheckCircle2, RotateCcw, Volume2 } from 'lucide-react';
 import { eligibilityQuestions } from '../data/questions';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
-import { assessEligibility } from '../services/eligibilityEngine';
 import { speakVernacularText } from '../utils/audioSpeech';
 
 export const EligibilityCheckerScreen: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const targetSchemeId = searchParams.get('scheme');
   const { t, language } = useTranslation();
   const { eligibilityAnswers, setEligibilityAnswer, resetEligibilityAnswers } = useAppStore();
 

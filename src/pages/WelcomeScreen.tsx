@@ -1,13 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Sparkles, Volume2, ArrowRight } from 'lucide-react';
+import { Shield, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { speakVernacularText } from '../utils/audioSpeech';
 
 export const WelcomeScreen: React.FC = () => {
   const navigate = useNavigate();
-  const { language, setLanguage } = useAppStore();
+  const { setLanguage } = useAppStore();
   const { t } = useTranslation();
 
   const handleSelectAndProceed = (langCode: 'kn' | 'hi' | 'en') => {

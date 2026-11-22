@@ -1,8 +1,7 @@
 import React from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { 
-  Clock, ShieldCheck, AlertCircle, CheckCircle2, ChevronLeft, 
-  FileText, Download, Phone, ExternalLink 
+  ShieldCheck, AlertCircle, CheckCircle2, Download 
 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
@@ -10,7 +9,6 @@ import { AudioListenButton } from '../components/feedback/AudioListenButton';
 
 export const ApplicationTrackerDetailScreen: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const { applications } = useAppStore();
 

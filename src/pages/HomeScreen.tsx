@@ -1,9 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
-  Search, Mic, AlertTriangle, ArrowRight, Sparkles, Filter, 
-  CheckCircle2, HelpCircle, Shield, Clock, FileCheck, ArrowUpRight,
-  BookOpen, ExternalLink, Info
+  Search, Mic, AlertTriangle, ArrowRight, Sparkles, 
+  CheckCircle2, HelpCircle, Shield, Info
 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
@@ -15,7 +14,7 @@ import { AudioListenButton } from '../components/feedback/AudioListenButton';
 export const HomeScreen: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { schemes, setAiDrawerOpen, eligibilityAnswers, eligibilityStatus } = useAppStore();
+  const { schemes, setAiDrawerOpen, eligibilityAnswers } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
 
   const featuredSchemes = schemes.slice(0, 3);

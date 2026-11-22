@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Sparkles, CheckCircle, AlertCircle, ArrowRight, RotateCcw, Share2, FileCheck, HelpCircle, ShieldAlert } from 'lucide-react';
+import { Sparkles, CheckCircle, AlertCircle, ArrowRight, RotateCcw, HelpCircle, ShieldAlert } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
 import { assessEligibility } from '../services/eligibilityEngine';

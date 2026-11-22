@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Volume2, Globe, ArrowLeft } from 'lucide-react';
+import { Check, Volume2 } from 'lucide-react';
 import { SupportedLanguage } from '../types';
 import { useAppStore } from '../store/useAppStore';
 import { useTranslation } from '../hooks/useTranslation';

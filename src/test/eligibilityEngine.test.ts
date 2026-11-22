@@ -7,7 +7,7 @@ import {
 } from '../services/eligibilityEngine';
 import { verifiedSchemes } from '../data/schemes';
 
-describe('Eligibility Engine Phase 4.6 — Hardened Rules & Primary Source Verification', () => {
+describe('Eligibility Engine Phase 4.6.1 — Hardened Rules & Final Statutory Alignment', () => {
 
   // ==========================================
   // SECTION A: MISSING INFORMATION HANDLING
@@ -40,10 +40,11 @@ describe('Eligibility Engine Phase 4.6 — Hardened Rules & Primary Source Verif
     it('flags "additional_verification_required" when scheme criteria are missing rather than falsely qualifying', () => {
       const pmKisan = verifiedSchemes.find(s => s.id === 'pm-kisan')!;
       
-      // Farmer answered occupation and non-govt employee, but landholding is missing
+      // Farmer answered occupation, non-govt employee, and non-taxpayer, but landholding is missing
       const outcome = evaluateSchemeEligibility(pmKisan, {
         occupation: 'farmer',
-        isGovtEmployee: false
+        isGovtEmployee: false,
+        isIncomeTaxPayee: false
         // landholdingAcres is missing!
       });
 
@@ -64,6 +65,37 @@ describe('Eligibility Engine Phase 4.6 — Hardened Rules & Primary Source Verif
 
       expect(outcome.status).toBe('additional_verification_required');
       expect(outcome.missingCriteria.some(c => c.toLowerCase().includes('mcp'))).toBe(true);
+    });
+
+    it('ensures missing mandatory information never produces a positive eligibility result', () => {
+      const pmKisan = verifiedSchemes.find(s => s.id === 'pm-kisan')!;
+
+      // Missing explicit tax-status information must never produce potentially_eligible
+      const outcome = evaluateSchemeEligibility(pmKisan, {
+        occupation: 'farmer',
+        landholdingAcres: 4.0,
+        annualIncome: 100000,
+        isGovtEmployee: false
+        // isIncomeTaxPayee is missing!
+      });
+
+      expect(outcome.status).toBe('additional_verification_required');
+      expect(outcome.status).not.toBe('potentially_eligible');
+      expect(outcome.missingCriteria.some(c => c.includes('non-income-tax-payer status'))).toBe(true);
+    });
+
+    it('ensures missing optional information does not unnecessarily block assessment', () => {
+      const kcc = verifiedSchemes.find(s => s.id === 'pm-kcc')!;
+
+      // KCC owner cultivator provides mandatory tenure and land; optional flags omitted
+      const outcome = evaluateSchemeEligibility(kcc, {
+        occupation: 'farmer',
+        landholdingAcres: 3.5,
+        farmerTenureType: 'owner_cultivator'
+      });
+
+      expect(outcome.status).toBe('potentially_eligible');
+      expect(outcome.satisfiedCriteria.some(c => c.includes('owner cultivator'))).toBe(true);
     });
   });
 
@@ -89,6 +121,7 @@ describe('Eligibility Engine Phase 4.6 — Hardened Rules & Primary Source Verif
         age: 48,
         annualIncome: 120000,
         socialCategory: 'obc',
+        isIncomeTaxPayee: false,
         isGovtEmployee: false
       });
 
@@ -105,7 +138,10 @@ describe('Eligibility Engine Phase 4.6 — Hardened Rules & Primary Source Verif
         gender: 'male',
         age: 42,
         annualIncome: 950000,
-        isGovtEmployee: true
+        isGovtEmployee: true,
+        farmerTenureType: 'none',
+        hasBplOrRationCard: false,
+        isSeccDeprivedHousehold: false
       });
 
       expect(result.status).toBe('not_established');
@@ -137,11 +173,11 @@ describe('Eligibility Engine Phase 4.6 — Hardened Rules & Primary Source Verif
     describe('PM-KISAN (Pradhan Mantri Kisan Samman Nidhi)', () => {
       const pmKisan = verifiedSchemes.find(s => s.id === 'pm-kisan')!;
 
-      it('does NOT arbitrarily exclude farmers with > 5 acres (revised 31.05.2019 Cabinet guidelines)', () => {
+      it('does NOT arbitrarily exclude farmers with > 5 acres (preserves 31.05.2019 Cabinet reform)', () => {
         const outcome = evaluateSchemeEligibility(pmKisan, {
           occupation: 'farmer',
           landholdingAcres: 12.0, // 12 acres large landholder
-          annualIncome: 200000,
+          isIncomeTaxPayee: false,
           isGovtEmployee: false
         });
 
@@ -149,10 +185,34 @@ describe('Eligibility Engine Phase 4.6 — Hardened Rules & Primary Source Verif
         expect(outcome.disqualifyingExclusions).toHaveLength(0);
       });
 
+      it('requires explicit tax-status information and does NOT use annual income as a proxy', () => {
+        // Low-income farmer (₹1.2L) with unconfirmed tax status -> additional_verification_required
+        const lowIncomeMissingTax = evaluateSchemeEligibility(pmKisan, {
+          occupation: 'farmer',
+          landholdingAcres: 3.0,
+          annualIncome: 120000,
+          isGovtEmployee: false
+          // isIncomeTaxPayee is undefined!
+        });
+        expect(lowIncomeMissingTax.status).toBe('additional_verification_required');
+        expect(lowIncomeMissingTax.missingCriteria.some(c => c.includes('non-income-tax-payer status'))).toBe(true);
+
+        // High agricultural income farmer with confirmed non-taxpayer status -> potentially_eligible
+        const highIncomeNonTax = evaluateSchemeEligibility(pmKisan, {
+          occupation: 'farmer',
+          landholdingAcres: 8.0,
+          annualIncome: 1200000,
+          isIncomeTaxPayee: false,
+          isGovtEmployee: false
+        });
+        expect(highIncomeNonTax.status).toBe('potentially_eligible');
+      });
+
       it('excludes landless farmers and agricultural labourers (landholding = 0)', () => {
         const outcome = evaluateSchemeEligibility(pmKisan, {
           occupation: 'farmer',
           landholdingAcres: 0,
+          isIncomeTaxPayee: false,
           isGovtEmployee: false
         });
 
@@ -164,7 +224,9 @@ describe('Eligibility Engine Phase 4.6 — Hardened Rules & Primary Source Verif
         const outcome = evaluateSchemeEligibility(pmKisan, {
           occupation: 'farmer',
           landholdingAcres: 2.0,
-          isGovtEmployee: true
+          isIncomeTaxPayee: false,
+          isGovtEmployee: true,
+          govtEmploymentType: 'central_state_regular'
         });
 
         expect(outcome.status).toBe('not_established');
@@ -175,7 +237,7 @@ describe('Eligibility Engine Phase 4.6 — Hardened Rules & Primary Source Verif
         const outcome = evaluateSchemeEligibility(pmKisan, {
           occupation: 'farmer',
           landholdingAcres: 2.5,
-          annualIncome: 220000,
+          isIncomeTaxPayee: false,
           isGovtEmployee: true,
           govtEmploymentType: 'group_d_mts'
         });
@@ -188,7 +250,7 @@ describe('Eligibility Engine Phase 4.6 — Hardened Rules & Primary Source Verif
         const outcome = evaluateSchemeEligibility(pmKisan, {
           occupation: 'farmer',
           landholdingAcres: 3.0,
-          annualIncome: 250000,
+          isIncomeTaxPayee: false,
           isGovtEmployee: true,
           govtEmploymentType: 'pensioner_above_10k'
         });
@@ -201,7 +263,7 @@ describe('Eligibility Engine Phase 4.6 — Hardened Rules & Primary Source Verif
         const outcome = evaluateSchemeEligibility(pmKisan, {
           occupation: 'farmer',
           landholdingAcres: 3.0,
-          annualIncome: 180000,
+          isIncomeTaxPayee: false,
           isGovtEmployee: true,
           govtEmploymentType: 'pensioner_below_10k'
         });
@@ -228,7 +290,7 @@ describe('Eligibility Engine Phase 4.6 — Hardened Rules & Primary Source Verif
       it('qualifies all senior citizens aged 70+ under expanded Ayushman Vay Vandana card regardless of income', () => {
         const outcome = evaluateSchemeEligibility(pmJay, {
           age: 72,
-          annualIncome: 800000, // High income does not disqualify 70+ senior citizen
+          annualIncome: 800000,
           isGovtEmployee: false
         });
 
@@ -258,6 +320,21 @@ describe('Eligibility Engine Phase 4.6 — Hardened Rules & Primary Source Verif
         expect(outcome.missingCriteria.some(c => c.includes('SECC 2011'))).toBe(true);
       });
 
+      it('does NOT automatically disqualify under-70 applicants based solely on government employment status', () => {
+        // Government employee with active BPL ration card is not auto-disqualified; requires departmental scheme coordination
+        const outcome = evaluateSchemeEligibility(pmJay, {
+          age: 40,
+          annualIncome: 450000,
+          hasBplOrRationCard: true,
+          isGovtEmployee: true,
+          govtEmploymentType: 'central_state_regular'
+        });
+
+        expect(outcome.status).toBe('additional_verification_required');
+        expect(outcome.missingCriteria.some(c => c.includes('departmental health coverage'))).toBe(true);
+        expect(outcome.disqualifyingExclusions).toHaveLength(0);
+      });
+
       it('excludes under-70 applicants when confirmed non-SECC and non-BPL', () => {
         const outcome = evaluateSchemeEligibility(pmJay, {
           age: 45,
@@ -270,33 +347,49 @@ describe('Eligibility Engine Phase 4.6 — Hardened Rules & Primary Source Verif
         expect(outcome.status).toBe('not_established');
         expect(outcome.disqualifyingExclusions.some(e => e.includes('SECC 2011'))).toBe(true);
       });
-
-      it('excludes regular government employees covered under CGHS/ECHS', () => {
-        const outcome = evaluateSchemeEligibility(pmJay, {
-          age: 40,
-          annualIncome: 450000,
-          hasBplOrRationCard: true,
-          isGovtEmployee: true,
-          govtEmploymentType: 'central_state_regular'
-        });
-
-        expect(outcome.status).toBe('not_established');
-        expect(outcome.disqualifyingExclusions.some(e => e.includes('CGHS/ECHS'))).toBe(true);
-      });
     });
 
     describe('PMMVY (Pradhan Mantri Matru Vandana Yojana)', () => {
       const pmmvy = verifiedSchemes.find(s => s.id === 'pmmvy')!;
 
-      it('excludes male applicants with a clear statutory explanation', () => {
+      it('distinguishes missing documents (e.g. MCP card) from confirmed ineligibility', () => {
+        // Missing MCP card -> additional_verification_required (NOT not_established)
         const outcome = evaluateSchemeEligibility(pmmvy, {
-          gender: 'male',
-          age: 30,
+          gender: 'female',
+          age: 24,
+          isPregnantOrLactating: true,
+          maternityParity: 'first_child',
           isGovtEmployee: false
+          // hasMcpCard is undefined!
         });
 
-        expect(outcome.status).toBe('not_established');
-        expect(outcome.explanation).toContain('male applicants are excluded');
+        expect(outcome.status).toBe('additional_verification_required');
+        expect(outcome.missingCriteria.some(c => c.includes('MCP'))).toBe(true);
+        expect(outcome.disqualifyingExclusions).toHaveLength(0);
+      });
+
+      it('independently validates parity and beneficiary conditions', () => {
+        // Male applicant is excluded regardless of parity
+        const maleOutcome = evaluateSchemeEligibility(pmmvy, {
+          gender: 'male',
+          age: 25,
+          maternityParity: 'first_child'
+        });
+        expect(maleOutcome.status).toBe('not_established');
+        expect(maleOutcome.explanation).toContain('male applicants are excluded');
+
+        // Second child being male is excluded regardless of mother age and pregnancy
+        const boyOutcome = evaluateSchemeEligibility(pmmvy, {
+          gender: 'female',
+          age: 26,
+          isPregnantOrLactating: true,
+          maternityParity: 'second_child',
+          childGender: 'male',
+          hasMcpCard: true,
+          isGovtEmployee: false
+        });
+        expect(boyOutcome.status).toBe('not_established');
+        expect(boyOutcome.disqualifyingExclusions.some(e => e.includes('second child is a girl'))).toBe(true);
       });
 
       it('excludes applicants under 19 years of age', () => {
@@ -338,21 +431,6 @@ describe('Eligibility Engine Phase 4.6 — Hardened Rules & Primary Source Verif
 
         expect(outcome.status).toBe('potentially_eligible');
         expect(outcome.satisfiedCriteria.some(c => c.includes('Second girl child'))).toBe(true);
-      });
-
-      it('excludes 2nd boy child with statutory reasoning countering female foeticide', () => {
-        const outcome = evaluateSchemeEligibility(pmmvy, {
-          gender: 'female',
-          age: 26,
-          isPregnantOrLactating: true,
-          maternityParity: 'second_child',
-          childGender: 'male',
-          hasMcpCard: true,
-          isGovtEmployee: false
-        });
-
-        expect(outcome.status).toBe('not_established');
-        expect(outcome.disqualifyingExclusions.some(e => e.includes('second child is a girl'))).toBe(true);
       });
 
       it('excludes 3rd or subsequent children under statutory cap', () => {

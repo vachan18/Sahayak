@@ -73,16 +73,16 @@ export const evaluateSchemeEligibility = (scheme: Scheme, answers: AssessmentAns
     }
 
     // 1.2 Statutory Exclusion: Income-tax payees in the last assessment year (Clause 2.b.iv)
-    if (answers.isIncomeTaxPayee === true || (answers.annualIncome !== undefined && answers.annualIncome > 800000)) {
+    // Note (Phase 4.6.1): Annual income thresholds are NOT proxies for income-tax payer status.
+    // Explicit tax-status confirmation is required; otherwise flagged for additional verification.
+    if (answers.isIncomeTaxPayee === true) {
       disqualifyingExclusions.push(
-        "PM-KISAN Statutory Exclusion Clause 2(b)(iv): All persons who paid Income Tax in the last assessment year or fall into the taxable bracket (> ₹8 Lakh) are excluded."
+        "PM-KISAN Statutory Exclusion Clause 2(b)(iv): All persons who paid Income Tax in the last assessment year are excluded."
       );
-    } else if (answers.isIncomeTaxPayee === false || (answers.annualIncome !== undefined && answers.annualIncome <= 250000)) {
-      satisfiedCriteria.push("Confirmed non-income tax payee status (annual income within tax-exempt bracket).");
-    } else if (answers.annualIncome !== undefined && answers.annualIncome <= 800000) {
-      satisfiedCriteria.push("Reported annual income within standard non-excluded bracket.");
+    } else if (answers.isIncomeTaxPayee === false) {
+      satisfiedCriteria.push("Explicit confirmation of non-income-tax-payer status for the preceding assessment year.");
     } else {
-      missingCriteria.push("Confirmation of non-income tax payee status.");
+      missingCriteria.push("Self-declaration or official verification of non-income-tax-payer status for the preceding assessment year.");
     }
 
     // 1.3 Statutory Exclusion: Constitutional post holders, Ministers, MPs, MLAs, Mayors (Clause 2.b.i-ii)
@@ -172,11 +172,20 @@ export const evaluateSchemeEligibility = (scheme: Scheme, answers: AssessmentAns
     } 
     // 2.2 Route B: Vulnerable Households (under 70 years)
     else {
-      // Government servant CGHS/ECHS notice (under 70 years)
-      if (answers.govtEmploymentType === 'central_state_regular' || (answers.isGovtEmployee === true && answers.govtEmploymentType !== 'group_d_mts')) {
-        disqualifyingExclusions.push(
-          "PM-JAY Operational Guidelines: Regular government employees covered under statutory CGHS/ECHS or State Medical Attendance Rules are served by respective departmental health schemes."
+      // Government employment & health coverage rules (under 70 years)
+      // Note (Phase 4.6.1): Do not automatically disqualify applicants based solely on employment status.
+      // Entitlement is anchored in verified beneficiary identification (SECC 2011 / NFSA ration card),
+      // with departmental coordination rules applied for existing public health schemes.
+      if (answers.govtEmploymentType === 'central_state_regular' || answers.govtEmploymentType === 'psu_autonomous') {
+        missingCriteria.push(
+          "Verification of departmental health coverage (CGHS / ECHS / State Medical Attendance Rules) coordination with PM-JAY."
         );
+      } else if (answers.isGovtEmployee === true && answers.govtEmploymentType === undefined) {
+        missingCriteria.push(
+          "Clarification of public sector employment category and applicable medical attendance rules."
+        );
+      } else {
+        satisfiedCriteria.push("Confirmed non-departmental / general citizen category for PM-JAY health assurance.");
       }
 
       // Beneficiary Identification: SECC 2011 / State NFSA Ration Card
@@ -233,12 +242,17 @@ export const evaluateSchemeEligibility = (scheme: Scheme, answers: AssessmentAns
     }
 
     // 3.3 Statutory Exclusion: Government / PSU employment with paid maternity leave (Section 3.2)
-    if (answers.govtEmploymentType === 'central_state_regular' || answers.govtEmploymentType === 'psu_autonomous' || answers.isGovtEmployee === true) {
+    // Note (Phase 4.6.1): Distinguish confirmed ineligibility from missing information.
+    // Regular employees receiving statutory paid maternity leave are excluded.
+    // Unclassified public employment requires verification of maternity leave entitlement.
+    if (answers.govtEmploymentType === 'central_state_regular' || answers.govtEmploymentType === 'psu_autonomous') {
       disqualifyingExclusions.push(
         "PMMVY Section 3.2: Women in regular service with Central/State Govt or PSUs receiving statutory paid maternity leave are excluded."
       );
     } else if (answers.govtEmploymentType === 'none' || answers.isGovtEmployee === false) {
       satisfiedCriteria.push("Confirmed non-government regular employment status.");
+    } else if (answers.isGovtEmployee === true && answers.govtEmploymentType === undefined) {
+      missingCriteria.push("Verification of statutory paid maternity leave entitlement under government/PSU service rules.");
     } else {
       missingCriteria.push("Confirmation of non-government employment status.");
     }

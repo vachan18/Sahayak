@@ -202,8 +202,8 @@ export const verifiedSchemes: Scheme[] = [
       "All senior citizens aged 70+ under the expanded Ayushman Vay Vandana card irrespective of household income"
     ],
     whoIsNotEligibleListKeys: [
-      "Serving government employees with comprehensive medical coverage under CGHS/ECHS/State attendance rules",
-      "Households not enrolled in SECC 2011 deprivation list or active state food security ration database"
+      "Households covered under separate statutory comprehensive schemes (such as CGHS / ECHS / State Medical Attendance Rules), where departmental rules supersede general Ayushman Bharat coverage",
+      "Households not mapped in SECC 2011 deprivation categories or active state NFSA food security ration records"
     ],
     rulesRegistry: [
       {

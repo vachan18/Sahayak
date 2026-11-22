@@ -28,8 +28,8 @@ export const OnboardingScreen: React.FC = () => {
     },
     {
       icon: ShieldCheck,
-      title: t('onboard3Title', 'Zero Middlemen & Guaranteed Free'),
-      desc: t('onboard3Desc', 'Know the official government fee is ₹0.00. Generate a pre-verified CSC slip with a statutory fee guarantee so no agent can overcharge you.'),
+      title: t('onboard3Title', 'Zero Middlemen & Statutory Fee Transparency'),
+      desc: t('onboard3Desc', 'Official government application fee is ₹0.00. Generate a pre-verified CSC slip with statutory fee limits so no agent can overcharge you.'),
       bgColor: 'bg-blue-50 dark:bg-blue-950/60',
       iconColor: 'text-blue-600 dark:text-blue-400'
     }

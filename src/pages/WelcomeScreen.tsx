@@ -30,7 +30,7 @@ export const WelcomeScreen: React.FC = () => {
         </div>
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 mb-2">
           <Shield className="w-3.5 h-3.5 text-emerald-600" />
-          <span>{t('statutoryBadge', 'Official Sovereign Welfare Guide • 100% Free')}</span>
+          <span>{t('statutoryBadge', 'Official Sovereign Welfare Information Guide • Statutory Citizen Portal')}</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2">
           {t('appName', 'SAHAYAK')}
@@ -110,6 +110,18 @@ export const WelcomeScreen: React.FC = () => {
             </div>
           </div>
           <ArrowRight className="w-5 h-5 text-slate-600 group-hover:translate-x-1 transition-transform" />
+        </button>
+      </div>
+
+      {/* Direct Dashboard Link */}
+      <div className="w-full text-center mb-6">
+        <button
+          type="button"
+          onClick={() => navigate('/home')}
+          className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline inline-flex items-center gap-1.5 py-1 px-3 rounded-full hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors"
+        >
+          <span>Skip to Main Dashboard / ನೇರವಾಗಿ ಮುಖಪುಟಕ್ಕೆ ತೆರಳಿ</span>
+          <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>
 

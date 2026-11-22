@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAppStore } from '../store/useAppStore';
 import { AppLayout } from '../components/layout/AppLayout';
 import { WelcomeScreen } from '../pages/WelcomeScreen';
 import { LanguageSelectionScreen } from '../pages/LanguageSelectionScreen';
@@ -18,10 +19,13 @@ import { UserProfileScreen } from '../pages/UserProfileScreen';
 import { NotificationsScreen } from '../pages/NotificationsScreen';
 
 export const AppRoutes: React.FC = () => {
+  const { hasCompletedOnboarding } = useAppStore();
+
   return (
     <Routes>
       {/* Standalone Entry Views */}
-      <Route path="/" element={<WelcomeScreen />} />
+      <Route path="/" element={hasCompletedOnboarding ? <Navigate to="/home" replace /> : <WelcomeScreen />} />
+      <Route path="/welcome" element={<WelcomeScreen />} />
       <Route path="/language" element={<LanguageSelectionScreen />} />
       <Route path="/onboarding" element={<OnboardingScreen />} />
 

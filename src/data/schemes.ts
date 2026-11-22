@@ -5,8 +5,8 @@ export const verifiedSchemes: Scheme[] = [
     id: "pm-kisan",
     slug: "pm-kisan-samman-nidhi",
     titleKey: "PM-KISAN (Pradhan Mantri Kisan Samman Nidhi)",
-    shortDescKey: "₹6,000 yearly income support transferred directly in 3 equal installments of ₹2,000 to landholding farmer families.",
-    fullDescKey: "Pradhan Mantri Kisan Samman Nidhi is a central sector scheme with 100% funding from Government of India. Under the scheme, income support of ₹6,000/- per year in three equal installments is provided to all landholding farmer families.",
+    shortDescKey: "₹6,000 yearly income support transferred directly in 3 equal installments of ₹2,000 to landholding farmer families via DBT.",
+    fullDescKey: "Pradhan Mantri Kisan Samman Nidhi is a central sector scheme with 100% funding from Government of India. Under the scheme, income support of ₹6,000/- per year in three equal installments is provided to all landholding farmer families, subject to statutory exclusions.",
     lifeEventId: "farming",
     ministryKey: "Ministry of Agriculture & Farmers Welfare",
     benefitType: "dbt_cash",
@@ -17,8 +17,11 @@ export const verifiedSchemes: Scheme[] = [
     },
     statutoryFee: {
       amount: 0,
-      isFree: true
+      isFree: true,
+      statutoryRuleCitation: "Statutory Free Application (Order No. 1-1/2019-Credit-I)"
     },
+    sourceAttribution: "Official Guidelines, Ministry of Agriculture & Farmers Welfare • myScheme.gov.in",
+    lastVerifiedDate: "November 2026",
     processingSlaDays: 21,
     handlingAuthorityKey: "Tehsildar / District Agriculture Officer",
     helplinePhone: "155261 / 011-24300606",
@@ -27,7 +30,7 @@ export const verifiedSchemes: Scheme[] = [
       {
         id: "aadhaar",
         nameKey: "Aadhaar Card (eKYC Linked)",
-        descriptionKey: "Mandatory biometric/OTP verified identity linked to bank account.",
+        descriptionKey: "Biometric or OTP verified identity linked to bank account as mandated by Gazette Notification.",
         isMandatory: true,
         acceptableFormats: ["PDF", "JPEG"],
         maxSizeMb: 2,
@@ -37,7 +40,7 @@ export const verifiedSchemes: Scheme[] = [
       {
         id: "land_record",
         nameKey: "Land Record (RTC / Khatauni / Khasra)",
-        descriptionKey: "Certified revenue record establishing cultivable land title in state database (Bhoomi/Bhulekh).",
+        descriptionKey: "Certified revenue record establishing cultivable land title in state database (Bhoomi / Bhulekh).",
         isMandatory: true,
         acceptableFormats: ["PDF", "JPEG"],
         maxSizeMb: 5,
@@ -47,7 +50,7 @@ export const verifiedSchemes: Scheme[] = [
       {
         id: "bank_passbook",
         nameKey: "Bank Account Passbook (NPCI Seeded)",
-        descriptionKey: "First page showing Account Number, IFSC code, photo and clear official bank seal.",
+        descriptionKey: "Front page showing Account Number, IFSC code, customer photo, and official bank seal.",
         isMandatory: true,
         acceptableFormats: ["JPEG", "PNG", "PDF"],
         maxSizeMb: 3,
@@ -64,25 +67,25 @@ export const verifiedSchemes: Scheme[] = [
       socialCategories: ["all"]
     },
     keyBenefitsListKeys: [
-      "₹2,000 transferred directly every 4 months via Direct Benefit Transfer (DBT)",
-      "Zero collateral requirements; continuous funding as long as land title is active",
+      "₹2,000 transferred every 4 months directly via Public Financial Management System (PFMS)",
+      "Continuous assistance subject to active verified land records",
       "Seamless integration with Kisan Credit Card (KCC) for subsidized credit"
     ],
     whoIsEligibleListKeys: [
-      "Small and marginal farmer families with cultivable land in official land records",
-      "Farmers with Aadhaar-linked NPCI active bank accounts"
+      "Farmer families possessing cultivable landholding in state land records",
+      "Aadhaar-seeded NPCI mapped bank account holders"
     ],
     whoIsNotEligibleListKeys: [
-      "Institutional landholders or tenant farmers without registered title in state database",
-      "Families where any member pays income tax or holds a permanent government job"
+      "Institutional landholders or tenant farmers without registered title in state revenue records",
+      "Families where any member is an income-tax payee or serving/retired government employee"
     ]
   },
   {
     id: "pm-jay",
     slug: "ayushman-bharat-pmjay",
     titleKey: "Ayushman Bharat (PM-JAY)",
-    shortDescKey: "Free cashless secondary and tertiary hospital treatment cover of up to ₹5,00,000 per family per year across 28,000+ hospitals.",
-    fullDescKey: "Pradhan Mantri Jan Arogya Yojana is the flagship health assurance scheme providing a health cover of ₹5 Lakhs per family per year for secondary and tertiary care hospitalization to over 12 crore poor and vulnerable families.",
+    shortDescKey: "Secondary and tertiary hospital treatment cover of up to ₹5,00,000 per family per year across 28,000+ empaneled hospitals.",
+    fullDescKey: "Pradhan Mantri Jan Arogya Yojana is the flagship health assurance scheme providing a health cover of ₹5 Lakhs per family per year for secondary and tertiary care hospitalization to eligible bottom 40% vulnerable families and senior citizens.",
     lifeEventId: "health_elder",
     ministryKey: "National Health Authority (NHA), MoHFW",
     benefitType: "health_insurance",
@@ -93,8 +96,11 @@ export const verifiedSchemes: Scheme[] = [
     },
     statutoryFee: {
       amount: 0,
-      isFree: true
+      isFree: true,
+      statutoryRuleCitation: "Statutory Free Issuance at Public Hospitals (NHA Operational Guidelines)"
     },
+    sourceAttribution: "National Health Authority (NHA) Operational Guidelines • pmjay.gov.in",
+    lastVerifiedDate: "November 2026",
     processingSlaDays: 7,
     handlingAuthorityKey: "District Health Society / Ayushman Mitra",
     helplinePhone: "14555",
@@ -126,25 +132,25 @@ export const verifiedSchemes: Scheme[] = [
       socialCategories: ["all"]
     },
     keyBenefitsListKeys: [
-      "Cashless and paperless treatment at all empaneled public and private hospitals across India",
-      "Covers 3 days pre-hospitalization and 15 days post-hospitalization expenses including medicines",
-      "No restriction on family size, age, or gender; pre-existing medical conditions covered from Day 1"
+      "Cashless treatment at all empaneled public and private hospitals across India",
+      "Covers 3 days pre-hospitalization and 15 days post-hospitalization diagnostics and medicines",
+      "Pre-existing medical conditions covered from Day 1 without waiting periods"
     ],
     whoIsEligibleListKeys: [
-      "Households registered in SECC 2011 deprivation categories or active NFSA ration card holders",
-      "All senior citizens aged 70+ (universal Ayushman Vay Vandana top-up)"
+      "Households identified in SECC 2011 deprivation criteria or active NFSA ration card holders",
+      "All senior citizens aged 70+ under the expanded Ayushman Vay Vandana card"
     ],
     whoIsNotEligibleListKeys: [
-      "Households owning motorized 3/4 wheelers or agricultural equipment over 50,000 value",
-      "Government employees entitled to CGHS/ECHS/State government health schemes"
+      "Government employees entitled to CGHS/ECHS/State health schemes",
+      "Households holding permanent corporate group insurance"
     ]
   },
   {
     id: "pmmvy",
     slug: "pradhan-mantri-matru-vandana",
     titleKey: "PMMVY (Pradhan Mantri Matru Vandana Yojana)",
-    shortDescKey: "Direct financial maternity cash benefit of ₹5,000 in two installments for pregnant women to support wage loss and nutrition.",
-    fullDescKey: "PMMVY is a conditional cash transfer scheme for pregnant and lactating mothers for the first living child (and ₹6,000 for a second girl child) to promote institutional care and safe delivery.",
+    shortDescKey: "Direct maternity cash assistance of ₹5,000 in two installments for pregnant women to compensate wage loss and support nutrition.",
+    fullDescKey: "PMMVY is a centrally sponsored conditional cash transfer scheme for pregnant women and lactating mothers for the first living child (and ₹6,000 for a second girl child) to promote institutional care and safe delivery.",
     lifeEventId: "women_child",
     ministryKey: "Ministry of Women & Child Development",
     benefitType: "dbt_cash",
@@ -155,8 +161,11 @@ export const verifiedSchemes: Scheme[] = [
     },
     statutoryFee: {
       amount: 0,
-      isFree: true
+      isFree: true,
+      statutoryRuleCitation: "Statutory Free Registration at Anganwadi / Health Centres"
     },
+    sourceAttribution: "Ministry of Women & Child Development Gazette Rules 2022 • pmmvy.wcd.gov.in",
+    lastVerifiedDate: "November 2026",
     processingSlaDays: 14,
     handlingAuthorityKey: "Anganwadi Worker / CDPO Office",
     helplinePhone: "1098 / 011-23382393",
@@ -165,7 +174,7 @@ export const verifiedSchemes: Scheme[] = [
       {
         id: "mcp_card",
         nameKey: "Mother and Child Protection (MCP) Card",
-        descriptionKey: "Issued at Anganwadi/Health Center with LMP date and ANC checkup stamps.",
+        descriptionKey: "Issued at Anganwadi / Primary Health Centre with LMP date and ANC checkup stamps.",
         isMandatory: true,
         acceptableFormats: ["PDF", "JPEG"],
         maxSizeMb: 3,
@@ -205,7 +214,7 @@ export const verifiedSchemes: Scheme[] = [
     ],
     whoIsEligibleListKeys: [
       "Pregnant women and lactating mothers who are not in regular service with Central/State Govt or PSUs",
-      "Women holding e-Shram card, BPL ration card, or having annual income below ₹8 Lakh"
+      "Women holding e-Shram card, BPL ration card, or having annual family income below ₹8 Lakh"
     ],
     whoIsNotEligibleListKeys: [
       "Regular salaried government employees with paid maternity leave benefits"
@@ -227,8 +236,11 @@ export const verifiedSchemes: Scheme[] = [
     },
     statutoryFee: {
       amount: 0,
-      isFree: true
+      isFree: true,
+      statutoryRuleCitation: "No processing fee charged by lending institutions as per MoHUA guidelines"
     },
+    sourceAttribution: "Ministry of Housing & Urban Affairs (MoHUA) Scheme Guidelines • pmsvanidhi.mohua.gov.in",
+    lastVerifiedDate: "November 2026",
     processingSlaDays: 10,
     handlingAuthorityKey: "Urban Local Body (Municipality) & Lead Bank",
     helplinePhone: "1800-11-1979",
@@ -286,7 +298,7 @@ export const verifiedSchemes: Scheme[] = [
     id: "post-matric-scholarship",
     slug: "post-matric-scholarship-sc-obc",
     titleKey: "Post-Matric Scholarship for SC/OBC/Minority Students",
-    shortDescKey: "Complete tuition fee reimbursement plus monthly maintenance allowance for students pursuing higher education (Class 11 to PG).",
+    shortDescKey: "Compulsory non-refundable fee reimbursement plus monthly maintenance allowance for students pursuing higher education.",
     fullDescKey: "Centrally sponsored scholarship scheme to significantly boost Gross Enrolment Ratio (GER) of students from SC, OBC, and economically backward classes in higher secondary, college, and university courses.",
     lifeEventId: "education_youth",
     ministryKey: "Ministry of Social Justice & Empowerment",
@@ -298,8 +310,11 @@ export const verifiedSchemes: Scheme[] = [
     },
     statutoryFee: {
       amount: 0,
-      isFree: true
+      isFree: true,
+      statutoryRuleCitation: "Statutory Free Application on National Scholarship Portal (NSP)"
     },
+    sourceAttribution: "Ministry of Social Justice & Empowerment Guidelines • scholarships.gov.in",
+    lastVerifiedDate: "November 2026",
     processingSlaDays: 30,
     handlingAuthorityKey: "District Social Welfare Officer",
     helplinePhone: "0120-6619540",
@@ -361,7 +376,7 @@ export const verifiedSchemes: Scheme[] = [
     slug: "kisan-credit-card-crop-loan",
     titleKey: "Kisan Credit Card (KCC) Subsidized Crop Credit",
     shortDescKey: "Concessional credit limit up to ₹3,00,000 at an effective interest rate of just 4% per annum with prompt repayment incentive.",
-    fullDescKey: "Kisan Credit Card scheme provides farmers with timely access to adequate short-term credit for cultivation, post-harvest expenses, and animal husbandry at heavily subsidized interest rates.",
+    fullDescKey: "Kisan Credit Card scheme provides farmers with timely access to adequate short-term credit for cultivation, post-harvest expenses, and animal husbandry at subsidized interest rates.",
     lifeEventId: "farming",
     ministryKey: "Ministry of Agriculture & NABARD",
     benefitType: "credit_loan",
@@ -372,8 +387,11 @@ export const verifiedSchemes: Scheme[] = [
     },
     statutoryFee: {
       amount: 0,
-      isFree: true
+      isFree: true,
+      statutoryRuleCitation: "Zero processing fee for loan limits up to ₹3.00 Lakh (RBI Master Circular)"
     },
+    sourceAttribution: "Reserve Bank of India (RBI) / NABARD Master Directions • rbi.org.in",
+    lastVerifiedDate: "November 2026",
     processingSlaDays: 14,
     handlingAuthorityKey: "Lead Commercial Bank / Regional Rural Bank (RRB)",
     helplinePhone: "1800-180-1551",
@@ -405,7 +423,7 @@ export const verifiedSchemes: Scheme[] = [
       maxAnnualIncome: 500000
     },
     keyBenefitsListKeys: [
-      "Interest subvention of 2% + additional 3% incentive for prompt repayment makes effective rate only 4%",
+      "Interest subvention of 2% + additional 3% incentive for prompt repayment makes effective rate 4%",
       "No collateral required for loans up to ₹1.60 Lakh; flexible withdrawal via ATM debit card",
       "Includes crop insurance under PM Fasal Bima Yojana (PMFBY)"
     ],

@@ -49,7 +49,10 @@ export interface Scheme {
   statutoryFee: {
     amount: number;
     isFree: boolean;
+    statutoryRuleCitation: string;
   };
+  sourceAttribution: string;
+  lastVerifiedDate: string;
   processingSlaDays: number;
   handlingAuthorityKey: string;
   helplinePhone: string;
@@ -86,13 +89,23 @@ export interface EligibilityQuestion {
   }[];
 }
 
+export type EligibilityAssessmentStatus = 
+  | 'not_assessed'
+  | 'in_progress'
+  | 'potentially_eligible'
+  | 'not_established'
+  | 'additional_verification_required';
+
 export interface EligibilityAssessmentResult {
+  status: EligibilityAssessmentStatus;
   eligibleSchemes: Scheme[];
   partialMatchSchemes: {
     scheme: Scheme;
     missingRequirementKey: string;
   }[];
   totalAnnualBenefitValue: number;
+  disclaimerKey: string;
+  assessmentTimestamp?: string;
 }
 
 export type ApplicationStage = 1 | 2 | 3 | 4;

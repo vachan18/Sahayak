@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Mic, AlertTriangle, ArrowRight, Sparkles, Filter } from 'lucide-react';
+import { Search, Mic, AlertTriangle, ArrowRight, Sparkles, Filter, CheckCircle2, HelpCircle } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
+import { assessEligibility } from '../services/eligibilityEngine';
 import { LifeEventGrid } from '../components/dashboard/LifeEventGrid';
 import { SchemeCard } from '../components/schemes/SchemeCard';
 import { AudioListenButton } from '../components/feedback/AudioListenButton';
@@ -10,10 +11,14 @@ import { AudioListenButton } from '../components/feedback/AudioListenButton';
 export const HomeScreen: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { schemes, setAiDrawerOpen } = useAppStore();
+  const { schemes, setAiDrawerOpen, eligibilityAnswers, eligibilityStatus } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
 
   const featuredSchemes = schemes.slice(0, 3);
+
+  const assessment = useMemo(() => {
+    return assessEligibility(eligibilityAnswers);
+  }, [eligibilityAnswers]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,28 +92,98 @@ export const HomeScreen: React.FC = () => {
         </div>
       </section>
 
-      {/* Quick 2-Minute Eligibility Checker Banner */}
-      <section>
-        <div className="bg-emerald-800 text-white rounded-2xl p-5 sm:p-6 shadow-crisp-md flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-center sm:text-left">
-            <span className="text-xs font-bold text-emerald-200 uppercase tracking-wider">
-              {t('eligibilityTitle', 'Smart Eligibility')}
-            </span>
-            <h2 className="text-lg sm:text-xl font-extrabold mt-1">
-              {t('resultsSubtitle', 'What is your family\'s total welfare entitlement?')}
-            </h2>
-            <p className="text-xs sm:text-sm text-emerald-100 mt-1 max-w-md">
-              {t('onboard2Desc', 'Answer 4 simple questions. Know your cash DBT, health cover, and loans instantly.')}
-            </p>
+      {/* Distinct 5-State Eligibility Cockpit Banner */}
+      <section aria-labelledby="eligibility-status-banner">
+        {assessment.status === 'potentially_eligible' ? (
+          <div className="bg-emerald-800 text-white rounded-2xl p-5 sm:p-6 shadow-crisp-md flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-center sm:text-left">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-emerald-200 border border-white/20 mb-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
+                <span>{t('statusPotentiallyEligible', 'Preliminary Assessment: Potentially Eligible')}</span>
+              </div>
+              <h2 id="eligibility-status-banner" className="text-lg sm:text-xl font-extrabold mt-0.5">
+                {t('totalAnnualBenefit')}: ₹{assessment.totalAnnualBenefitValue.toLocaleString('en-IN')}/year
+              </h2>
+              <p className="text-xs sm:text-sm text-emerald-100 mt-1 max-w-md">
+                {t('preliminaryGuidanceDisclaimer', 'Preliminary guidance only; subject to official departmental document verification.')}
+              </p>
+            </div>
+            <Link
+              to="/eligibility/results"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white hover:bg-emerald-50 text-emerald-900 font-extrabold text-sm flex items-center justify-center gap-2 shadow-sm flex-shrink-0 active:scale-95 transition-all"
+            >
+              <span>{t('resultsTitle', 'View Eligibility Breakdown')}</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
-          <Link
-            to="/eligibility"
-            className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white hover:bg-emerald-50 text-emerald-900 font-extrabold text-sm flex items-center justify-center gap-2 shadow-sm flex-shrink-0 active:scale-95 transition-all"
-          >
-            <span>{t('checkEligibilityBtn', 'Check My Eligibility')}</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+        ) : assessment.status === 'in_progress' ? (
+          <div className="bg-amber-800 text-white rounded-2xl p-5 sm:p-6 shadow-crisp-md flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-center sm:text-left">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-amber-200 border border-white/20 mb-2">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-300" />
+                <span>{t('statusInProgress', 'Assessment In Progress')}</span>
+              </div>
+              <h2 id="eligibility-status-banner" className="text-lg sm:text-xl font-extrabold mt-0.5">
+                Complete Your Questionnaire
+              </h2>
+              <p className="text-xs sm:text-sm text-amber-100 mt-1 max-w-md">
+                A few questions remain. Finish them to see your family's preliminary benefit entitlement.
+              </p>
+            </div>
+            <Link
+              to="/eligibility"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white hover:bg-amber-50 text-amber-900 font-extrabold text-sm flex items-center justify-center gap-2 shadow-sm flex-shrink-0 active:scale-95 transition-all"
+            >
+              <span>{t('navNext', 'Resume Questionnaire')}</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        ) : assessment.status === 'not_established' ? (
+          <div className="bg-slate-800 text-white rounded-2xl p-5 sm:p-6 shadow-crisp-md flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-center sm:text-left">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-slate-300 border border-white/20 mb-2">
+                <HelpCircle className="w-3.5 h-3.5 text-slate-300" />
+                <span>{t('statusNotEstablished', 'Eligibility Not Established')}</span>
+              </div>
+              <h2 id="eligibility-status-banner" className="text-lg sm:text-xl font-extrabold mt-0.5">
+                No Direct Scheme Matches on Current Inputs
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-md">
+                Review your questionnaire inputs or browse the comprehensive public scheme directory.
+              </p>
+            </div>
+            <Link
+              to="/eligibility"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-sm flex-shrink-0 active:scale-95 transition-all"
+            >
+              <span>Review Assessment</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        ) : (
+          /* Default: not_assessed - Clear distinction that eligibility has NOT yet been calculated */
+          <div className="bg-brand-navy-900 dark:bg-slate-900 text-white border border-brand-navy-800 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-crisp-md flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-center sm:text-left">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-amber-300 border border-white/15 mb-2">
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span>{t('statusNotAssessed', 'Eligibility Status: Not Assessed')}</span>
+              </div>
+              <h2 id="eligibility-status-banner" className="text-lg sm:text-xl font-extrabold mt-0.5">
+                {t('resultsSubtitle', 'Check Your Family\'s Welfare Entitlement')}
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-md">
+                Answer 4 simple questions in 2 minutes. Receive preliminary entitlement guidance based on official scheme guidelines.
+              </p>
+            </div>
+            <Link
+              to="/eligibility"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-sm flex-shrink-0 active:scale-95 transition-all"
+            >
+              <span>{t('checkEligibilityBtn', 'Take 2-Min Assessment')}</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        )}
       </section>
 
       {/* Life-Event Exploration Grid ("Jeevan Ke Padav") */}
@@ -138,7 +213,7 @@ export const HomeScreen: React.FC = () => {
               {t('catalogTitle', 'Government Schemes Directory')}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t('statutoryBadge', 'Official Sovereign Welfare Guide • 100% Free')}
+              {t('statutoryBadge', 'Official Sovereign Welfare Information Guide • Statutory Citizen Portal')}
             </p>
           </div>
           <Link to="/schemes" className="text-xs font-bold text-brand-navy-900 dark:text-sky-400 hover:underline flex items-center gap-1">

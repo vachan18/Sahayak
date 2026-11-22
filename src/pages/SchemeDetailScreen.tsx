@@ -74,11 +74,23 @@ export const SchemeDetailScreen: React.FC = () => {
             {scheme.financialBenefit.formattedDisplay}
           </div>
           <div className="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">
-            100% Direct to NPCI Aadhaar-seeded bank account
+            Direct to NPCI Aadhaar-seeded bank account via DBT
           </div>
         </div>
 
         <StatutoryFeeBadge className="self-start sm:self-center" />
+      </div>
+
+      {/* Official Government Source Attribution & Last Verified Notice */}
+      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-300">
+        <div>
+          <span className="font-semibold text-slate-500 dark:text-slate-400">Official Source: </span>
+          <span className="font-bold text-slate-800 dark:text-slate-200">{scheme.sourceAttribution || 'Government of India Gazette & Ministry Portal'}</span>
+        </div>
+        <div className="text-slate-500 dark:text-slate-400">
+          <span>Verified: </span>
+          <span className="font-medium text-slate-700 dark:text-slate-300">{scheme.lastVerifiedDate || 'November 2026'}</span>
+        </div>
       </div>
 
       {/* Plain Language Description */}

@@ -1,5 +1,8 @@
 import { create } from 'zustand';
-import { SupportedLanguage, UserProfile, ApplicationRecord, NotificationItem, Scheme } from '../types';
+import { 
+  SupportedLanguage, UserProfile, ApplicationRecord, NotificationItem, 
+  Scheme, EligibilityAssessmentStatus 
+} from '../types';
 import { verifiedSchemes } from '../data/schemes';
 import { mockApplicationsData } from '../data/mockApplications';
 import { mockNotificationsData } from '../data/mockNotifications';
@@ -39,6 +42,8 @@ interface AppState {
   clearCompareSchemes: () => void;
 
   // Eligibility Engine State
+  eligibilityStatus: EligibilityAssessmentStatus;
+  setEligibilityStatus: (status: EligibilityAssessmentStatus) => void;
   eligibilityAnswers: {
     occupation?: string;
     landholdingAcres?: number;
@@ -153,23 +158,24 @@ export const useAppStore = create<AppState>((set) => ({
       return { compareSchemeIds: state.compareSchemeIds.filter(id => id !== schemeId) };
     }
     if (state.compareSchemeIds.length >= 3) {
-      return state; // Max 3 schemes
+      return state;
     }
     return { compareSchemeIds: [...state.compareSchemeIds, schemeId] };
   }),
   clearCompareSchemes: () => set({ compareSchemeIds: [] }),
 
-  eligibilityAnswers: {
-    occupation: "farmer",
-    landholdingAcres: 1.5,
-    gender: "male",
-    annualIncome: 120000,
-    isGovtEmployee: false
-  },
+  // Eligibility Engine State: Starts as 'not_assessed' with empty inputs
+  eligibilityStatus: 'not_assessed',
+  setEligibilityStatus: (status) => set({ eligibilityStatus: status }),
+  eligibilityAnswers: {},
   setEligibilityAnswer: (field, value) => set((state) => ({
-    eligibilityAnswers: { ...state.eligibilityAnswers, [field]: value }
+    eligibilityAnswers: { ...state.eligibilityAnswers, [field]: value },
+    eligibilityStatus: 'in_progress'
   })),
-  resetEligibilityAnswers: () => set({ eligibilityAnswers: {} }),
+  resetEligibilityAnswers: () => set({ 
+    eligibilityAnswers: {}, 
+    eligibilityStatus: 'not_assessed' 
+  }),
 
   applications: mockApplicationsData,
   addApplication: (newApp) => set((state) => ({

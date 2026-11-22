@@ -17,8 +17,39 @@ export interface SavedAssessmentRecord {
 }
 
 /**
+ * Canonicalizes an assessment answers object and computes a SHA-256 hex hash.
+ * Works universally across modern browsers, Node.js, and Vitest.
+ */
+export async function computeCanonicalAnswersSha256(
+  userId: string,
+  answers: AssessmentAnswers
+): Promise<string> {
+  const canonicalEntries = Object.keys(answers || {})
+    .filter(k => (answers as any)[k] !== undefined && (answers as any)[k] !== null)
+    .sort()
+    .map(k => `${k}:${String((answers as any)[k]).trim().toLowerCase()}`);
+
+  const rawCanonicalString = `${userId}::${canonicalEntries.join('|')}`;
+
+  if (typeof crypto !== 'undefined' && crypto.subtle) {
+    const msgBuffer = new TextEncoder().encode(rawCanonicalString);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return `sha256-${hashArray.map(b => b.toString(16).padStart(2, '0')).join('')}`;
+  }
+
+  // Safe fallback
+  let hash = 0;
+  for (let i = 0; i < rawCanonicalString.length; i++) {
+    hash = ((hash << 5) - hash) + rawCanonicalString.charCodeAt(i);
+    hash |= 0;
+  }
+  return `sha256-fallback-${Math.abs(hash).toString(16)}`;
+}
+
+/**
  * Persist an assessment session and its scheme outcomes to Supabase.
- * Enforces deduplication via deterministic fingerprint and transaction rollback on partial failure.
+ * Enforces deduplication via SHA-256 hash of canonicalized answers and transaction rollback on partial failure.
  * In Guest Mode, gracefully returns local ID without network error.
  */
 export const saveAssessmentToBackend = async (
@@ -36,12 +67,8 @@ export const saveAssessmentToBackend = async (
   }
 
   try {
-    // 1. Compute deterministic idempotency fingerprint to prevent duplicate assessment records
-    const sortedAnswersKey = Object.keys(answers || {})
-      .sort()
-      .map(k => `${k}:${(answers as any)[k]}`)
-      .join('|');
-    const idempotencyKey = `asm-${userId}-${sortedAnswersKey}`;
+    // 1. Compute SHA-256 hash of canonicalized assessment inputs
+    const idempotencyKey = await computeCanonicalAnswersSha256(userId, answers);
 
     // Check if an assessment with this exact fingerprint already exists for this citizen
     const { data: existingAssessment } = await supabase

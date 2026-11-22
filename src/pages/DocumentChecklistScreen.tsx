@@ -55,7 +55,7 @@ export const DocumentChecklistScreen: React.FC = () => {
   const isAllReady = verifiedCount === totalCount;
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto py-4 sm:py-6 animate-fadeIn pb-16">
+    <div className="space-y-8 max-w-5xl mx-auto py-4 sm:py-6 animate-fadeIn pb-16">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>

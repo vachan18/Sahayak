@@ -35,41 +35,69 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
     }
   };
 
+  const desktopNavItems = [
+    { to: '/home', label: t('navHome', 'Home') },
+    { to: '/schemes', label: t('catalogTitle', 'All Schemes') },
+    { to: '/eligibility', label: t('navEligibility', 'Check Eligibility') },
+    { to: '/documents', label: t('navDocuments', 'Documents') },
+    { to: '/tracker', label: t('navTracker', 'Tracker') },
+  ];
+
   return (
-    <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
-      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
+    <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+      <div className="max-w-[1360px] 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* Left Side: Brand or Back Button */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {!isRootScreen ? (
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="inline-flex items-center gap-1 py-1.5 px-2 -ml-2 rounded-lg text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all"
+              className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all"
               aria-label="Go back to previous screen"
             >
               <ChevronLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
               <span>{t('navBack', 'Back')}</span>
             </button>
           ) : (
-            <Link to="/home" className="flex items-center gap-2 group">
+            <Link to="/home" className="flex items-center gap-2.5 group">
               {/* Sovereign Tricolor Accent Emblem */}
-              <div className="w-8 h-8 rounded-lg bg-brand-navy-900 dark:bg-sky-500 flex items-center justify-center text-white font-bold text-base shadow-sm ring-2 ring-amber-500/50">
+              <div className="w-9 h-9 rounded-xl bg-brand-navy-900 dark:bg-sky-500 flex items-center justify-center text-white font-extrabold text-lg shadow-sm ring-2 ring-amber-500/50 group-hover:scale-105 transition-transform">
                 <span>ಸ</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-lg leading-tight tracking-tight text-slate-900 dark:text-white">
+                <span className="font-extrabold text-lg sm:text-xl leading-tight tracking-tight text-slate-900 dark:text-white">
                   {t('appName', 'SAHAYAK')}
                 </span>
-                <span className="text-[10px] text-amber-700 dark:text-amber-400 font-semibold tracking-wide uppercase">
-                  {language === 'kn' ? 'ಸಹಾಯಕ' : language === 'hi' ? 'सहायक' : 'Bharat Welfare'}
+                <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold tracking-wider uppercase">
+                  {language === 'kn' ? 'ಸಹಾಯಕ • ಭಾರತ' : language === 'hi' ? 'सहायक • भारत' : 'Bharat Welfare'}
                 </span>
               </div>
             </Link>
           )}
         </div>
 
+        {/* Center: Desktop Navigation Bar */}
+        <nav aria-label="Desktop primary navigation" className="hidden md:flex items-center gap-1 lg:gap-2">
+          {desktopNavItems.map((item) => {
+            const isActive = location.pathname === item.to || (item.to !== '/home' && location.pathname.startsWith(item.to));
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`px-3 py-2 rounded-xl text-xs lg:text-sm font-semibold transition-all ${
+                  isActive
+                    ? 'bg-brand-navy-900 text-white dark:bg-sky-500 dark:text-slate-950 font-bold shadow-sm'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
         {/* Right Side: Global Controls */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           {/* Language Switcher Pill */}
           <button
             type="button"

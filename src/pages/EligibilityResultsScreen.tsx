@@ -95,36 +95,36 @@ export const EligibilityResultsScreen: React.FC = () => {
 
   // Case 3: Assessment Completed - Results View
   return (
-    <div className="space-y-6 max-w-4xl mx-auto py-4 sm:py-6 animate-fadeIn pb-16">
+    <div className="space-y-8 max-w-6xl w-full mx-auto py-4 sm:py-6 animate-fadeIn pb-16">
       {/* Statutory Preliminary Guidance Disclaimer Banner */}
-      <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-800 flex items-start gap-3">
-        <ShieldAlert className="w-5 h-5 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-        <div className="text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
-          <span className="font-bold uppercase tracking-wide mr-1">Statutory Notice:</span>
+      <div className="p-5 rounded-3xl bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-800 flex items-start gap-4">
+        <ShieldAlert className="w-6 h-6 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+        <div className="text-xs sm:text-sm text-amber-900 dark:text-amber-200 leading-relaxed">
+          <span className="font-extrabold uppercase tracking-wide mr-1.5">Statutory Notice:</span>
           {t('preliminaryGuidanceDisclaimer', 'This assessment provides preliminary guidance based on self-reported inputs. Official scheme eligibility and benefit disbursement are determined exclusively by the designated government department upon physical or biometric document verification.')}
         </div>
       </div>
 
       {/* Header Card */}
-      <section className="bg-gradient-to-r from-emerald-800 to-emerald-900 text-white rounded-3xl p-6 sm:p-8 shadow-crisp-md relative overflow-hidden text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6">
-        <div className="max-w-xl">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-emerald-200 border border-white/20 mb-3">
+      <section className="bg-gradient-to-r from-emerald-800 via-emerald-850 to-emerald-900 text-white rounded-3xl p-6 sm:p-8 lg:p-10 shadow-crisp-lg relative overflow-hidden flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+        <div className="max-w-2xl space-y-3">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-white/20 text-emerald-200 border border-white/20">
             <Sparkles className="w-4 h-4 text-amber-300" />
             <span>{t('statusPotentiallyEligible', 'Preliminary Assessment: Potentially Eligible')}</span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight">
             {t('resultsTitle', 'Your Preliminary Entitlement Results')}
           </h1>
 
-          <p className="text-xs sm:text-sm text-emerald-100 leading-relaxed mt-1">
+          <p className="text-xs sm:text-sm lg:text-base text-emerald-100 leading-relaxed">
             {t('resultsSubtitle', 'Based on your entered criteria, your household may potentially qualify for:')}
           </p>
 
-          <div className="mt-4 inline-flex items-baseline gap-2 bg-emerald-950/60 px-4 py-2 rounded-2xl border border-emerald-700/50">
-            <span className="text-xs text-emerald-200 font-semibold">{t('totalAnnualBenefit')}:</span>
-            <span className="text-2xl font-extrabold text-amber-300 tabular-nums">
-              ₹{assessment.totalAnnualBenefitValue.toLocaleString('en-IN')}/year
+          <div className="mt-4 inline-flex items-baseline gap-3 bg-emerald-950/70 px-5 py-3 rounded-2xl border border-emerald-700/50 shadow-inner">
+            <span className="text-xs sm:text-sm text-emerald-200 font-bold">{t('totalAnnualBenefit')}:</span>
+            <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-amber-300 tabular-nums">
+              ₹{assessment.totalAnnualBenefitValue.toLocaleString('en-IN')} / year
             </span>
           </div>
         </div>
@@ -135,10 +135,10 @@ export const EligibilityResultsScreen: React.FC = () => {
       </section>
 
       {/* Tabs / Section Indicator */}
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
         <div className="flex items-center gap-2">
-          <CheckCircle className="w-5 h-5 text-emerald-600" />
-          <h2 className="text-base font-bold text-slate-900 dark:text-white">
+          <CheckCircle className="w-6 h-6 text-emerald-600" />
+          <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
             {t('qualifiedSchemesTab', 'Potentially Eligible Schemes')} ({assessment.eligibleSchemes.length})
           </h2>
         </div>
@@ -149,23 +149,23 @@ export const EligibilityResultsScreen: React.FC = () => {
             resetEligibilityAnswers();
             navigate('/eligibility');
           }}
-          className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center gap-1"
+          className="text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white flex items-center gap-1.5"
         >
-          <RotateCcw className="w-3.5 h-3.5" />
+          <RotateCcw className="w-4 h-4" />
           <span>ಮತ್ತೆ ಪರಿಶೀಲಿಸಿ (Retake Assessment)</span>
         </button>
       </div>
 
       {/* Qualified Schemes Deck */}
       {assessment.eligibleSchemes.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {assessment.eligibleSchemes.map((scheme) => (
             <SchemeCard key={scheme.id} scheme={scheme} />
           ))}
         </div>
       ) : (
-        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-          <p className="text-sm text-slate-600 dark:text-slate-300">
+        <div className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">
             No exact matching schemes found for this combination of inputs. Explore the full public directory below.
           </p>
         </div>

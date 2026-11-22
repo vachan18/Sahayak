@@ -10,13 +10,13 @@ export const ApplicationTrackerScreen: React.FC = () => {
   const { applications } = useAppStore();
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto py-4 sm:py-6 animate-fadeIn pb-16">
+    <div className="space-y-8 max-w-5xl mx-auto py-4 sm:py-6 animate-fadeIn pb-16">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
           {t('trackerTitle', 'Application Lifecycle Tracker')}
         </h1>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-xs sm:text-sm lg:text-base text-slate-500 dark:text-slate-400 mt-1">
           {t('trackerSubtitle', 'Track real-time progress, officer handling, and statutory SLA timelines.')}
         </p>
       </div>

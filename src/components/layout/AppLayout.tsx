@@ -21,8 +21,8 @@ export const AppLayout: React.FC = () => {
         onOpenNotifications={() => setIsNotifModalOpen(true)}
       />
 
-      {/* Main Viewport Container */}
-      <main className="flex-1 max-w-6xl w-full mx-auto pb-24 md:pb-12 px-4 sm:px-6 pt-4 sm:pt-6">
+      {/* Main Viewport Container — Optimized for Full Desktop (1200px - 1440px) */}
+      <main className="flex-1 max-w-[1360px] 2xl:max-w-[1440px] w-full mx-auto pb-24 md:pb-16 px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
         <Outlet />
       </main>
 

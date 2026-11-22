@@ -22,98 +22,101 @@ export const SchemeCard: React.FC<SchemeCardProps> = ({ scheme }) => {
 
   return (
     <article 
-      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-crisp-sm hover:shadow-crisp-md transition-all flex flex-col justify-between group"
+      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-6 lg:p-7 shadow-crisp-sm hover:shadow-crisp-lg hover:border-amber-400 dark:hover:border-amber-500 transition-all flex flex-col justify-between group"
     >
       <div>
-        {/* Header: Department Badge & Save Button */}
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+        {/* Header: Department Badge & Bookmark */}
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
             {scheme.ministryKey}
           </span>
           <button
             type="button"
             onClick={() => toggleSaveScheme(scheme.id)}
-            className={`p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${
-              isSaved ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'
+            className={`p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${
+              isSaved ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50' : 'text-slate-400'
             }`}
             title={isSaved ? "Saved to your list" : "Save scheme for later"}
             aria-label={isSaved ? "Remove from saved" : "Save scheme"}
           >
-            {isSaved ? <BookmarkCheck className="w-4 h-4 fill-amber-600" /> : <Bookmark className="w-4 h-4" />}
+            {isSaved ? <BookmarkCheck className="w-4 h-4 fill-amber-600 text-amber-600" /> : <Bookmark className="w-4 h-4" />}
           </button>
         </div>
 
         {/* Title */}
-        <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug mb-2.5 group-hover:text-brand-navy-900 dark:group-hover:text-sky-400 transition-colors">
+        <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white leading-snug mb-3 group-hover:text-brand-navy-900 dark:group-hover:text-sky-400 transition-colors">
           <Link to={`/schemes/${scheme.id}`} className="focus:outline-none">
             {scheme.titleKey}
           </Link>
         </h3>
 
         {/* Benefit Amount Hero Box */}
-        <div className="my-3 p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between gap-3">
+        <div className="my-4 p-4 rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between gap-4">
           <div>
             <div className="text-[11px] font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider">
               {t('directDbtBank', 'Direct Bank Transfer / Benefit')}
             </div>
-            <div className="text-xl sm:text-2xl font-extrabold text-emerald-950 dark:text-emerald-200 tabular-nums">
+            <div className="text-2xl sm:text-3xl font-black text-emerald-950 dark:text-emerald-200 tabular-nums mt-0.5">
               {scheme.financialBenefit.formattedDisplay}
+            </div>
+            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">
+              Direct to Aadhaar-seeded bank account
             </div>
           </div>
           <AudioListenButton textToSpeak={getAudioSummary()} size="sm" />
         </div>
 
         {/* Plain Language Short Description */}
-        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-3.5">
+        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
           {scheme.shortDescKey}
         </p>
 
-        {/* Eligibility Brief Pill */}
-        <div className="mb-3.5 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-xs text-slate-600 dark:text-slate-300">
-          <div className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 mb-1">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+        {/* Key Eligibility Criteria Brief Box */}
+        <div className="mb-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300">
+          <div className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 mb-1">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
             <span>Key Criteria:</span>
           </div>
-          <div className="line-clamp-2">
+          <div className="leading-relaxed">
             {scheme.whoIsEligibleListKeys[0]}
           </div>
         </div>
 
         {/* Statutory Fee & Timeline Metadata Strip */}
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 mb-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-          <span className="flex items-center gap-1 font-medium text-slate-700 dark:text-slate-300">
-            <Clock className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 mb-3.5 pb-3.5 border-b border-slate-100 dark:border-slate-800">
+          <span className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-300">
+            <Clock className="w-4 h-4 text-amber-600 flex-shrink-0" />
             <span>{scheme.processingSlaDays} {t('days', 'Days')} SLA</span>
           </span>
-          <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold">
-            <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
+          <span className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold">
+            <ShieldCheck className="w-4 h-4 flex-shrink-0" />
             <span>₹0.00 Govt Fee</span>
           </span>
         </div>
 
-        {/* Source Reference & Last Verified Date */}
-        <div className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center justify-between gap-1 mb-4">
+        {/* Official Source & Verification Timestamp */}
+        <div className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center justify-between gap-2 mb-5">
           <span className="truncate" title={scheme.sourceAttribution}>
-            {t('sourceAttributionLabel', 'Source')}: {scheme.sourceAttribution}
+            <span className="font-semibold">{t('sourceAttributionLabel', 'Source')}:</span> {scheme.sourceAttribution}
           </span>
-          <span className="flex-shrink-0 text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+          <span className="flex-shrink-0 text-[10px] font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/50 dark:border-slate-700/50">
             {scheme.lastVerifiedDate}
           </span>
         </div>
       </div>
 
       {/* Action Footer: Prominent Primary CTA */}
-      <div className="flex items-center gap-2 pt-1">
+      <div className="flex items-center gap-3 pt-2">
         <Link
           to={`/eligibility?scheme=${scheme.id}`}
-          className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-brand-navy-900 dark:bg-sky-600 hover:bg-brand-navy-800 dark:hover:bg-sky-500 text-white font-bold text-xs sm:text-sm shadow-sm active:scale-98 transition-all"
+          className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-brand-navy-900 hover:bg-brand-navy-800 dark:bg-sky-600 dark:hover:bg-sky-500 text-white font-extrabold text-xs sm:text-sm shadow-crisp-sm hover:shadow-crisp-md active:scale-98 transition-all"
         >
           <span>{t('checkEligibilityBtn', 'Check Eligibility')}</span>
           <ArrowRight className="w-4 h-4" />
         </Link>
         <Link
           to={`/schemes/${scheme.id}`}
-          className="px-3.5 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs sm:text-sm transition-all text-center"
+          className="px-4 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs sm:text-sm transition-all text-center"
         >
           {t('viewDetailsBtn', 'Details')}
         </Link>

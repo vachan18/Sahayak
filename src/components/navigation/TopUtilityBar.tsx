@@ -45,7 +45,7 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
-      <div className="max-w-[1360px] 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <div className="layout-container h-16 flex items-center justify-between gap-4">
         {/* Left Side: Brand or Back Button */}
         <div className="flex items-center gap-3">
           {!isRootScreen ? (

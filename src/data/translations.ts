@@ -6,7 +6,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     appName: "SAHAYAK",
     tagline: "Government Schemes in Your Language",
     statutoryBadge: "Public Welfare Information Platform • Demonstration Prototype",
-    sovereignMotto: "Civic Dignity & Plain-Language Welfare Access for Bharat",
+    sovereignMotto: "Sovereign Welfare Information Portal • Official Public Guide",
 
     // Navigation
     navHome: "Discover",
@@ -198,7 +198,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     appName: "ಸಹಾಯಕ",
     tagline: "ನಿಮ್ಮದೇ ಭಾಷೆಯಲ್ಲಿ ಸರ್ಕಾರದ ಯೋಜನೆಗಳು",
     statutoryBadge: "ಸಾರ್ವಜನಿಕ ಕಲ್ಯಾಣ ಮಾಹಿತಿ ವೇದಿಕೆ • ಪ್ರಾಯೋಗಿಕ ಮಾದರಿ",
-    sovereignMotto: "80 ಕೋಟಿಗೂ ಹೆಚ್ಚು ಭಾರತೀಯರಿಗೆ ನಾಗರಿಕ ಗೌರವ ಮತ್ತು ಸರಳ ಭಾಷೆಯ ಸೇವೆ",
+    sovereignMotto: "ಸಾರ್ವಭೌಮ ಜನಕಲ್ಯಾಣ ಮಾಹಿತಿ ಪೋರ್ಟಲ್ • ಅಧಿಕೃತ ಮಾರ್ಗದರ್ಶಿ",
 
     // Navigation
     navHome: "ಮುಖಪುಟ",
@@ -390,7 +390,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     appName: "सहायक",
     tagline: "आपकी अपनी भाषा में सरकारी योजनाएं",
     statutoryBadge: "लोक कल्याण सूचना मंच • व्यावहारिक प्रोटोटाइप",
-    sovereignMotto: "80 करोड़ से अधिक देशवासियों को नागरिक सम्मान और सरल भाषा में पहुंच",
+    sovereignMotto: "सार्वभौम लोक कल्याण सूचना पोर्टल • आधिकारिक नागरिक मार्गदर्शिका",
 
     // Navigation
     navHome: "खोजें",

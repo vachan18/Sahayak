@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, ShieldCheck, ArrowRight, Bookmark, BookmarkCheck, FileText, CheckCircle2 } from 'lucide-react';
-import { Scheme } from '../../types';
+import { Scheme, BenefitType } from '../../types';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useAppStore } from '../../store/useAppStore';
 import { AudioListenButton } from '../feedback/AudioListenButton';
@@ -17,7 +17,18 @@ export const SchemeCard: React.FC<SchemeCardProps> = ({ scheme }) => {
   const isSaved = savedSchemeIds.includes(scheme.id);
 
   const getAudioSummary = () => {
-    return `${scheme.titleKey}. ${scheme.shortDescKey} ${scheme.financialBenefit.formattedDisplay}. ${t('statutoryFreeFee')}.`;
+    return `${scheme.titleKey}. ${scheme.shortDescKey} ${scheme.financialBenefit.formattedDisplay}.`;
+  };
+
+  const getBenefitMechanismLabel = (benefitType: BenefitType) => {
+    switch (benefitType) {
+      case 'dbt_cash': return 'Direct bank credit via NPCI DBT';
+      case 'health_insurance': return 'Cashless treatment at empaneled hospitals';
+      case 'credit_loan': return 'Collateral-free institutional micro-loan';
+      case 'scholarship': return 'Direct scholarship credit to student account';
+      case 'pension': return 'Monthly pension DBT credit';
+      default: return 'Government welfare benefit';
+    }
   };
 
   return (
@@ -54,13 +65,13 @@ export const SchemeCard: React.FC<SchemeCardProps> = ({ scheme }) => {
         <div className="my-4 p-4 rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between gap-4">
           <div>
             <div className="text-[11px] font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider">
-              {t('directDbtBank', 'Direct Bank Transfer / Benefit')}
+              {scheme.benefitType === 'dbt_cash' ? 'DIRECT BENEFIT TRANSFER (DBT)' : 'GOVERNMENT BENEFIT'}
             </div>
             <div className="text-2xl sm:text-3xl font-black text-emerald-950 dark:text-emerald-200 tabular-nums mt-0.5">
               {scheme.financialBenefit.formattedDisplay}
             </div>
             <div className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">
-              Direct to Aadhaar-seeded bank account
+              {getBenefitMechanismLabel(scheme.benefitType)}
             </div>
           </div>
           <AudioListenButton textToSpeak={getAudioSummary()} size="sm" />
@@ -72,7 +83,7 @@ export const SchemeCard: React.FC<SchemeCardProps> = ({ scheme }) => {
         </p>
 
         {/* Key Eligibility Criteria Brief Box */}
-        <div className="mb-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300">
+        <div className="mb-4 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300">
           <div className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 mb-1">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
             <span>Key Criteria:</span>
@@ -90,16 +101,16 @@ export const SchemeCard: React.FC<SchemeCardProps> = ({ scheme }) => {
           </span>
           <span className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold">
             <ShieldCheck className="w-4 h-4 flex-shrink-0" />
-            <span>₹0.00 Govt Fee</span>
+            <span>Govt Fee: ₹{scheme.statutoryFee?.amount ? scheme.statutoryFee.amount.toFixed(2) : '0.00'}</span>
           </span>
         </div>
 
         {/* Official Source & Verification Timestamp */}
-        <div className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center justify-between gap-2 mb-5">
+        <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2 mb-5">
           <span className="truncate" title={scheme.sourceAttribution}>
-            <span className="font-semibold">{t('sourceAttributionLabel', 'Source')}:</span> {scheme.sourceAttribution}
+            <span className="font-semibold text-slate-700 dark:text-slate-300">{t('sourceAttributionLabel', 'Source')}:</span> {scheme.sourceAttribution}
           </span>
-          <span className="flex-shrink-0 text-[10px] font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/50 dark:border-slate-700/50">
+          <span className="flex-shrink-0 text-[10px] font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200/50 dark:border-slate-700/50 text-slate-600 dark:text-slate-300">
             {scheme.lastVerifiedDate}
           </span>
         </div>

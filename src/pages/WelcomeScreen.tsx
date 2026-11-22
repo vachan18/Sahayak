@@ -127,7 +127,7 @@ export const WelcomeScreen: React.FC = () => {
 
       {/* Footer Assurance */}
       <div className="text-xs text-slate-500 dark:text-slate-400 max-w-xs">
-        {t('sovereignMotto', 'Empowering 800M+ Citizens with Radical Dignity')}
+        {t('sovereignMotto', 'Sovereign Welfare Information Portal • Official Public Guide')}
       </div>
     </div>
   );

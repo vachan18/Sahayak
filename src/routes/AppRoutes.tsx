@@ -23,8 +23,8 @@ export const AppRoutes: React.FC = () => {
 
   return (
     <Routes>
-      {/* Standalone Entry Views */}
-      <Route path="/" element={hasCompletedOnboarding ? <Navigate to="/home" replace /> : <WelcomeScreen />} />
+      {/* Root redirect to Main Dashboard */}
+      <Route path="/" element={<Navigate to="/home" replace />} />
       <Route path="/welcome" element={<WelcomeScreen />} />
       <Route path="/language" element={<LanguageSelectionScreen />} />
       <Route path="/onboarding" element={<OnboardingScreen />} />

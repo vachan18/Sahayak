@@ -10,6 +10,7 @@ import { mockNotificationsData } from '../data/mockNotifications';
 import { getCurrentUser, onAuthStateChange, logoutUser as apiLogoutUser } from '../services/authService';
 import { saveSchemeToDb, removeSavedSchemeFromDb, fetchSavedSchemeCodes } from '../services/savedSchemesDbService';
 import { createApplicationInDb, fetchApplicationsFromDb } from '../services/applicationDbService';
+import { fetchHouseholdMembersFromDb, createHouseholdMemberInDb } from '../services/householdMembersDbService';
 
 interface AppState {
   // Authentication & Guest Mode
@@ -115,6 +116,11 @@ export const useAppStore = create<AppState>((set, get) => ({
             applications: [...dbApps, ...state.applications.filter(a => !dbApps.some(da => da.id === a.id))]
           }));
         }
+        // Sync household members from database
+        const { members: dbMembers } = await fetchHouseholdMembersFromDb(user.id);
+        if (dbMembers.length > 0) {
+          set({ profiles: dbMembers, activeProfileId: dbMembers[0].id });
+        }
       }
       // Listen for session changes
       onAuthStateChange(async (updatedUser: User | null) => {
@@ -198,10 +204,24 @@ export const useAppStore = create<AppState>((set, get) => ({
   ],
   activeProfileId: "prof-1",
   setActiveProfileId: (id) => set({ activeProfileId: id }),
-  addProfile: (newP) => set((state) => {
-    const id = `prof-${Date.now()}`;
-    return { profiles: [...state.profiles, { ...newP, id }], activeProfileId: id };
-  }),
+  addProfile: (newP) => {
+    const state = get();
+    const tempId = `prof-${Date.now()}`;
+    set((s) => ({
+      profiles: [...s.profiles, { ...newP, id: tempId }],
+      activeProfileId: tempId
+    }));
+    if (state.authUser?.id) {
+      createHouseholdMemberInDb(state.authUser.id, newP).then((res) => {
+        if (res.success && res.member) {
+          set((s) => ({
+            profiles: s.profiles.map(p => p.id === tempId ? res.member! : p),
+            activeProfileId: s.activeProfileId === tempId ? res.member!.id : s.activeProfileId
+          }));
+        }
+      }).catch(console.warn);
+    }
+  },
   updateProfile: (id, updates) => set((state) => ({
     profiles: state.profiles.map(p => p.id === id ? { ...p, ...updates } : p)
   })),

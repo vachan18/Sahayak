@@ -42,6 +42,15 @@ export const ApplicationTrackerDetailScreen: React.FC = () => {
         <AudioListenButton textToSpeak={app.audioStatusNarrationKey} label="Listen to Status (ಕೇಳಿ)" />
       </div>
 
+      {/* Citizen Self-Tracking Statutory Notice Banner */}
+      <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 flex items-start gap-2.5">
+        <AlertCircle className="w-4 h-4 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-amber-950 dark:text-amber-200 leading-relaxed">
+          <strong>Citizen Self-Tracking Disclosure: </strong>
+          Milestones shown reflect records generated during your application filing or CSC kiosk assistance. Official processing status is determined directly on the designated government department portal.
+        </p>
+      </div>
+
       {/* SLA Alert Box */}
       <div className={`p-4 rounded-2xl border ${
         app.isDelayed

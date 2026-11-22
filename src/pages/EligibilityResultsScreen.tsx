@@ -20,8 +20,13 @@ export const EligibilityResultsScreen: React.FC = () => {
     return assessEligibility(eligibilityAnswers);
   }, [eligibilityAnswers]);
 
+  const savedFingerprintRef = React.useRef<string | null>(null);
+
   useEffect(() => {
     if (authUser?.id && assessment.status !== 'not_assessed' && assessment.status !== 'in_progress') {
+      const fingerprint = `${authUser.id}-${JSON.stringify(eligibilityAnswers)}-${assessment.status}`;
+      if (savedFingerprintRef.current === fingerprint) return;
+      savedFingerprintRef.current = fingerprint;
       saveAssessmentToDb(authUser.id, eligibilityAnswers, assessment).catch(console.warn);
     }
   }, [authUser?.id, assessment.status, eligibilityAnswers, assessment]);

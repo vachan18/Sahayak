@@ -18,13 +18,14 @@ export interface SavedAssessmentRecord {
 
 /**
  * Persist an assessment session and its scheme outcomes to Supabase.
+ * Enforces deduplication via deterministic fingerprint and transaction rollback on partial failure.
  * In Guest Mode, gracefully returns local ID without network error.
  */
 export const saveAssessmentToBackend = async (
   userId: string | null | undefined,
   answers: AssessmentAnswers,
   result: EligibilityAssessmentResult
-): Promise<{ success: boolean; assessmentId?: string; error?: string; isGuest?: boolean }> => {
+): Promise<{ success: boolean; assessmentId?: string; error?: string; isGuest?: boolean; isDuplicate?: boolean }> => {
   if (!isSupabaseConfigured() || !userId) {
     // Guest Mode: Stored locally in Zustand/localStorage
     return {
@@ -35,30 +36,59 @@ export const saveAssessmentToBackend = async (
   }
 
   try {
-    // 1. Insert assessment record
+    // 1. Compute deterministic idempotency fingerprint to prevent duplicate assessment records
+    const sortedAnswersKey = Object.keys(answers || {})
+      .sort()
+      .map(k => `${k}:${(answers as any)[k]}`)
+      .join('|');
+    const idempotencyKey = `asm-${userId}-${sortedAnswersKey}`;
+
+    // Check if an assessment with this exact fingerprint already exists for this citizen
+    const { data: existingAssessment } = await supabase
+      .from('assessments')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('idempotency_key', idempotencyKey)
+      .maybeSingle();
+
+    if (existingAssessment) {
+      return {
+        success: true,
+        assessmentId: existingAssessment.id,
+        isDuplicate: true
+      };
+    }
+
+    // 2. Insert assessment parent record with idempotency key
     const { data: assessment, error: assessmentError } = await supabase
       .from('assessments')
       .insert({
         user_id: userId,
         assessment_data: answers as any,
+        idempotency_key: idempotencyKey,
         completed_at: new Date().toISOString()
       })
       .select('id')
       .single();
 
     if (assessmentError || !assessment) {
-      return { success: false, error: assessmentError?.message || "Failed to create assessment." };
+      return { success: false, error: assessmentError?.message || "Failed to create assessment record." };
     }
 
     const assessmentId = assessment.id;
 
-    // 2. Insert individual scheme outcome records
+    // 3. Prepare individual scheme outcome records
     const schemeResultsToInsert: any[] = [];
 
-    // First fetch schemes mapped by code to get their UUIDs
-    const { data: dbSchemes } = await supabase
+    const { data: dbSchemes, error: fetchSchemesError } = await supabase
       .from('schemes')
       .select('id, scheme_code');
+
+    if (fetchSchemesError) {
+      // Rollback parent assessment to prevent orphaned records
+      await supabase.from('assessments').delete().eq('id', assessmentId);
+      return { success: false, error: `Failed to resolve schemes: ${fetchSchemesError.message}. Assessment rolled back.` };
+    }
 
     const schemeIdMap = new Map<string, string>();
     if (dbSchemes) {
@@ -81,13 +111,19 @@ export const saveAssessmentToBackend = async (
       }
     }
 
+    // 4. Insert scheme results and detect failures
     if (schemeResultsToInsert.length > 0) {
       const { error: resultsError } = await supabase
         .from('assessment_results')
         .insert(schemeResultsToInsert);
 
       if (resultsError) {
-        console.warn("Could not batch insert assessment results:", resultsError.message);
+        // Rollback parent assessment on partial failure to avoid inconsistent state
+        await supabase.from('assessments').delete().eq('id', assessmentId);
+        return {
+          success: false,
+          error: `Failed to persist scheme evaluation details: ${resultsError.message}. Assessment record rolled back.`
+        };
       }
     }
 

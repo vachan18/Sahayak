@@ -100,6 +100,7 @@ export interface Database {
           id: string;
           user_id: string;
           assessment_data: Json;
+          idempotency_key: string | null;
           completed_at: string | null;
           created_at: string;
         };
@@ -107,6 +108,7 @@ export interface Database {
           id?: string;
           user_id: string;
           assessment_data: Json;
+          idempotency_key?: string | null;
           completed_at?: string | null;
           created_at?: string;
         };
@@ -114,6 +116,7 @@ export interface Database {
           id?: string;
           user_id?: string;
           assessment_data?: Json;
+          idempotency_key?: string | null;
           completed_at?: string | null;
           created_at?: string;
         };
@@ -252,6 +255,71 @@ export interface Database {
             columns: ["scheme_id"];
             isOneToOne: false;
             referencedRelation: "schemes";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      household_members: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          relation: string;
+          age: number;
+          gender: string;
+          occupation: string;
+          state: string;
+          district: string | null;
+          social_category: string | null;
+          landholding_acres: number;
+          annual_income: number;
+          is_aadhaar_linked_bank: boolean;
+          is_digilocker_linked: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          relation: string;
+          age?: number;
+          gender?: string;
+          occupation?: string;
+          state?: string;
+          district?: string | null;
+          social_category?: string | null;
+          landholding_acres?: number;
+          annual_income?: number;
+          is_aadhaar_linked_bank?: boolean;
+          is_digilocker_linked?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          relation?: string;
+          age?: number;
+          gender?: string;
+          occupation?: string;
+          state?: string;
+          district?: string | null;
+          social_category?: string | null;
+          landholding_acres?: number;
+          annual_income?: number;
+          is_aadhaar_linked_bank?: boolean;
+          is_digilocker_linked?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "household_members_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
             referencedColumns: ["id"];
           }
         ];

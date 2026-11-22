@@ -21,6 +21,15 @@ export const ApplicationTrackerScreen: React.FC = () => {
         </p>
       </div>
 
+      {/* Citizen Self-Tracking Statutory Notice Banner */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 flex items-start gap-3">
+        <AlertCircle className="w-5 h-5 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+        <div className="text-xs text-amber-950 dark:text-amber-200 leading-relaxed">
+          <strong>Citizen Self-Tracking Disclosure: </strong>
+          The progress records displayed here reflect application tokens generated during citizen self-filing or CSC kiosk assistance. Official government processing and final benefit disbursals are determined exclusively by the respective nodal ministry upon statutory verification.
+        </div>
+      </div>
+
       {/* Applications List */}
       {applications.length > 0 ? (
         <div className="space-y-4">

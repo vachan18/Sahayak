@@ -1,10 +1,18 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../types/database.types';
 
-const metaEnv = (import.meta as any).env || {};
-const supabaseUrl = metaEnv.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = metaEnv.VITE_SUPABASE_ANON_KEY || '';
-export const storageBucketName = metaEnv.VITE_SUPABASE_STORAGE_BUCKET || 'user-documents';
+const getEnvVar = (key: string): string => {
+  const meta = (import.meta as any)?.env?.[key];
+  if (meta) return meta;
+  if (typeof process !== 'undefined' && process.env?.[key]) {
+    return process.env[key] as string;
+  }
+  return '';
+};
+
+const supabaseUrl = getEnvVar('VITE_SUPABASE_URL');
+const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY');
+export const storageBucketName = getEnvVar('VITE_SUPABASE_STORAGE_BUCKET') || 'user-documents';
 
 /**
  * Validates whether Supabase credentials have been configured with real project values.

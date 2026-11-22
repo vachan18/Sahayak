@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Bot } from 'lucide-react';
 import { TopUtilityBar } from '../navigation/TopUtilityBar';
@@ -6,12 +6,23 @@ import { BottomNavBar } from '../navigation/BottomNavBar';
 import { LanguageModal } from '../navigation/LanguageModal';
 import { NotificationsModal } from '../navigation/NotificationsModal';
 import { AiAssistantDrawer } from '../feedback/AiAssistantDrawer';
+import { AuthModal } from '../auth/AuthModal';
 import { useAppStore } from '../../store/useAppStore';
 
 export const AppLayout: React.FC = () => {
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
-  const { setAiDrawerOpen } = useAppStore();
+  const { 
+    setAiDrawerOpen, 
+    isAuthModalOpen, 
+    authModalView, 
+    closeAuthModal,
+    initializeAuth 
+  } = useAppStore();
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
@@ -54,6 +65,12 @@ export const AppLayout: React.FC = () => {
       <NotificationsModal
         isOpen={isNotifModalOpen}
         onClose={() => setIsNotifModalOpen(false)}
+      />
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={closeAuthModal}
+        initialView={authModalView}
       />
 
       <AiAssistantDrawer />

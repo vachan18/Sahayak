@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { User } from '@supabase/supabase-js';
 import { 
   SupportedLanguage, UserProfile, ApplicationRecord, NotificationItem, 
   Scheme, EligibilityAssessmentStatus 
@@ -6,8 +7,21 @@ import {
 import { verifiedSchemes } from '../data/schemes';
 import { mockApplicationsData } from '../data/mockApplications';
 import { mockNotificationsData } from '../data/mockNotifications';
+import { getCurrentUser, onAuthStateChange, logoutUser as apiLogoutUser } from '../services/authService';
+import { saveSchemeToDb, removeSavedSchemeFromDb, fetchSavedSchemeCodes } from '../services/savedSchemesDbService';
+import { createApplicationInDb, fetchApplicationsFromDb } from '../services/applicationDbService';
 
 interface AppState {
+  // Authentication & Guest Mode
+  authUser: User | null;
+  isAuthModalOpen: boolean;
+  authModalView: 'login' | 'register' | 'forgot_password';
+  setAuthUser: (user: User | null) => void;
+  openAuthModal: (view?: 'login' | 'register' | 'forgot_password') => void;
+  closeAuthModal: () => void;
+  initializeAuth: () => Promise<void>;
+  logoutUser: () => Promise<void>;
+
   // Localization
   language: SupportedLanguage;
   dialect: string;
@@ -74,7 +88,55 @@ interface AppState {
   setDocumentStatus: (docId: string, status: 'verified' | 'uploaded' | 'pending' | 'rejected') => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => ({
+  // Authentication & Guest Mode
+  authUser: null,
+  isAuthModalOpen: false,
+  authModalView: 'login',
+  setAuthUser: (user) => set({ authUser: user }),
+  openAuthModal: (view = 'login') => set({ isAuthModalOpen: true, authModalView: view }),
+  closeAuthModal: () => set({ isAuthModalOpen: false }),
+  initializeAuth: async () => {
+    try {
+      const user = await getCurrentUser();
+      if (user) {
+        set({ authUser: user });
+        // Sync saved schemes from database
+        const { savedCodes } = await fetchSavedSchemeCodes(user.id);
+        if (savedCodes.length > 0) {
+          set((state) => ({
+            savedSchemeIds: Array.from(new Set([...state.savedSchemeIds, ...savedCodes]))
+          }));
+        }
+        // Sync applications from database
+        const { applications: dbApps } = await fetchApplicationsFromDb(user.id);
+        if (dbApps.length > 0) {
+          set((state) => ({
+            applications: [...dbApps, ...state.applications.filter(a => !dbApps.some(da => da.id === a.id))]
+          }));
+        }
+      }
+      // Listen for session changes
+      onAuthStateChange(async (updatedUser: User | null) => {
+        set({ authUser: updatedUser });
+        if (updatedUser) {
+          const { savedCodes } = await fetchSavedSchemeCodes(updatedUser.id);
+          if (savedCodes.length > 0) {
+            set((state) => ({
+              savedSchemeIds: Array.from(new Set([...state.savedSchemeIds, ...savedCodes]))
+            }));
+          }
+        }
+      });
+    } catch (err) {
+      console.warn("Auth initialization running in guest mode fallback:", err);
+    }
+  },
+  logoutUser: async () => {
+    await apiLogoutUser();
+    set({ authUser: null, isAuthModalOpen: false });
+  },
+
   // Defaults
   language: 'kn', // Defaults to Kannada for Bharat-first demonstration
   dialect: 'standard',
@@ -146,11 +208,23 @@ export const useAppStore = create<AppState>((set) => ({
 
   schemes: verifiedSchemes,
   savedSchemeIds: ["pm-kisan", "pm-jay"],
-  toggleSaveScheme: (schemeId) => set((state) => ({
-    savedSchemeIds: state.savedSchemeIds.includes(schemeId)
-      ? state.savedSchemeIds.filter(id => id !== schemeId)
-      : [...state.savedSchemeIds, schemeId]
-  })),
+  toggleSaveScheme: (schemeId) => {
+    const state = get();
+    const isCurrentlySaved = state.savedSchemeIds.includes(schemeId);
+    set({
+      savedSchemeIds: isCurrentlySaved
+        ? state.savedSchemeIds.filter(id => id !== schemeId)
+        : [...state.savedSchemeIds, schemeId]
+    });
+    // Cloud sync when authenticated
+    if (state.authUser?.id) {
+      if (isCurrentlySaved) {
+        removeSavedSchemeFromDb(state.authUser.id, schemeId).catch(console.warn);
+      } else {
+        saveSchemeToDb(state.authUser.id, schemeId).catch(console.warn);
+      }
+    }
+  },
 
   compareSchemeIds: [],
   toggleCompareScheme: (schemeId) => set((state) => {
@@ -178,9 +252,20 @@ export const useAppStore = create<AppState>((set) => ({
   }),
 
   applications: mockApplicationsData,
-  addApplication: (newApp) => set((state) => ({
-    applications: [newApp, ...state.applications]
-  })),
+  addApplication: (newApp) => {
+    set((state) => ({
+      applications: [newApp, ...state.applications]
+    }));
+    const state = get();
+    if (state.authUser?.id) {
+      createApplicationInDb(state.authUser.id, {
+        scheme_id: newApp.schemeId,
+        status: newApp.statusBadge || 'submitted',
+        application_reference: newApp.tokenNumber,
+        notes: `Application filed via SAHAYAK portal on ${newApp.submittedAt}`
+      }).catch(console.warn);
+    }
+  },
 
   notifications: mockNotificationsData,
   markNotificationAsRead: (id) => set((state) => ({

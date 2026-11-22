@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Sparkles, CheckCircle, AlertCircle, ArrowRight, RotateCcw, 
@@ -7,17 +7,24 @@ import {
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
 import { assessEligibility } from '../services/eligibilityEngine';
+import { saveAssessmentToDb } from '../services/assessmentDbService';
 import { SchemeCard } from '../components/schemes/SchemeCard';
 import { AudioListenButton } from '../components/feedback/AudioListenButton';
 
 export const EligibilityResultsScreen: React.FC = () => {
   const navigate = useNavigate();
   const { t, language } = useTranslation();
-  const { eligibilityAnswers, resetEligibilityAnswers } = useAppStore();
+  const { eligibilityAnswers, resetEligibilityAnswers, authUser } = useAppStore();
 
   const assessment = useMemo(() => {
     return assessEligibility(eligibilityAnswers);
   }, [eligibilityAnswers]);
+
+  useEffect(() => {
+    if (authUser?.id && assessment.status !== 'not_assessed' && assessment.status !== 'in_progress') {
+      saveAssessmentToDb(authUser.id, eligibilityAnswers, assessment).catch(console.warn);
+    }
+  }, [authUser?.id, assessment.status, eligibilityAnswers, assessment]);
 
   // Voice narration text based on assessment result
   const celebrationVoiceText = assessment.status === 'potentially_eligible'

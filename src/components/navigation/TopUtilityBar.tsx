@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Globe, Bell, Sun, Moon, Volume2, User, ChevronLeft } from 'lucide-react';
+import { Globe, Bell, Sun, Moon, Volume2, User, ChevronLeft, LogIn } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useTranslation } from '../../hooks/useTranslation';
 
@@ -21,7 +21,9 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
     toggleDarkMode, 
     isAudioAssistanceEnabled, 
     toggleAudioAssistance,
-    notifications 
+    notifications,
+    authUser,
+    openAuthModal
   } = useAppStore();
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -151,14 +153,43 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
             )}
           </button>
 
-          {/* User Profile */}
-          <Link
-            to="/profile"
-            className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:ring-2 hover:ring-amber-500 text-slate-700 dark:text-slate-200 transition-all ml-0.5"
-            aria-label="View user profile"
-          >
-            <User className="w-4 h-4 text-brand-navy-900 dark:text-sky-400" />
-          </Link>
+          {/* User Profile or Cloud Login Button */}
+          {authUser ? (
+            <Link
+              to="/profile"
+              className="flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1 rounded-full bg-slate-100 dark:bg-slate-800 hover:ring-2 hover:ring-amber-500 text-slate-700 dark:text-slate-200 transition-all ml-0.5"
+              aria-label="View user profile"
+              title={authUser.email || "Authenticated Citizen"}
+            >
+              <div className="w-5 h-5 rounded-full bg-brand-navy-900 text-white text-[10px] font-bold flex items-center justify-center">
+                {authUser.email?.charAt(0).toUpperCase() || 'U'}
+              </div>
+              <span className="hidden sm:inline text-xs font-semibold text-slate-700 dark:text-slate-300 max-w-[90px] truncate">
+                {authUser.user_metadata?.full_name || authUser.email?.split('@')[0]}
+              </span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" title="Cloud Synced" />
+            </Link>
+          ) : (
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => openAuthModal('login')}
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-brand-navy-900 dark:bg-sky-600 hover:bg-brand-navy-800 dark:hover:bg-sky-500 shadow-crisp-xs active:scale-95 transition-all"
+                aria-label="Sign in to your account"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>{language === 'kn' ? 'ಲಾಗಿನ್' : language === 'hi' ? 'लॉग इन' : 'Sign In'}</span>
+              </button>
+              <Link
+                to="/profile"
+                className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:ring-2 hover:ring-amber-500 text-slate-700 dark:text-slate-200 transition-all ml-0.5"
+                aria-label="View user profile"
+                title="Guest Mode Profile"
+              >
+                <User className="w-4 h-4 text-brand-navy-900 dark:text-sky-400" />
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </header>

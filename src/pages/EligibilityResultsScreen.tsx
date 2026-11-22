@@ -186,7 +186,7 @@ export const EligibilityResultsScreen: React.FC = () => {
               One-Time Grant / Scholarship
             </div>
             <div className="text-2xl sm:text-3xl font-black text-white tabular-nums mt-1">
-              ₹{(assessment.categorizedBenefits.oneTimeCashTotal + assessment.categorizedBenefits.subsidyTotal).toLocaleString('en-IN')}
+              ₹{(assessment.categorizedBenefits.oneTimeCashTotal + assessment.categorizedBenefits.subsidyTotal + (assessment.categorizedBenefits.scholarshipTotal || 0)).toLocaleString('en-IN')}
             </div>
             <div className="text-[11px] text-slate-300 mt-1">
               Maternity / student assistance upon event

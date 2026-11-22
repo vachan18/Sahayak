@@ -7,7 +7,7 @@ import {
 } from '../services/eligibilityEngine';
 import { verifiedSchemes } from '../data/schemes';
 
-describe('Eligibility Engine Phase 4.5 — Government Integrity & Rules Verification', () => {
+describe('Eligibility Engine Phase 4.6 — Hardened Rules & Primary Source Verification', () => {
 
   // ==========================================
   // SECTION A: MISSING INFORMATION HANDLING
@@ -24,7 +24,7 @@ describe('Eligibility Engine Phase 4.5 — Government Integrity & Rules Verifica
       expect(result.disclaimerKey).toBe('disclaimer_not_assessed');
     });
 
-    it('returns "in_progress" when questionnaire is incomplete (< 4 questions answered)', () => {
+    it('returns "in_progress" when questionnaire is incomplete (core demographic set missing)', () => {
       const answers: AssessmentAnswers = {
         occupation: 'farmer',
         age: 45
@@ -68,7 +68,7 @@ describe('Eligibility Engine Phase 4.5 — Government Integrity & Rules Verifica
   });
 
   // ==========================================
-  // SECTION B: 5 ELIGIBILITY RESULT STATES
+  // SECTION B: 5 ELIGIBILITY OUTCOME STATES
   // ==========================================
   describe('B. 5 Eligibility Outcome States', () => {
     it('State 1: "not_assessed" when empty', () => {
@@ -134,17 +134,17 @@ describe('Eligibility Engine Phase 4.5 — Government Integrity & Rules Verifica
   // ==========================================
   describe('C. Scheme-Specific Rules', () => {
 
-    describe('PM-KISAN', () => {
+    describe('PM-KISAN (Pradhan Mantri Kisan Samman Nidhi)', () => {
       const pmKisan = verifiedSchemes.find(s => s.id === 'pm-kisan')!;
 
       it('does NOT arbitrarily exclude farmers with > 5 acres (revised 31.05.2019 Cabinet guidelines)', () => {
         const outcome = evaluateSchemeEligibility(pmKisan, {
           occupation: 'farmer',
           landholdingAcres: 12.0, // 12 acres large landholder
+          annualIncome: 200000,
           isGovtEmployee: false
         });
 
-        // Must be potentially eligible — no 5-acre ceiling exists in official revised scheme guidelines!
         expect(outcome.status).toBe('potentially_eligible');
         expect(outcome.disqualifyingExclusions).toHaveLength(0);
       });
@@ -160,7 +160,7 @@ describe('Eligibility Engine Phase 4.5 — Government Integrity & Rules Verifica
         expect(outcome.explanation).toContain('registered land title');
       });
 
-      it('enforces statutory government employee exclusion', () => {
+      it('enforces statutory regular government employee exclusion', () => {
         const outcome = evaluateSchemeEligibility(pmKisan, {
           occupation: 'farmer',
           landholdingAcres: 2.0,
@@ -169,6 +169,56 @@ describe('Eligibility Engine Phase 4.5 — Government Integrity & Rules Verifica
 
         expect(outcome.status).toBe('not_established');
         expect(outcome.explanation).toContain('Statutory Exclusion');
+      });
+
+      it('exempts Group D / MTS employees from government exclusion under Clause 2(b)(iii)', () => {
+        const outcome = evaluateSchemeEligibility(pmKisan, {
+          occupation: 'farmer',
+          landholdingAcres: 2.5,
+          annualIncome: 220000,
+          isGovtEmployee: true,
+          govtEmploymentType: 'group_d_mts'
+        });
+
+        expect(outcome.status).toBe('potentially_eligible');
+        expect(outcome.satisfiedCriteria.some(c => c.includes('Group D'))).toBe(true);
+      });
+
+      it('excludes pensioners with monthly pension >= ₹10,000 under Clause 2(b)(iv)', () => {
+        const outcome = evaluateSchemeEligibility(pmKisan, {
+          occupation: 'farmer',
+          landholdingAcres: 3.0,
+          annualIncome: 250000,
+          isGovtEmployee: true,
+          govtEmploymentType: 'pensioner_above_10k'
+        });
+
+        expect(outcome.status).toBe('not_established');
+        expect(outcome.disqualifyingExclusions.some(e => e.includes('₹10,000'))).toBe(true);
+      });
+
+      it('exempts pensioners with monthly pension < ₹10,000', () => {
+        const outcome = evaluateSchemeEligibility(pmKisan, {
+          occupation: 'farmer',
+          landholdingAcres: 3.0,
+          annualIncome: 180000,
+          isGovtEmployee: true,
+          govtEmploymentType: 'pensioner_below_10k'
+        });
+
+        expect(outcome.status).toBe('potentially_eligible');
+      });
+
+      it('excludes income-tax payees under Clause 2(b)(iv)', () => {
+        const outcome = evaluateSchemeEligibility(pmKisan, {
+          occupation: 'farmer',
+          landholdingAcres: 2.0,
+          isIncomeTaxPayee: true,
+          isGovtEmployee: false
+        });
+
+        expect(outcome.status).toBe('not_established');
+        expect(outcome.explanation).toContain('Clause 2(b)(iv)');
       });
     });
 
@@ -191,21 +241,47 @@ describe('Eligibility Engine Phase 4.5 — Government Integrity & Rules Verifica
           age: 45,
           annualIncome: 120000,
           isGovtEmployee: false
-          // hasBplOrRationCard is undefined!
         });
 
         expect(outcome.status).toBe('additional_verification_required');
         expect(outcome.missingCriteria.some(c => c.includes('SECC 2011'))).toBe(true);
       });
 
-      it('excludes families with income exceeding PM-JAY threshold', () => {
+      it('does NOT auto-disqualify families with income > 2.5L; flags additional_verification_required if SECC unconfirmed', () => {
         const outcome = evaluateSchemeEligibility(pmJay, {
           age: 45,
           annualIncome: 650000,
           isGovtEmployee: false
         });
 
+        expect(outcome.status).toBe('additional_verification_required');
+        expect(outcome.missingCriteria.some(c => c.includes('SECC 2011'))).toBe(true);
+      });
+
+      it('excludes under-70 applicants when confirmed non-SECC and non-BPL', () => {
+        const outcome = evaluateSchemeEligibility(pmJay, {
+          age: 45,
+          annualIncome: 350000,
+          hasBplOrRationCard: false,
+          isSeccDeprivedHousehold: false,
+          isGovtEmployee: false
+        });
+
         expect(outcome.status).toBe('not_established');
+        expect(outcome.disqualifyingExclusions.some(e => e.includes('SECC 2011'))).toBe(true);
+      });
+
+      it('excludes regular government employees covered under CGHS/ECHS', () => {
+        const outcome = evaluateSchemeEligibility(pmJay, {
+          age: 40,
+          annualIncome: 450000,
+          hasBplOrRationCard: true,
+          isGovtEmployee: true,
+          govtEmploymentType: 'central_state_regular'
+        });
+
+        expect(outcome.status).toBe('not_established');
+        expect(outcome.disqualifyingExclusions.some(e => e.includes('CGHS/ECHS'))).toBe(true);
       });
     });
 
@@ -235,15 +311,232 @@ describe('Eligibility Engine Phase 4.5 — Government Integrity & Rules Verifica
         expect(outcome.explanation).toContain('19 years of age');
       });
 
-      it('qualifies eligible expectant mother when all conditions are affirmatively satisfied', () => {
+      it('qualifies eligible expectant mother for 1st child (₹5,000) when all conditions are affirmatively satisfied', () => {
         const outcome = evaluateSchemeEligibility(pmmvy, {
           gender: 'female',
           age: 24,
           isPregnantOrLactating: true,
+          maternityParity: 'first_child',
+          hasMcpCard: true,
           isGovtEmployee: false
         });
 
         expect(outcome.status).toBe('potentially_eligible');
+        expect(outcome.satisfiedCriteria.some(c => c.includes('First living child'))).toBe(true);
+      });
+
+      it('qualifies eligible mother for 2nd girl child (₹6,000) under Mission Shakti guidelines', () => {
+        const outcome = evaluateSchemeEligibility(pmmvy, {
+          gender: 'female',
+          age: 26,
+          isPregnantOrLactating: true,
+          maternityParity: 'second_child',
+          childGender: 'female',
+          hasMcpCard: true,
+          isGovtEmployee: false
+        });
+
+        expect(outcome.status).toBe('potentially_eligible');
+        expect(outcome.satisfiedCriteria.some(c => c.includes('Second girl child'))).toBe(true);
+      });
+
+      it('excludes 2nd boy child with statutory reasoning countering female foeticide', () => {
+        const outcome = evaluateSchemeEligibility(pmmvy, {
+          gender: 'female',
+          age: 26,
+          isPregnantOrLactating: true,
+          maternityParity: 'second_child',
+          childGender: 'male',
+          hasMcpCard: true,
+          isGovtEmployee: false
+        });
+
+        expect(outcome.status).toBe('not_established');
+        expect(outcome.disqualifyingExclusions.some(e => e.includes('second child is a girl'))).toBe(true);
+      });
+
+      it('excludes 3rd or subsequent children under statutory cap', () => {
+        const outcome = evaluateSchemeEligibility(pmmvy, {
+          gender: 'female',
+          age: 30,
+          isPregnantOrLactating: true,
+          maternityParity: 'third_or_more',
+          hasMcpCard: true,
+          isGovtEmployee: false
+        });
+
+        expect(outcome.status).toBe('not_established');
+        expect(outcome.explanation).toContain('first two children');
+      });
+    });
+
+    describe('PM SVANidhi (Micro-Credit for Street Vendors)', () => {
+      const svanidhi = verifiedSchemes.find(s => s.id === 'pm-svanidhi')!;
+
+      it('qualifies verified street vendor with Certificate of Vending (CoV)', () => {
+        const outcome = evaluateSchemeEligibility(svanidhi, {
+          occupation: 'street_vendor',
+          age: 32,
+          hasStreetVendorCertificate: true
+        });
+
+        expect(outcome.status).toBe('potentially_eligible');
+        expect(outcome.satisfiedCriteria.some(c => c.includes('urban street vending'))).toBe(true);
+      });
+
+      it('excludes artisans and directs to PM Vishwakarma', () => {
+        const outcome = evaluateSchemeEligibility(svanidhi, {
+          occupation: 'artisan',
+          age: 35,
+          hasStreetVendorCertificate: false
+        });
+
+        expect(outcome.status).toBe('not_established');
+        expect(outcome.explanation).toContain('PM Vishwakarma');
+      });
+
+      it('flags additional_verification_required when CoV / LoR status is unconfirmed', () => {
+        const outcome = evaluateSchemeEligibility(svanidhi, {
+          occupation: 'street_vendor',
+          age: 28
+        });
+
+        expect(outcome.status).toBe('additional_verification_required');
+        expect(outcome.missingCriteria.some(c => c.includes('Certificate of Vending'))).toBe(true);
+      });
+    });
+
+    describe('Kisan Credit Card (KCC)', () => {
+      const kcc = verifiedSchemes.find(s => s.id === 'pm-kcc')!;
+
+      it('qualifies owner cultivators with agricultural land', () => {
+        const outcome = evaluateSchemeEligibility(kcc, {
+          occupation: 'farmer',
+          landholdingAcres: 4.5,
+          farmerTenureType: 'owner_cultivator'
+        });
+
+        expect(outcome.status).toBe('potentially_eligible');
+        expect(outcome.satisfiedCriteria.some(c => c.includes('owner cultivator'))).toBe(true);
+      });
+
+      it('qualifies tenant farmers without requiring land ownership title', () => {
+        const outcome = evaluateSchemeEligibility(kcc, {
+          occupation: 'farmer',
+          landholdingAcres: 0,
+          farmerTenureType: 'tenant_farmer'
+        });
+
+        expect(outcome.status).toBe('potentially_eligible');
+        expect(outcome.satisfiedCriteria.some(c => c.includes('tenant farmer'))).toBe(true);
+      });
+
+      it('qualifies sharecroppers under RBI KCC Master Direction', () => {
+        const outcome = evaluateSchemeEligibility(kcc, {
+          occupation: 'farmer',
+          landholdingAcres: 0,
+          farmerTenureType: 'sharecropper'
+        });
+
+        expect(outcome.status).toBe('potentially_eligible');
+      });
+
+      it('qualifies animal husbandry / dairy farmers for working capital up to ₹2 Lakh', () => {
+        const outcome = evaluateSchemeEligibility(kcc, {
+          occupation: 'farmer',
+          landholdingAcres: 0,
+          farmerTenureType: 'animal_husbandry_dairy'
+        });
+
+        expect(outcome.status).toBe('potentially_eligible');
+        expect(outcome.satisfiedCriteria.some(c => c.includes('Allied Activity Pathway'))).toBe(true);
+      });
+
+      it('qualifies fisheries applicants without cultivable land ownership', () => {
+        const outcome = evaluateSchemeEligibility(kcc, {
+          occupation: 'farmer',
+          landholdingAcres: 0,
+          farmerTenureType: 'fisheries'
+        });
+
+        expect(outcome.status).toBe('potentially_eligible');
+      });
+
+      it('flags additional_verification_required when tenure type is unconfirmed', () => {
+        const outcome = evaluateSchemeEligibility(kcc, {
+          occupation: 'farmer',
+          landholdingAcres: 0
+        });
+
+        expect(outcome.status).toBe('additional_verification_required');
+      });
+    });
+
+    describe('Post-Matric Scholarships Separation (SC/ST/OBC vs Minority)', () => {
+      const pms = verifiedSchemes.find(s => s.id === 'post-matric-scholarship')!;
+      const pmsMin = verifiedSchemes.find(s => s.id === 'post-matric-scholarship-minority')!;
+
+      it('qualifies SC student with family income ₹2.20 Lakh under MoSJE scheme (ceiling ₹2.5L)', () => {
+        const outcome = evaluateSchemeEligibility(pms, {
+          socialCategory: 'sc',
+          annualIncome: 220000,
+          isEnrolledStudent: true
+        });
+
+        expect(outcome.status).toBe('potentially_eligible');
+        expect(outcome.disqualifyingExclusions).toHaveLength(0);
+      });
+
+      it('excludes minority student with family income ₹2.20 Lakh because Minority ceiling is ₹2.0L', () => {
+        const outcome = evaluateSchemeEligibility(pmsMin, {
+          socialCategory: 'minority',
+          annualIncome: 220000,
+          isEnrolledStudent: true,
+          qualifyingExamMarksPercent: 65
+        });
+
+        expect(outcome.status).toBe('not_established');
+        expect(outcome.explanation).toContain('₹2.00 Lakh');
+      });
+
+      it('qualifies minority student with income ₹1.80 Lakh and 55% marks', () => {
+        const outcome = evaluateSchemeEligibility(pmsMin, {
+          socialCategory: 'minority',
+          annualIncome: 180000,
+          isEnrolledStudent: true,
+          qualifyingExamMarksPercent: 55
+        });
+
+        expect(outcome.status).toBe('potentially_eligible');
+      });
+
+      it('excludes minority student with 45% marks (< 50% statutory threshold)', () => {
+        const outcome = evaluateSchemeEligibility(pmsMin, {
+          socialCategory: 'minority',
+          annualIncome: 180000,
+          isEnrolledStudent: true,
+          qualifyingExamMarksPercent: 45
+        });
+
+        expect(outcome.status).toBe('not_established');
+        expect(outcome.explanation).toContain('50% marks');
+      });
+
+      it('excludes General category non-minority from affirmative scholarship schemes', () => {
+        const scOutcome = evaluateSchemeEligibility(pms, {
+          socialCategory: 'general',
+          annualIncome: 150000,
+          isEnrolledStudent: true
+        });
+        expect(scOutcome.status).toBe('not_established');
+
+        const minOutcome = evaluateSchemeEligibility(pmsMin, {
+          socialCategory: 'general',
+          annualIncome: 150000,
+          isEnrolledStudent: true,
+          qualifyingExamMarksPercent: 75
+        });
+        expect(minOutcome.status).toBe('not_established');
       });
     });
   });
@@ -278,6 +571,15 @@ describe('Eligibility Engine Phase 4.5 — Government Integrity & Rules Verifica
 
       expect(categorized.annualCashTransferTotal).toBe(0);
       expect(categorized.oneTimeCashTotal).toBe(5000);
+    });
+
+    it('isolates scholarships from generic subsidies', () => {
+      const pms = verifiedSchemes.find(s => s.id === 'post-matric-scholarship')!;
+      const categorized = calculateCategorizedBenefits([pms]);
+
+      expect(categorized.scholarshipTotal).toBe(14000);
+      expect(categorized.subsidyTotal).toBe(0);
+      expect(categorized.annualCashTransferTotal).toBe(0);
     });
   });
 

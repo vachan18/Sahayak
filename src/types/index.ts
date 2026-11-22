@@ -46,11 +46,24 @@ export interface SchemeProcessingTimeline {
   authorityCitation?: string;
 }
 
+export interface SchemeEligibilityRule {
+  ruleId: string;
+  ruleDescription: string;
+  issuingAuthority: string;
+  officialDocumentTitle: string;
+  exactSourceUrl: string;
+  applicableClauseOrSection?: string;
+  notificationDate?: string;
+  lastVerifiedDate: string;
+  verificationStatus: SchemeVerificationStatus;
+}
+
 export interface CategorizedBenefitSummary {
   annualCashTransferTotal: number;
   oneTimeCashTotal: number;
   healthInsuranceCoverTotal: number;
   loanCreditFacilityTotal: number;
+  scholarshipTotal: number;
   subsidyTotal: number;
   hasNonFinancialBenefits: boolean;
 }
@@ -118,6 +131,7 @@ export interface Scheme {
   keyBenefitsListKeys: string[];
   whoIsEligibleListKeys: string[];
   whoIsNotEligibleListKeys: string[];
+  rulesRegistry?: SchemeEligibilityRule[];
 }
 
 export interface SchemeEvaluationOutcome {

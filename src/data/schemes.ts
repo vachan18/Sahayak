@@ -96,7 +96,31 @@ export const verifiedSchemes: Scheme[] = [
     ],
     whoIsNotEligibleListKeys: [
       "Institutional landholders or tenant farmers without registered ownership title in state revenue records",
-      "Farmer families in which one or more members are: Constitutional post holders, Ministers/MPs/MLAs, serving/retired Govt/PSU employees, monthly pensioners of ₹10,000+, Income Tax payees, or registered professionals (Doctors, Engineers, Lawyers, CAs)"
+      "Farmer families in which one or more members are: Constitutional post holders, Ministers/MPs/MLAs, serving/retired Govt/PSU employees (excluding MTS/Group D), monthly pensioners of ₹10,000+, Income Tax payees, or registered professionals (Doctors, Engineers, Lawyers, CAs)"
+    ],
+    rulesRegistry: [
+      {
+        ruleId: "PMK-R01",
+        ruleDescription: "Universal landholder coverage: All farmer families owning cultivable land in state revenue records are eligible regardless of landholding size.",
+        issuingAuthority: "Ministry of Agriculture & Farmers Welfare, GoI",
+        officialDocumentTitle: "Operational Guidelines for Pradhan Mantri Kisan Samman Nidhi",
+        exactSourceUrl: "https://pmkisan.gov.in/Documents/OperationalGuidelines.pdf",
+        applicableClauseOrSection: "Clause 2 (Definition of Beneficiary)",
+        notificationDate: "2019-05-31",
+        lastVerifiedDate: "November 2026",
+        verificationStatus: "VERIFIED"
+      },
+      {
+        ruleId: "PMK-R02",
+        ruleDescription: "Statutory Exclusion: Institutional landholders, serving/retired govt/PSU employees (excluding MTS/Group D), pensioners ≥ ₹10,000/mo, income tax payees, and professionals are excluded.",
+        issuingAuthority: "Ministry of Agriculture & Farmers Welfare, GoI",
+        officialDocumentTitle: "Operational Guidelines for Pradhan Mantri Kisan Samman Nidhi",
+        exactSourceUrl: "https://pmkisan.gov.in/Documents/OperationalGuidelines.pdf",
+        applicableClauseOrSection: "Clause 2(b) (Exclusion Categories)",
+        notificationDate: "2019-05-31",
+        lastVerifiedDate: "November 2026",
+        verificationStatus: "VERIFIED"
+      }
     ]
   },
   {
@@ -136,7 +160,7 @@ export const verifiedSchemes: Scheme[] = [
       timelineType: "administrative_estimate",
       authorityCitation: "NHA e-Card approval protocol"
     },
-    sourceAttribution: "National Health Authority (NHA) Operational Guidelines • pmjay.gov.in",
+    sourceAttribution: "National Health Authority (NHA) Operational Guidelines & Ayushman Vay Vandana Notification • pmjay.gov.in",
     lastVerifiedDate: "November 2026",
     processingSlaDays: 7,
     handlingAuthorityKey: "District Health Society / Ayushman Mitra",
@@ -165,7 +189,6 @@ export const verifiedSchemes: Scheme[] = [
       }
     ],
     eligibilityCriteria: {
-      maxAnnualIncome: 250000,
       socialCategories: ["all"],
       requiresSeccOrBplRationCard: true
     },
@@ -179,16 +202,40 @@ export const verifiedSchemes: Scheme[] = [
       "All senior citizens aged 70+ under the expanded Ayushman Vay Vandana card irrespective of household income"
     ],
     whoIsNotEligibleListKeys: [
-      "Government employees entitled to CGHS/ECHS/State statutory medical schemes",
-      "Households with active corporate or formal group health coverage exceeding statutory norms"
+      "Serving government employees with comprehensive medical coverage under CGHS/ECHS/State attendance rules",
+      "Households not enrolled in SECC 2011 deprivation list or active state food security ration database"
+    ],
+    rulesRegistry: [
+      {
+        ruleId: "PMJ-R01",
+        ruleDescription: "SECC 2011 & NFSA Beneficiary Identification: Target families identified based on SECC 2011 deprivation criteria (D1-D7 rural, 11 occupational categories urban) or active state NFSA BPL cards.",
+        issuingAuthority: "National Health Authority, MoHFW",
+        officialDocumentTitle: "PM-JAY Guidelines on Beneficiary Identification",
+        exactSourceUrl: "https://pmjay.gov.in/sites/default/files/2020-01/Operational-Guidelines-for-PMJAY.pdf",
+        applicableClauseOrSection: "Section 3.1",
+        notificationDate: "2018-09-23",
+        lastVerifiedDate: "November 2026",
+        verificationStatus: "VERIFIED"
+      },
+      {
+        ruleId: "PMJ-R02",
+        ruleDescription: "Ayushman Vay Vandana: All senior citizens aged 70 and above are eligible for ₹5 Lakh hospitalization coverage regardless of household income.",
+        issuingAuthority: "Ministry of Health & Family Welfare, GoI",
+        officialDocumentTitle: "Ayushman Bharat PM-JAY Senior Citizens (70+) Gazette Notification S.O. 4668(E)",
+        exactSourceUrl: "https://pmjay.gov.in",
+        applicableClauseOrSection: "Gazette Notification S.O. 4668(E)",
+        notificationDate: "2024-10-28",
+        lastVerifiedDate: "November 2026",
+        verificationStatus: "VERIFIED"
+      }
     ]
   },
   {
     id: "pmmvy",
     slug: "pradhan-mantri-matru-vandana",
     titleKey: "PMMVY (Pradhan Mantri Matru Vandana Yojana)",
-    shortDescKey: "Direct maternity cash assistance of ₹5,000 in two installments for pregnant women to compensate wage loss and support nutrition.",
-    fullDescKey: "PMMVY is a centrally sponsored conditional cash transfer scheme under Mission Shakti for pregnant women and lactating mothers for the first living child (₹5,000 in two installments) and ₹6,000 in a single installment for a second girl child to promote institutional health and counter female foeticide.",
+    shortDescKey: "Direct maternity cash assistance of ₹5,000 for 1st child and ₹6,000 for 2nd girl child to support maternal nutrition and institutional health.",
+    fullDescKey: "PMMVY is a centrally sponsored conditional cash transfer scheme under Mission Shakti for pregnant women and lactating mothers: ₹5,000 in two installments for the first living child, and ₹6,000 in a single installment for a second girl child to counter female foeticide and promote institutional health.",
     lifeEventId: "women_child",
     ministryKey: "Ministry of Women & Child Development",
     benefitType: "dbt_cash",
@@ -197,7 +244,7 @@ export const verifiedSchemes: Scheme[] = [
     financialBenefit: {
       amount: 5000,
       frequencyKey: "oneTime",
-      formattedDisplay: "₹5,000 (ಒಮ್ಮೆ ಮಾತ್ರ / One-time maternity grant)"
+      formattedDisplay: "₹5,000 (1st child) / ₹6,000 (2nd girl child)"
     },
     statutoryFee: {
       amount: 0,
@@ -261,17 +308,41 @@ export const verifiedSchemes: Scheme[] = [
       requiresMaternityStatus: true
     },
     keyBenefitsListKeys: [
-      "Installment 1: ₹3,000 on early registration of pregnancy and at least 1 Antenatal Check-up (ANC) within 6 months of LMP",
-      "Installment 2: ₹2,000 on registration of child birth and first cycle of immunization (BCG, OPV, DPT)",
-      "Special ₹6,000 assistance if second child born is a girl to counter female foeticide"
+      "1st Child: ₹3,000 upon early registration + 1 Antenatal Check-up (ANC); ₹2,000 upon birth registration + vaccination cycle",
+      "2nd Child: ₹6,000 in single installment exclusively if the second child is a girl",
+      "Direct DBT credit via PFMS to mother's individual Aadhaar-seeded bank account"
     ],
     whoIsEligibleListKeys: [
-      "Pregnant women and lactating mothers (PW&LM) who are not in regular service with Central/State Govt or PSUs",
-      "Women holding e-Shram card, BPL ration card, or having annual family income below ₹8 Lakh"
+      "Pregnant women and lactating mothers aged 19+ who are not in regular service with Central/State Govt or PSUs",
+      "Women registered with active Mother and Child Protection (MCP) card at Anganwadi/PHC"
     ],
     whoIsNotEligibleListKeys: [
-      "Regular salaried government employees or those receiving paid maternity leave under the Maternity Benefit Act or service rules",
-      "Male applicants or individuals who are not expectant/lactating mothers"
+      "Regular salaried government employees or PSU staff receiving paid statutory maternity leave",
+      "Male applicants or families with parity beyond the second child"
+    ],
+    rulesRegistry: [
+      {
+        ruleId: "PMM-R01",
+        ruleDescription: "First Child & Second Girl Child Benefit: ₹5,000 in two installments for the first child; ₹6,000 in single installment for the second child only if female.",
+        issuingAuthority: "Ministry of Women & Child Development, GoI",
+        officialDocumentTitle: "Mission Shakti Operational Guidelines - Samarthya Sub-scheme (PMMVY)",
+        exactSourceUrl: "https://pmmvy.wcd.gov.in",
+        applicableClauseOrSection: "Section 3.1 (Beneficiary Entitlements)",
+        notificationDate: "2022-07-14",
+        lastVerifiedDate: "November 2026",
+        verificationStatus: "VERIFIED"
+      },
+      {
+        ruleId: "PMM-R02",
+        ruleDescription: "Statutory Exclusion: Women in regular service with Central/State Govt or PSUs receiving statutory maternity leave are excluded.",
+        issuingAuthority: "Ministry of Women & Child Development, GoI",
+        officialDocumentTitle: "Mission Shakti Operational Guidelines - Samarthya Sub-scheme (PMMVY)",
+        exactSourceUrl: "https://pmmvy.wcd.gov.in",
+        applicableClauseOrSection: "Section 3.2 (Exclusions)",
+        notificationDate: "2022-07-14",
+        lastVerifiedDate: "November 2026",
+        verificationStatus: "VERIFIED"
+      }
     ]
   },
   {
@@ -350,7 +421,7 @@ export const verifiedSchemes: Scheme[] = [
       }
     ],
     eligibilityCriteria: {
-      occupations: ["street_vendor", "artisan", "self_employed"],
+      occupations: ["street_vendor"],
       minAge: 18,
       requiresStreetVendorCertificate: true
     },
@@ -365,15 +436,28 @@ export const verifiedSchemes: Scheme[] = [
     ],
     whoIsNotEligibleListKeys: [
       "Fixed store shopkeepers with permanent commercial property registration",
-      "Individuals without verified street vending certification or municipality endorsement"
+      "Artisans and craftspersons not engaged in street vending (covered under PM Vishwakarma)"
+    ],
+    rulesRegistry: [
+      {
+        ruleId: "PMS-R01",
+        ruleDescription: "Street Vendor Eligibility: Strictly restricted to urban vendors possessing Certificate of Vending (CoV) or Letter of Recommendation (LoR) issued by Town Vending Committee / Urban Local Body.",
+        issuingAuthority: "Ministry of Housing & Urban Affairs, GoI",
+        officialDocumentTitle: "Scheme Guidelines for PM Street Vendor’s AtmaNirbhar Nidhi",
+        exactSourceUrl: "https://pmsvanidhi.mohua.gov.in",
+        applicableClauseOrSection: "Section 2.1",
+        notificationDate: "2020-06-01",
+        lastVerifiedDate: "November 2026",
+        verificationStatus: "VERIFIED"
+      }
     ]
   },
   {
     id: "post-matric-scholarship",
     slug: "post-matric-scholarship-sc-obc",
-    titleKey: "Post-Matric Scholarship for SC/OBC/Minority Students",
-    shortDescKey: "Compulsory non-refundable fee reimbursement plus monthly maintenance allowance for students pursuing higher education.",
-    fullDescKey: "Centrally sponsored scholarship scheme to significantly boost Gross Enrolment Ratio (GER) of students from SC, OBC, and economically backward classes in higher secondary, college, and university courses.",
+    titleKey: "Post-Matric Scholarship for SC/ST/OBC Students",
+    shortDescKey: "Compulsory non-refundable fee reimbursement plus monthly maintenance allowance for SC/ST/OBC students in higher education.",
+    fullDescKey: "Centrally sponsored scholarship scheme to boost higher education participation among students from SC, ST, and OBC communities with annual family income up to ₹2.50 Lakh.",
     lifeEventId: "education_youth",
     ministryKey: "Ministry of Social Justice & Empowerment",
     benefitType: "scholarship",
@@ -382,7 +466,7 @@ export const verifiedSchemes: Scheme[] = [
     financialBenefit: {
       amount: 14000,
       frequencyKey: "perYear",
-      formattedDisplay: "₹14,000+ / ವರ್ಷಕ್ಕೆ (Tuition + Allowance)"
+      formattedDisplay: "₹14,000+ / ವರ್ಷಕ್ಕೆ (Tuition + Maintenance)"
     },
     statutoryFee: {
       amount: 0,
@@ -441,7 +525,7 @@ export const verifiedSchemes: Scheme[] = [
     ],
     eligibilityCriteria: {
       maxAnnualIncome: 250000,
-      socialCategories: ["sc", "st", "obc", "minority"],
+      socialCategories: ["sc", "st", "obc"],
       minAge: 15,
       maxAge: 35,
       requiresStudentEnrollment: true
@@ -458,6 +542,126 @@ export const verifiedSchemes: Scheme[] = [
     whoIsNotEligibleListKeys: [
       "Students already receiving any other central/state scholarship for the same degree",
       "Students pursuing studies through unapproved private correspondence institutes"
+    ],
+    rulesRegistry: [
+      {
+        ruleId: "PMS-SC01",
+        ruleDescription: "SC/ST/OBC Scholarship Criteria: Indian national, enrolled in recognized post-matric course, family annual income ≤ ₹2.50 Lakh.",
+        issuingAuthority: "Ministry of Social Justice & Empowerment, GoI",
+        officialDocumentTitle: "Guidelines for Centrally Sponsored Scheme of Post-Matric Scholarships for SC/OBC Students",
+        exactSourceUrl: "https://socialjustice.gov.in",
+        applicableClauseOrSection: "Clause 4 (Eligibility)",
+        notificationDate: "2020-12-30",
+        lastVerifiedDate: "November 2026",
+        verificationStatus: "VERIFIED"
+      }
+    ]
+  },
+  {
+    id: "post-matric-scholarship-minority",
+    slug: "post-matric-scholarship-minorities",
+    titleKey: "Post-Matric Scholarship for Minority Communities",
+    shortDescKey: "Tuition fee reimbursement and maintenance allowance for minority community students with family income ≤ ₹2.00 Lakh.",
+    fullDescKey: "Centrally sponsored scheme administered by Ministry of Minority Affairs for students from notified minority communities (Muslims, Christians, Sikhs, Buddhists, Jains, Parsis) pursuing Class 11 to Ph.D. in recognized institutions with at least 50% marks in the previous exam.",
+    lifeEventId: "education_youth",
+    ministryKey: "Ministry of Minority Affairs",
+    benefitType: "scholarship",
+    benefitCategory: "scholarship",
+    verificationStatus: "VERIFIED",
+    financialBenefit: {
+      amount: 10000,
+      frequencyKey: "perYear",
+      formattedDisplay: "₹10,000 / ವರ್ಷಕ್ಕೆ (Tuition + Maintenance)"
+    },
+    statutoryFee: {
+      amount: 0,
+      isFree: true,
+      statutoryRuleCitation: "Statutory Free Application on National Scholarship Portal (NSP)",
+      cscAuthorizedCharge: "National Scholarship Portal charges ₹0 official fee"
+    },
+    feeStructure: {
+      governmentFee: 0,
+      isStatutoryFree: true,
+      statutoryRuleCitation: "Ministry of Minority Affairs Guidelines"
+    },
+    processingTimeline: {
+      slaDays: 30,
+      isStatutoryGuarantee: false,
+      timelineType: "administrative_estimate",
+      authorityCitation: "NSP verification window"
+    },
+    sourceAttribution: "Ministry of Minority Affairs Operational Guidelines • minorityaffairs.gov.in",
+    lastVerifiedDate: "November 2026",
+    processingSlaDays: 30,
+    handlingAuthorityKey: "State Directorate of Minorities Welfare",
+    helplinePhone: "1800-11-2001",
+    officialPortalUrl: "https://scholarships.gov.in",
+    documents: [
+      {
+        id: "minority_cert",
+        nameKey: "Self-Declaration / Minority Community Certificate",
+        descriptionKey: "Affidavit or community certificate for notified minority.",
+        isMandatory: true,
+        acceptableFormats: ["PDF", "JPEG"],
+        maxSizeMb: 3,
+        digiLockerSupported: true,
+        status: "verified"
+      },
+      {
+        id: "income_cert",
+        nameKey: "Income Certificate (Current Year)",
+        descriptionKey: "Annual family income certificate valid for current financial year (ceiling ₹2.00 Lakh).",
+        isMandatory: true,
+        acceptableFormats: ["PDF", "JPEG"],
+        maxSizeMb: 3,
+        digiLockerSupported: true,
+        status: "pending"
+      },
+      {
+        id: "marksheet",
+        nameKey: "Previous Qualifying Exam Marksheet (50%+ Marks)",
+        descriptionKey: "Marksheet confirming at least 50% marks in previous final exam.",
+        isMandatory: true,
+        acceptableFormats: ["PDF", "JPEG"],
+        maxSizeMb: 4,
+        digiLockerSupported: true,
+        status: "verified"
+      }
+    ],
+    eligibilityCriteria: {
+      maxAnnualIncome: 200000,
+      socialCategories: ["minority"],
+      minAge: 15,
+      maxAge: 35,
+      requiresStudentEnrollment: true
+    },
+    keyBenefitsListKeys: [
+      "Tuition fee up to ₹7,000/annum for Classes 11 and 12, technical and vocational courses",
+      "Maintenance allowance up to ₹380/month for day scholars and ₹570/month for hostellers",
+      "Direct benefit credit to bank account via National Scholarship Portal (NSP)"
+    ],
+    whoIsEligibleListKeys: [
+      "Students belonging to notified minority communities (Muslims, Christians, Sikhs, Buddhists, Jains, Parsis)",
+      "Total family income from all sources not exceeding ₹2.00 Lakh per annum",
+      "Scored not less than 50% marks in the previous final examination"
+    ],
+    whoIsNotEligibleListKeys: [
+      "Family income exceeding ₹2.00 Lakh per annum",
+      "Scored below 50% marks in the previous final exam",
+      "Students availing any other government scholarship for the same course"
+    ],
+    rulesRegistry: [
+      {
+        ruleId: "PMS-MIN01",
+        ruleDescription: "Minority Scholarship Income Ceiling: Parental annual income must not exceed ₹2.00 Lakh (distinct from ₹2.5L SC ceiling).",
+        issuingAuthority: "Ministry of Minority Affairs, GoI",
+        officialDocumentTitle: "Operational Guidelines for Scheme of Post-Matric Scholarship for Students Belonging to Minority Communities",
+        exactSourceUrl: "https://minorityaffairs.gov.in",
+        applicableClauseOrSection: "Clause 3 (Eligibility Criteria)",
+        notificationDate: "2022-04-01",
+        lastVerifiedDate: "November 2026",
+        verificationStatus: "VERIFIED"
+      }
     ]
   },
   {
@@ -465,7 +669,7 @@ export const verifiedSchemes: Scheme[] = [
     slug: "kisan-credit-card-crop-loan",
     titleKey: "Kisan Credit Card (KCC) Subsidized Crop Credit",
     shortDescKey: "Concessional credit limit up to ₹3,00,000 at an effective interest rate of just 4% per annum with prompt repayment incentive.",
-    fullDescKey: "Kisan Credit Card scheme provides farmers with timely access to adequate short-term credit for cultivation, post-harvest expenses, and animal husbandry at subsidized interest rates.",
+    fullDescKey: "Kisan Credit Card scheme provides farmers (owner cultivators, tenant farmers, sharecroppers, oral lessees, SHGs/JLGs, animal husbandry and fisheries) with timely access to subsidized working capital credit at effective 4% interest.",
     lifeEventId: "farming",
     ministryKey: "Ministry of Agriculture & NABARD",
     benefitType: "credit_loan",
@@ -502,8 +706,8 @@ export const verifiedSchemes: Scheme[] = [
     documents: [
       {
         id: "land_rtc",
-        nameKey: "Land Record (Pahani / RTC)",
-        descriptionKey: "Land record establishing crop pattern for the current agricultural season.",
+        nameKey: "Land Record / Tenancy Agreement / Dairy Certificate",
+        descriptionKey: "Land record (Pahani/RTC) for owner cultivators, tenancy agreement for tenants, or animal husbandry/fishery proof.",
         isMandatory: true,
         acceptableFormats: ["PDF", "JPEG"],
         maxSizeMb: 5,
@@ -523,20 +727,33 @@ export const verifiedSchemes: Scheme[] = [
     ],
     eligibilityCriteria: {
       occupations: ["farmer"],
-      maxAnnualIncome: 500000,
-      requiresLandTitle: true
+      maxAnnualIncome: 500000
     },
     keyBenefitsListKeys: [
       "Interest subvention of 2% + additional 3% incentive for prompt repayment makes effective rate 4%",
-      "No collateral required for loans up to ₹1.60 Lakh; flexible withdrawal via ATM debit card",
-      "Includes crop insurance under PM Fasal Bima Yojana (PMFBY)"
+      "Available to owner cultivators, recorded tenant farmers, oral lessees, animal husbandry and fisheries",
+      "No collateral required for loans up to ₹1.60 Lakh; flexible withdrawal via ATM debit card"
     ],
     whoIsEligibleListKeys: [
-      "All farmers — individuals/joint borrowers who are owner cultivators or tenant farmers with registered tenancy",
-      "Self Help Groups (SHGs) or Joint Liability Groups (JLGs) of farmers"
+      "Owner cultivators, tenant farmers, oral lessees, sharecroppers, and SHGs/JLGs of farmers",
+      "Farmers engaged in animal husbandry, dairy, poultry, sheep/goat rearing, and inland/marine fisheries"
     ],
     whoIsNotEligibleListKeys: [
-      "Defaulters with outstanding non-performing agricultural loans at commercial banks"
+      "Defaulters with outstanding non-performing agricultural loans at commercial banks",
+      "Individuals not engaged in agriculture, animal husbandry, or fisheries"
+    ],
+    rulesRegistry: [
+      {
+        ruleId: "KCC-R01",
+        ruleDescription: "Tenure & Allied Activity Inclusivity: Owner cultivators, tenant farmers, oral lessees, sharecroppers, and farmers engaged in animal husbandry or fisheries are eligible under RBI guidelines.",
+        issuingAuthority: "Reserve Bank of India / NABARD",
+        officialDocumentTitle: "Master Direction - Kisan Credit Card (KCC) Scheme",
+        exactSourceUrl: "https://www.rbi.org.in/Scripts/BS_ViewMasDirections.aspx?id=11560",
+        applicableClauseOrSection: "Section 3 (Beneficiary Categories)",
+        notificationDate: "2019-07-04",
+        lastVerifiedDate: "November 2026",
+        verificationStatus: "VERIFIED"
+      }
     ]
   }
 ];

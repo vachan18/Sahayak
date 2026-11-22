@@ -99,7 +99,18 @@ export const SchemeSchema = z.object({
   }),
   keyBenefitsListKeys: z.array(z.string()).min(1),
   whoIsEligibleListKeys: z.array(z.string()).min(1),
-  whoIsNotEligibleListKeys: z.array(z.string()).min(1)
+  whoIsNotEligibleListKeys: z.array(z.string()).min(1),
+  rulesRegistry: z.array(z.object({
+    ruleId: z.string().min(1),
+    ruleDescription: z.string().min(1),
+    issuingAuthority: z.string().min(1),
+    officialDocumentTitle: z.string().min(1),
+    exactSourceUrl: z.string().url(),
+    applicableClauseOrSection: z.string().optional(),
+    notificationDate: z.string().optional(),
+    lastVerifiedDate: z.string(),
+    verificationStatus: VerificationStatusEnum
+  })).optional()
 });
 
 export const validateSchemeRecord = (scheme: unknown): Scheme => {

@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Sovereign Color Tokens (Light Mode Default) */
+  --color-primary-navy: #0B2545;
+  --color-primary-navy-hover: #133966;
+  --color-saffron-ochre: #B45309;
+  --color-saffron-light: #FEF3C7;
+  --color-emerald-green: #065F46;
+  --color-emerald-light: #ECFDF5;
+  --color-amber-warning: #92400E;
+  --color-amber-light: #FFFBEB;
+  --color-crimson-error: #991B1B;
+  --color-crimson-light: #FEF2F2;
+  --color-sky-info: #0369A1;
+  --color-sky-light: #F0F9FF;
+
+  /* Typography Stacks */
+  --font-kannada: "Noto Sans Kannada", "Tunga", system-ui, sans-serif;
+  --font-devanagari: "Noto Sans Devanagari", "Mangal", system-ui, sans-serif;
+  --font-latin: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.dark {
+  --color-primary-navy: #38BDF8;
+  --color-primary-navy-hover: #0284C7;
+  --color-saffron-ochre: #F59E0B;
+  --color-saffron-light: #78350F;
+  --color-emerald-green: #34D399;
+  --color-emerald-light: #064E3B;
+  --color-amber-warning: #FBBF24;
+  --color-amber-light: #78350F;
+  --color-crimson-error: #F87171;
+  --color-crimson-light: #7F1D1D;
+}
+
+/* Indic Line Height Enforcement */
+body[lang="kn"], .lang-kn {
+  font-family: var(--font-kannada);
+  line-height: 1.75 !important;
+  letter-spacing: 0.01em;
+}
+
+body[lang="hi"], .lang-hi {
+  font-family: var(--font-devanagari);
+  line-height: 1.65 !important;
+  letter-spacing: 0.005em;
+}
+
+body[lang="en"], .lang-en {
+  font-family: var(--font-latin);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+/* Focus Outline Standard */
+:focus-visible {
+  outline: 3px solid #B45309;
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+/* Screen reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}

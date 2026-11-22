@@ -1,0 +1,138 @@
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Globe, Bell, Sun, Moon, Volume2, User, ChevronLeft } from 'lucide-react';
+import { useAppStore } from '../../store/useAppStore';
+import { useTranslation } from '../../hooks/useTranslation';
+
+interface TopUtilityBarProps {
+  onOpenLanguageModal: () => void;
+  onOpenNotifications: () => void;
+}
+
+export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
+  onOpenLanguageModal,
+  onOpenNotifications
+}) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { t, language } = useTranslation();
+  const { 
+    isDarkMode, 
+    toggleDarkMode, 
+    isAudioAssistanceEnabled, 
+    toggleAudioAssistance,
+    notifications 
+  } = useAppStore();
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const isRootScreen = ['/', '/home', '/schemes', '/eligibility', '/documents', '/tracker'].includes(location.pathname);
+
+  const getLanguageLabel = () => {
+    switch (language) {
+      case 'kn': return 'ಕನ್ನಡ';
+      case 'hi': return 'हिन्दी';
+      default: return 'English';
+    }
+  };
+
+  return (
+    <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
+        {/* Left Side: Brand or Back Button */}
+        <div className="flex items-center gap-2">
+          {!isRootScreen ? (
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-1 py-1.5 px-2 -ml-2 rounded-lg text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all"
+              aria-label="Go back to previous screen"
+            >
+              <ChevronLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+              <span>{t('navBack', 'Back')}</span>
+            </button>
+          ) : (
+            <Link to="/home" className="flex items-center gap-2 group">
+              {/* Sovereign Tricolor Accent Emblem */}
+              <div className="w-8 h-8 rounded-lg bg-brand-navy-900 dark:bg-sky-500 flex items-center justify-center text-white font-bold text-base shadow-sm ring-2 ring-amber-500/50">
+                <span>ಸ</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold text-lg leading-tight tracking-tight text-slate-900 dark:text-white">
+                  {t('appName', 'SAHAYAK')}
+                </span>
+                <span className="text-[10px] text-amber-700 dark:text-amber-400 font-semibold tracking-wide uppercase">
+                  {language === 'kn' ? 'ಸಹಾಯಕ' : language === 'hi' ? 'सहायक' : 'Bharat Welfare'}
+                </span>
+              </div>
+            </Link>
+          )}
+        </div>
+
+        {/* Right Side: Global Controls */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Language Switcher Pill */}
+          <button
+            type="button"
+            onClick={onOpenLanguageModal}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 active:scale-95 transition-all"
+            aria-label="Change application language"
+          >
+            <Globe className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+            <span>{getLanguageLabel()}</span>
+            <span className="text-[10px] text-slate-400">▼</span>
+          </button>
+
+          {/* Audio Assistance Toggle */}
+          <button
+            type="button"
+            onClick={toggleAudioAssistance}
+            title={isAudioAssistanceEnabled ? "Audio voiceover ON" : "Audio voiceover OFF"}
+            className={`p-2 rounded-full text-xs font-semibold transition-all active:scale-90 ${
+              isAudioAssistanceEnabled 
+                ? 'bg-amber-100 dark:bg-amber-900/60 text-amber-900 dark:text-amber-300 ring-2 ring-amber-400/50' 
+                : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+            aria-label="Toggle spoken audio assistance"
+          >
+            <Volume2 className="w-4 h-4" />
+          </button>
+
+          {/* Dark / Light Mode Toggle */}
+          <button
+            type="button"
+            onClick={toggleDarkMode}
+            title="Toggle theme"
+            className="p-2 rounded-full text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-90"
+            aria-label="Toggle dark mode"
+          >
+            {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
+          </button>
+
+          {/* Notifications Center */}
+          <button
+            type="button"
+            onClick={onOpenNotifications}
+            className="relative p-2 rounded-full text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-90"
+            aria-label="View notifications"
+          >
+            <Bell className="w-4 h-4" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-amber-600 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+
+          {/* User Profile */}
+          <Link
+            to="/profile"
+            className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:ring-2 hover:ring-amber-500 text-slate-700 dark:text-slate-200 transition-all ml-0.5"
+            aria-label="View user profile"
+          >
+            <User className="w-4 h-4 text-brand-navy-900 dark:text-sky-400" />
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+};

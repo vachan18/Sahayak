@@ -1,0 +1,141 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "name": "SAHAYAK Design System Tokens",
+  "version": "1.0.0",
+  "color": {
+    "brand": {
+      "sovereignNavy": {
+        "900": { "value": "#0B2545", "type": "color" },
+        "800": { "value": "#133966", "type": "color" },
+        "700": { "value": "#1E3A8A", "type": "color" }
+      },
+      "saffronOchre": {
+        "700": { "value": "#B45309", "type": "color" },
+        "500": { "value": "#F59E0B", "type": "color" },
+        "100": { "value": "#FEF3C7", "type": "color" }
+      },
+      "emeraldGreen": {
+        "800": { "value": "#065F46", "type": "color" },
+        "600": { "value": "#059669", "type": "color" },
+        "50": { "value": "#ECFDF5", "type": "color" }
+      }
+    },
+    "semantic": {
+      "light": {
+        "canvas": { "value": "#F8FAFC", "type": "color" },
+        "surface": { "value": "#FFFFFF", "type": "color" },
+        "surfaceElevated": { "value": "#FFFFFF", "type": "color" },
+        "textPrimary": { "value": "#0F172A", "type": "color" },
+        "textSecondary": { "value": "#334155", "type": "color" },
+        "textMuted": { "value": "#64748B", "type": "color" },
+        "borderSubdued": { "value": "#E2E8F0", "type": "color" },
+        "borderStandard": { "value": "#CBD5E1", "type": "color" },
+        "focusRing": { "value": "#B45309", "type": "color" },
+        "success": { "value": "#065F46", "type": "color" },
+        "successSurface": { "value": "#ECFDF5", "type": "color" },
+        "warning": { "value": "#92400E", "type": "color" },
+        "warningSurface": { "value": "#FFFBEB", "type": "color" },
+        "error": { "value": "#991B1B", "type": "color" },
+        "errorSurface": { "value": "#FEF2F2", "type": "color" },
+        "info": { "value": "#0369A1", "type": "color" },
+        "infoSurface": { "value": "#F0F9FF", "type": "color" },
+        "disabledContainer": { "value": "#F1F5F9", "type": "color" },
+        "disabledText": { "value": "#94A3B8", "type": "color" }
+      },
+      "dark": {
+        "canvas": { "value": "#0B1120", "type": "color" },
+        "surface": { "value": "#131C31", "type": "color" },
+        "surfaceElevated": { "value": "#1E293B", "type": "color" },
+        "textPrimary": { "value": "#F8FAFC", "type": "color" },
+        "textSecondary": { "value": "#CBD5E1", "type": "color" },
+        "borderStandard": { "value": "#334155", "type": "color" },
+        "primaryAccent": { "value": "#38BDF8", "type": "color" },
+        "success": { "value": "#34D399", "type": "color" },
+        "warning": { "value": "#FBBF24", "type": "color" },
+        "error": { "value": "#F87171", "type": "color" }
+      }
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "kannada": { "value": "'Noto Sans Kannada', 'Tunga', system-ui, sans-serif", "type": "fontFamily" },
+      "devanagari": { "value": "'Noto Sans Devanagari', 'Mangal', system-ui, sans-serif", "type": "fontFamily" },
+      "latin": { "value": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", "type": "fontFamily" }
+    },
+    "fontSize": {
+      "display": { "value": "2.0rem", "type": "dimension" },
+      "heading1": { "value": "1.5rem", "type": "dimension" },
+      "heading2": { "value": "1.25rem", "type": "dimension" },
+      "heading3": { "value": "1.125rem", "type": "dimension" },
+      "bodyRegular": { "value": "1.0rem", "type": "dimension" },
+      "bodySmall": { "value": "0.875rem", "type": "dimension" },
+      "caption": { "value": "0.75rem", "type": "dimension" }
+    },
+    "lineHeight": {
+      "latinDefault": { "value": "1.5", "type": "unitless" },
+      "devanagari": { "value": "1.65", "type": "unitless" },
+      "kannada": { "value": "1.75", "type": "unitless" }
+    },
+    "fontWeight": {
+      "regular": { "value": "400", "type": "fontWeight" },
+      "medium": { "value": "500", "type": "fontWeight" },
+      "semiBold": { "value": "600", "type": "fontWeight" },
+      "bold": { "value": "700", "type": "fontWeight" }
+    }
+  },
+  "spacing": {
+    "space1": { "value": "4px", "type": "dimension" },
+    "space2": { "value": "8px", "type": "dimension" },
+    "space3": { "value": "12px", "type": "dimension" },
+    "space4": { "value": "16px", "type": "dimension" },
+    "space5": { "value": "20px", "type": "dimension" },
+    "space6": { "value": "24px", "type": "dimension" },
+    "space8": { "value": "32px", "type": "dimension" },
+    "space10": { "value": "40px", "type": "dimension" },
+    "space12": { "value": "48px", "type": "dimension" },
+    "space16": { "value": "64px", "type": "dimension" }
+  },
+  "borderRadius": {
+    "sm": { "value": "4px", "type": "dimension" },
+    "md": { "value": "8px", "type": "dimension" },
+    "lg": { "value": "12px", "type": "dimension" },
+    "xl": { "value": "16px", "type": "dimension" },
+    "2xl": { "value": "24px", "type": "dimension" },
+    "full": { "value": "9999px", "type": "dimension" }
+  },
+  "shadow": {
+    "sm": { "value": "0 1px 2px 0 rgba(15, 23, 42, 0.05), 0 0 0 1px rgba(15, 23, 42, 0.06)", "type": "shadow" },
+    "md": { "value": "0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(15, 23, 42, 0.08)", "type": "shadow" },
+    "lg": { "value": "0 10px 15px -3px rgba(15, 23, 42, 0.10), 0 4px 6px -4px rgba(15, 23, 42, 0.05), 0 0 0 1px rgba(15, 23, 42, 0.08)", "type": "shadow" },
+    "xl": { "value": "0 20px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.06)", "type": "shadow" }
+  },
+  "touchTarget": {
+    "primaryCtaHeight": { "value": "56px", "type": "dimension" },
+    "secondaryCtaHeight": { "value": "48px", "type": "dimension" },
+    "bottomNavHeight": { "value": "64px", "type": "dimension" },
+    "topNavHeight": { "value": "56px", "type": "dimension" },
+    "minimumTapDimension": { "value": "48px", "type": "dimension" },
+    "minimumFingerSeparation": { "value": "8px", "type": "dimension" }
+  },
+  "motion": {
+    "duration": {
+      "instant": { "value": "100ms", "type": "time" },
+      "snappy": { "value": "150ms", "type": "time" },
+      "normal": { "value": "250ms", "type": "time" },
+      "enter": { "value": "300ms", "type": "time" },
+      "exit": { "value": "200ms", "type": "time" }
+    },
+    "easing": {
+      "spring": { "value": "cubic-bezier(0.32, 0.72, 0, 1)", "type": "cubicBezier" },
+      "easeOut": { "value": "cubic-bezier(0, 0, 0.2, 1)", "type": "cubicBezier" },
+      "easeIn": { "value": "cubic-bezier(0.4, 0, 1, 1)", "type": "cubicBezier" }
+    }
+  },
+  "breakpoints": {
+    "mobileCompact": { "value": "320px", "type": "dimension" },
+    "mobileStandard": { "value": "375px", "type": "dimension" },
+    "tablet": { "value": "768px", "type": "dimension" },
+    "desktop": { "value": "1024px", "type": "dimension" },
+    "desktopWide": { "value": "1280px", "type": "dimension" }
+  }
+}

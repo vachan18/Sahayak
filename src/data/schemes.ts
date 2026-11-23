@@ -1,5 +1,4 @@
 import { Scheme } from '../types';
-import { validateSchemes } from '../types/schemeValidation';
 
 export const verifiedSchemes: Scheme[] = [
   {
@@ -758,8 +757,12 @@ export const verifiedSchemes: Scheme[] = [
   }
 ];
 
-// Perform runtime validation
-const validationResult = validateSchemes(verifiedSchemes);
-if (!validationResult.valid) {
-  console.error("Scheme validation failed:", validationResult.errors);
+// In development, validate schemes asynchronously without impacting production bundle
+if ((import.meta as any).env?.DEV) {
+  import('../types/schemeValidation').then(({ validateSchemes }) => {
+    const validationResult = validateSchemes(verifiedSchemes);
+    if (!validationResult.valid) {
+      console.error("Scheme validation failed:", validationResult.errors);
+    }
+  }).catch(() => {});
 }

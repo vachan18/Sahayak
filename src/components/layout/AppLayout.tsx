@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Bot, X } from 'lucide-react';
 import { TopUtilityBar } from '../navigation/TopUtilityBar';
 import { BottomNavBar } from '../navigation/BottomNavBar';
-import { LanguageModal } from '../navigation/LanguageModal';
-import { NotificationsModal } from '../navigation/NotificationsModal';
-import { AiAssistantDrawer } from '../feedback/AiAssistantDrawer';
-import { AuthModal } from '../auth/AuthModal';
 import { useAppStore } from '../../store/useAppStore';
 import { useTranslation } from '../../hooks/useTranslation';
 import { PageMotion } from '../common/PageMotion';
+
+// Dynamic lazy-loading for overlay modals to reduce initial JavaScript payload
+const LanguageModal = lazy(() => import('../navigation/LanguageModal').then(m => ({ default: m.LanguageModal })));
+const NotificationsModal = lazy(() => import('../navigation/NotificationsModal').then(m => ({ default: m.NotificationsModal })));
+const AuthModal = lazy(() => import('../auth/AuthModal').then(m => ({ default: m.AuthModal })));
+const AiAssistantDrawer = lazy(() => import('../feedback/AiAssistantDrawer').then(m => ({ default: m.AiAssistantDrawer })));
 
 export const AppLayout: React.FC = () => {
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
@@ -63,12 +65,12 @@ export const AppLayout: React.FC = () => {
             <button
               type="button"
               onClick={() => setAiDrawerOpen(true)}
-              className="flex items-center gap-2 p-3 sm:py-3 sm:px-4 rounded-full bg-amber-500 hover:bg-amber-600 text-white font-bold shadow-crisp-lg active:scale-95 transition-all min-h-[48px] min-w-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
-              aria-label={t('openAssistantAria', 'Open Sahayak Sathi voice assistant')}
+              className="flex items-center gap-2 p-3 sm:py-3 sm:px-4 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black shadow-crisp-lg active:scale-95 transition-all min-h-[48px] min-w-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
+              aria-label={`${t('aiAssistantTitle', 'Sahayak Sathi')} (Voice)`}
             >
               <div className="relative flex-shrink-0">
-                <Bot className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-amber-500 animate-pulse" />
+                <Bot className="w-5 h-5 text-slate-950" />
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-600 ring-2 ring-amber-500 animate-pulse" />
               </div>
               <span className="hidden sm:inline text-xs sm:text-sm tracking-tight pr-1">
                 {t('aiAssistantTitle', 'Sahayak Sathi')} (Voice)
@@ -95,24 +97,32 @@ export const AppLayout: React.FC = () => {
       {/* Mobile Persistent Bottom Navigation Dock */}
       <BottomNavBar />
 
-      {/* Overlays & Modals */}
-      <LanguageModal
-        isOpen={isLangModalOpen}
-        onClose={() => setIsLangModalOpen(false)}
-      />
+      {/* Overlays & Modals (Lazy-loaded on demand) */}
+      <Suspense fallback={null}>
+        {isLangModalOpen && (
+          <LanguageModal
+            isOpen={isLangModalOpen}
+            onClose={() => setIsLangModalOpen(false)}
+          />
+        )}
 
-      <NotificationsModal
-        isOpen={isNotifModalOpen}
-        onClose={() => setIsNotifModalOpen(false)}
-      />
+        {isNotifModalOpen && (
+          <NotificationsModal
+            isOpen={isNotifModalOpen}
+            onClose={() => setIsNotifModalOpen(false)}
+          />
+        )}
 
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={closeAuthModal}
-        initialView={authModalView}
-      />
+        {isAuthModalOpen && (
+          <AuthModal
+            isOpen={isAuthModalOpen}
+            onClose={closeAuthModal}
+            initialView={authModalView}
+          />
+        )}
 
-      <AiAssistantDrawer />
+        {isAiDrawerOpen && <AiAssistantDrawer />}
+      </Suspense>
     </div>
   );
 };

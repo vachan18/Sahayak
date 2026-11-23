@@ -45,9 +45,9 @@ export const AudioListenButton: React.FC<AudioListenButtonProps> = ({
       <button
         type="button"
         onClick={handleTogglePlay}
-        aria-label="Play spoken audio"
+        aria-label="Listen in your language"
         title="Listen in your language"
-        className={`${baseClasses} p-2 rounded-full ${isPlaying ? 'bg-amber-600 text-white animate-pulse' : 'bg-amber-100 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 hover:bg-amber-200'} ${className}`}
+        className={`${baseClasses} p-2 rounded-full ${isPlaying ? 'bg-amber-700 text-white animate-pulse' : 'bg-amber-100 dark:bg-amber-900/60 text-amber-950 dark:text-amber-200 hover:bg-amber-200'} ${className}`}
       >
         {isPlaying ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
       </button>
@@ -58,16 +58,15 @@ export const AudioListenButton: React.FC<AudioListenButtonProps> = ({
     <button
       type="button"
       onClick={handleTogglePlay}
-      aria-label="Play spoken audio"
       className={`${baseClasses} ${size === 'sm' ? 'px-2.5 py-1 text-xs' : 'px-3 py-1.5 text-sm'} rounded-full ${
         isPlaying
-          ? 'bg-amber-600 text-white ring-2 ring-amber-400 animate-pulse'
-          : 'bg-amber-50 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100'
+          ? 'bg-amber-700 text-white ring-2 ring-amber-400 animate-pulse'
+          : 'bg-amber-50 dark:bg-amber-950/80 text-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100'
       } ${className}`}
     >
       {isPlaying ? (
         <>
-          <div className="flex gap-0.5 items-end h-3">
+          <div className="flex gap-0.5 items-end h-3" aria-hidden="true">
             <span className="w-0.5 h-3 bg-white animate-bounce" style={{ animationDelay: '0ms' }} />
             <span className="w-0.5 h-2 bg-white animate-bounce" style={{ animationDelay: '150ms' }} />
             <span className="w-0.5 h-3.5 bg-white animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -76,7 +75,7 @@ export const AudioListenButton: React.FC<AudioListenButtonProps> = ({
         </>
       ) : (
         <>
-          <Volume2 className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+          <Volume2 className="w-4 h-4 text-amber-700 dark:text-amber-400" aria-hidden="true" />
           <span>{label}</span>
         </>
       )}

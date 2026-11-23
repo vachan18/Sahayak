@@ -41,9 +41,9 @@ export const LifeEventGrid: React.FC = () => {
               <div className="w-10 h-10 sm:w-13 sm:h-13 rounded-2xl bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-400 flex items-center justify-center mb-2.5 sm:mb-3.5 group-hover:bg-amber-500 group-hover:text-white group-hover:scale-105 transition-all shadow-sm">
                 <IconComponent className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <h4 className="text-xs sm:text-sm lg:text-base font-extrabold text-slate-900 dark:text-white leading-snug mb-1 group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors line-clamp-2">
+              <h3 className="text-xs sm:text-sm lg:text-base font-extrabold text-slate-900 dark:text-white leading-snug mb-1 group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors line-clamp-2">
                 {t(event.titleKey)}
-              </h4>
+              </h3>
               <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 hidden sm:block">
                 {t(event.descriptionKey)}
               </p>

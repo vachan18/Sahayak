@@ -25,9 +25,9 @@ export const TrustAndClarityBanner: React.FC = () => {
                 Sakala Act Standards
               </span>
             </div>
-            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mt-1">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mt-1">
               {t('statutoryNoticeTitle', 'Statutory Trust & Information Standard')}
-            </h3>
+            </h2>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-0.5 max-w-3xl">
               {t('statutoryNoticeDesc', 'Preliminary citizen guidance only. Official sanction requires departmental document verification. Zero official government fees.')}
             </p>

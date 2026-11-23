@@ -121,7 +121,7 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
             type="button"
             onClick={onOpenLanguageModal}
             className="flex items-center gap-1 px-1.5 sm:px-2 xl:px-2.5 py-1 sm:py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 active:scale-95 transition-all min-h-[36px] sm:min-h-[40px] xl:min-h-[44px]"
-            aria-label="Change application language"
+            aria-label={`${getLanguageLabel()} - ${t('navLanguage', 'Language')}`}
           >
             <Globe className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
             <span className="hidden xl:inline">{getLanguageLabel()}</span>
@@ -192,11 +192,11 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
             type="button"
             onClick={onOpenNotifications}
             className="relative p-1.5 sm:p-2 rounded-full text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-90 min-w-[34px] sm:min-w-[38px] xl:min-w-[44px] min-h-[34px] sm:min-h-[38px] xl:min-h-[44px] flex items-center justify-center"
-            aria-label="View notifications"
           >
-            <Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+            <span className="sr-only">{unreadCount > 0 ? `Notifications (${unreadCount})` : "Notifications"}</span>
+            <Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" aria-hidden="true" />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-amber-600 text-white text-[9px] sm:text-[10px] font-bold flex items-center justify-center animate-pulse">
+              <span aria-hidden="true" className="absolute top-1 right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-amber-700 text-white text-[9px] sm:text-[10px] font-bold flex items-center justify-center animate-pulse">
                 {unreadCount}
               </span>
             )}
@@ -224,7 +224,7 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
                 type="button"
                 onClick={() => openAuthModal('login')}
                 className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-brand-navy-900 dark:bg-sky-600 hover:bg-brand-navy-800 dark:hover:bg-sky-500 shadow-crisp-xs active:scale-95 transition-all min-h-[38px]"
-                aria-label="Sign in to your account"
+                aria-label={language === 'kn' ? 'ಲಾಗಿನ್' : language === 'hi' ? 'लॉग इन' : language === 'bn' ? 'লগইন' : 'Sign In'}
               >
                 <LogIn className="w-3.5 h-3.5 flex-shrink-0" />
                 <span>{language === 'kn' ? 'ಲಾಗಿನ್' : language === 'hi' ? 'लॉग इन' : language === 'bn' ? 'লগইন' : 'Sign In'}</span>

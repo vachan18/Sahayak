@@ -60,7 +60,7 @@ export const HomeScreen: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
               <Link
                 to="/eligibility"
-                className="px-6 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-crisp-md active:scale-95 transition-all min-h-[48px]"
+                className="px-6 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-crisp-md active:scale-95 transition-all min-h-[48px]"
               >
                 <span>{t('checkEligibilityBtn', 'Check 2-Minute Eligibility')}</span>
                 <ArrowRight className="w-4 h-4 flex-shrink-0" />
@@ -87,7 +87,9 @@ export const HomeScreen: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setAiDrawerOpen(true)}
-                className="absolute right-1.5 sm:right-2.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 shadow-sm active:scale-95 transition-all min-h-[44px] min-w-[44px] justify-center"
+                aria-label={t('heroVoiceSearchCta', 'Speak')}
+                title={t('heroVoiceSearchCta', 'Speak')}
+                className="absolute right-1.5 sm:right-2.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 shadow-sm active:scale-95 transition-all min-h-[44px] min-w-[44px] justify-center"
               >
                 <Mic className="w-4 h-4 flex-shrink-0" />
                 <span className="hidden sm:inline">{t('heroVoiceSearchCta', 'Speak')}</span>
@@ -156,7 +158,7 @@ export const HomeScreen: React.FC = () => {
                 </div>
                 <Link
                   to="/eligibility"
-                  className="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
+                  className="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
                 >
                   <span>Check 2-Minute Eligibility</span>
                   <ArrowRight className="w-4 h-4" />
@@ -197,7 +199,7 @@ export const HomeScreen: React.FC = () => {
             <AudioListenButton textToSpeak={`${t('urgentNoticeTitle')}. ${t('urgentNoticeDesc')}`} size="md" />
             <Link
               to="/schemes/pm-kisan"
-              className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all shadow-sm min-h-[48px]"
+              className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all shadow-sm min-h-[48px]"
             >
               <span>{t('viewSchemeDetails', 'View Scheme Details')}</span>
               <ArrowRight className="w-4 h-4 flex-shrink-0" />
@@ -268,7 +270,7 @@ export const HomeScreen: React.FC = () => {
             </div>
             <Link
               to="/eligibility"
-              className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-crisp-sm flex-shrink-0 active:scale-95 transition-all min-h-[48px]"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm sm:text-base flex items-center justify-center gap-2 shadow-crisp-sm flex-shrink-0 active:scale-95 transition-all min-h-[48px]"
             >
               <span>{t('reviewAnswers', 'Review Assessment')}</span>
               <ArrowRight className="w-5 h-5 flex-shrink-0" />
@@ -307,7 +309,7 @@ export const HomeScreen: React.FC = () => {
               <div className="lg:col-span-4 flex lg:justify-end">
                 <Link
                   to="/eligibility"
-                  className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-crisp-md active:scale-95 transition-all min-h-[48px]"
+                  className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-crisp-md active:scale-95 transition-all min-h-[48px]"
                 >
                   <span>{t('checkEligibilityBtn', 'Start 2-Min Assessment')}</span>
                   <ArrowRight className="w-5 h-5 flex-shrink-0" />

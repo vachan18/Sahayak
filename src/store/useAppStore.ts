@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { User } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js';
 import { 
   SupportedLanguage, UserProfile, ApplicationRecord, NotificationItem, 
   Scheme, EligibilityAssessmentStatus, AssessmentHistoryRecord 
@@ -7,10 +7,6 @@ import {
 import { verifiedSchemes } from '../data/schemes';
 import { mockApplicationsData } from '../data/mockApplications';
 import { mockNotificationsData } from '../data/mockNotifications';
-import { getCurrentUser, onAuthStateChange, logoutUser as apiLogoutUser } from '../services/authService';
-import { saveSchemeToDb, removeSavedSchemeFromDb, fetchSavedSchemeCodes } from '../services/savedSchemesDbService';
-import { createApplicationInDb, fetchApplicationsFromDb } from '../services/applicationDbService';
-import { fetchHouseholdMembersFromDb, createHouseholdMemberInDb } from '../services/householdMembersDbService';
 
 interface AppState {
   // Authentication & Guest Mode
@@ -108,10 +104,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   closeAuthModal: () => set({ isAuthModalOpen: false }),
   initializeAuth: async () => {
     try {
+      const { getCurrentUser, onAuthStateChange } = await import('../services/authService');
       const user = await getCurrentUser();
       if (user) {
         set({ authUser: user });
         // Sync saved schemes from database
+        const { fetchSavedSchemeCodes } = await import('../services/savedSchemesDbService');
         const { savedCodes } = await fetchSavedSchemeCodes(user.id);
         if (savedCodes.length > 0) {
           set((state) => ({
@@ -119,6 +117,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           }));
         }
         // Sync applications from database
+        const { fetchApplicationsFromDb } = await import('../services/applicationDbService');
         const { applications: dbApps } = await fetchApplicationsFromDb(user.id);
         if (dbApps.length > 0) {
           set((state) => ({
@@ -126,6 +125,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           }));
         }
         // Sync household members from database
+        const { fetchHouseholdMembersFromDb } = await import('../services/householdMembersDbService');
         const { members: dbMembers } = await fetchHouseholdMembersFromDb(user.id);
         if (dbMembers.length > 0) {
           set({ profiles: dbMembers, activeProfileId: dbMembers[0].id });
@@ -135,6 +135,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       onAuthStateChange(async (updatedUser: User | null) => {
         set({ authUser: updatedUser });
         if (updatedUser) {
+          const { fetchSavedSchemeCodes } = await import('../services/savedSchemesDbService');
           const { savedCodes } = await fetchSavedSchemeCodes(updatedUser.id);
           if (savedCodes.length > 0) {
             set((state) => ({
@@ -148,6 +149,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
   logoutUser: async () => {
+    const { logoutUser: apiLogoutUser } = await import('../services/authService');
     await apiLogoutUser();
     set({ authUser: null, isAuthModalOpen: false });
   },
@@ -229,13 +231,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       activeProfileId: tempId
     }));
     if (state.authUser?.id) {
-      createHouseholdMemberInDb(state.authUser.id, newP).then((res) => {
-        if (res.success && res.member) {
-          set((s) => ({
-            profiles: s.profiles.map(p => p.id === tempId ? res.member! : p),
-            activeProfileId: s.activeProfileId === tempId ? res.member!.id : s.activeProfileId
-          }));
-        }
+      const userId = state.authUser.id;
+      import('../services/householdMembersDbService').then(({ createHouseholdMemberInDb }) => {
+        createHouseholdMemberInDb(userId, newP).then((res: { success: boolean; member?: UserProfile; error?: string }) => {
+          if (res.success && res.member) {
+            set((s) => ({
+              profiles: s.profiles.map(p => p.id === tempId ? res.member! : p),
+              activeProfileId: s.activeProfileId === tempId ? res.member!.id : s.activeProfileId
+            }));
+          }
+        }).catch(console.warn);
       }).catch(console.warn);
     }
   },
@@ -255,11 +260,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
     // Cloud sync when authenticated
     if (state.authUser?.id) {
-      if (isCurrentlySaved) {
-        removeSavedSchemeFromDb(state.authUser.id, schemeId).catch(console.warn);
-      } else {
-        saveSchemeToDb(state.authUser.id, schemeId).catch(console.warn);
-      }
+      const userId = state.authUser.id;
+      import('../services/savedSchemesDbService').then(({ saveSchemeToDb, removeSavedSchemeFromDb }) => {
+        if (isCurrentlySaved) {
+          removeSavedSchemeFromDb(userId, schemeId).catch(console.warn);
+        } else {
+          saveSchemeToDb(userId, schemeId).catch(console.warn);
+        }
+      }).catch(console.warn);
     }
   },
 
@@ -331,11 +339,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
     const state = get();
     if (state.authUser?.id) {
-      createApplicationInDb(state.authUser.id, {
-        scheme_id: newApp.schemeId,
-        status: newApp.statusBadge || 'submitted',
-        application_reference: newApp.tokenNumber,
-        notes: `Application filed via SAHAYAK portal on ${newApp.submittedAt}`
+      const userId = state.authUser.id;
+      import('../services/applicationDbService').then(({ createApplicationInDb }) => {
+        createApplicationInDb(userId, {
+          scheme_id: newApp.schemeId,
+          status: newApp.statusBadge || 'submitted',
+          application_reference: newApp.tokenNumber,
+          notes: `Application filed via SAHAYAK portal on ${newApp.submittedAt}`
+        }).catch(console.warn);
       }).catch(console.warn);
     }
   },

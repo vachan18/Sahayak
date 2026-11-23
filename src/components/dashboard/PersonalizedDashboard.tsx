@@ -205,7 +205,7 @@ export const PersonalizedDashboard: React.FC = () => {
                   </div>
                   <Link
                     to="/eligibility"
-                    className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold whitespace-nowrap transition-all shadow-sm flex items-center gap-1.5 flex-shrink-0 min-h-[38px]"
+                    className="px-3.5 py-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold whitespace-nowrap transition-all shadow-sm flex items-center gap-1.5 flex-shrink-0 min-h-[38px]"
                   >
                     <span>{t('checkEligibilityBtn', 'Check Eligibility')}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -376,7 +376,7 @@ export const PersonalizedDashboard: React.FC = () => {
                   </p>
                   <Link
                     to="/eligibility"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm active:scale-95 transition-all"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black shadow-sm active:scale-95 transition-all"
                   >
                     <span>Start 2-Minute Assessment</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -440,7 +440,7 @@ export const PersonalizedDashboard: React.FC = () => {
                                 isDone 
                                   ? 'bg-emerald-600 text-white' 
                                   : isCurrent 
-                                  ? 'bg-amber-600 text-white ring-2 ring-amber-300' 
+                                  ? 'bg-amber-700 text-white ring-2 ring-amber-300' 
                                   : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
                               }`}>
                                 {isDone ? '✓' : stepNum}

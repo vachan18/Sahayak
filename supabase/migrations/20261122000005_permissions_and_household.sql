@@ -78,12 +78,15 @@ CREATE POLICY "Users can manage own household members"
 -- Update application status check to accept all standardized lifecycle statuses
 DO $$
 BEGIN
-    ALTER TABLE public.applications DROP CONSTRAINT IF EXISTS chk_application_status;
+    IF EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'chk_application_status' 
+          AND conrelid = 'public.applications'::regclass
+    ) THEN
+        ALTER TABLE public.applications DROP CONSTRAINT chk_application_status;
+    END IF;
     ALTER TABLE public.applications ADD CONSTRAINT chk_application_status 
         CHECK (status IN ('draft', 'submitted', 'in_review', 'under_review', 'verified', 'sanctioned', 'approved', 'rejected'));
-EXCEPTION
-    WHEN OTHERS THEN
-        NULL;
 END $$;
 
 -- -----------------------------------------------------------------------------

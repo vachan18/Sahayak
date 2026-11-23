@@ -329,7 +329,18 @@ export interface Database {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      save_assessment_idempotent: {
+        Args: {
+          p_user_id: string;
+          p_assessment_data: Json;
+          p_idempotency_key: string;
+          p_completed_at?: string;
+        };
+        Returns: {
+          id: string;
+          is_duplicate: boolean;
+        }[];
+      };
     };
     Enums: {
       [_ in never]: never;

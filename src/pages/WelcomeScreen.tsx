@@ -10,12 +10,14 @@ export const WelcomeScreen: React.FC = () => {
   const { setLanguage } = useAppStore();
   const { t } = useTranslation();
 
-  const handleSelectAndProceed = (langCode: 'kn' | 'hi' | 'en') => {
+  const handleSelectAndProceed = (langCode: 'kn' | 'hi' | 'bn' | 'en') => {
     setLanguage(langCode);
     const greeting = langCode === 'kn'
       ? "ಸ್ವಾಗತ! ಸರ್ಕಾರದ ಯೋಜನೆಗಳನ್ನು ತಿಳಿಯಲು ಇದು ನಿಮ್ಮ ಸಹಾಯಕ."
       : langCode === 'hi'
       ? "स्वागत है! सरकारी योजनाओं को समझने में सहायक आपकी मदद करेगा."
+      : langCode === 'bn'
+      ? "স্বাগতম! সরকারি প্রকল্প জানতে সহায়ক আপনাকে সাহায্য করবে।"
       : "Welcome to SAHAYAK. Your official government welfare guide.";
     speakVernacularText(greeting, langCode);
     navigate('/onboarding');
@@ -72,7 +74,7 @@ export const WelcomeScreen: React.FC = () => {
         <button
           type="button"
           onClick={() => handleSelectAndProceed('hi')}
-          className="w-full p-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-amber-600 dark:hover:border-amber-500 shadow-crisp-sm hover:shadow-crisp-md transition-all flex items-center justify-between group active:scale-98 text-left"
+          className="w-full p-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-amber-600 dark:hover:border-amber-500 shadow-crisp-sm hover:shadow-crisp-md transition-all flex items-center justify-between group active:scale-98 text-left min-h-[64px]"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/70 text-blue-800 dark:text-blue-300 font-bold flex items-center justify-center text-lg">
@@ -88,6 +90,28 @@ export const WelcomeScreen: React.FC = () => {
             </div>
           </div>
           <ArrowRight className="w-5 h-5 text-blue-600 group-hover:translate-x-1 transition-transform" />
+        </button>
+
+        {/* Bengali */}
+        <button
+          type="button"
+          onClick={() => handleSelectAndProceed('bn')}
+          className="w-full p-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-amber-600 dark:hover:border-amber-500 shadow-crisp-sm hover:shadow-crisp-md transition-all flex items-center justify-between group active:scale-98 text-left min-h-[64px]"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 font-bold flex items-center justify-center text-lg">
+              বা
+            </div>
+            <div>
+              <div className="font-bold text-lg text-slate-900 dark:text-white leading-tight">
+                বাংলা
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                বাংলায় এগিয়ে যান
+              </div>
+            </div>
+          </div>
+          <ArrowRight className="w-5 h-5 text-emerald-600 group-hover:translate-x-1 transition-transform" />
         </button>
 
         {/* English */}

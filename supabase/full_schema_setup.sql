@@ -1,6 +1,6 @@
 -- =============================================================================
 -- SAHAYAK — Comprehensive Supabase Database Deployment Script
--- Phases: 5, 5.1 & 5.2 Consolidated Setup
+-- Phases: 5, 5.1 & 5.2 Consolidated Setup (Phase 5.2.1 Hardened)
 -- Description: 
 --   1. Provisions all core relational tables: profiles, schemes, assessments,
 --      assessment_results, saved_schemes, applications, household_members.
@@ -8,7 +8,9 @@
 --   3. Configures private user-documents storage bucket with folder isolation.
 --   4. Grants least-privilege permissions to anon and authenticated roles.
 --   5. Seeds canonical verified government welfare schemes.
---   6. Fully idempotent — safe to re-run multiple times on fresh or existing projects.
+--   6. Provides atomic idempotency RPC for race-safe assessment deduplication.
+--   7. Fully idempotent — safe to re-run multiple times on fresh or existing projects.
+--   8. Preserves all existing user records, schemes, and documents.
 -- =============================================================================
 
 -- Enable pgcrypto for UUID generation
@@ -63,6 +65,9 @@ CREATE TABLE IF NOT EXISTS public.assessments (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Ensure idempotency_key column exists if table was provisioned in an earlier version
+ALTER TABLE public.assessments ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
+
 CREATE INDEX IF NOT EXISTS idx_assessments_user_id ON public.assessments(user_id);
 CREATE INDEX IF NOT EXISTS idx_assessments_created_at ON public.assessments(created_at DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_assessments_user_idempotency 
@@ -105,9 +110,22 @@ CREATE TABLE IF NOT EXISTS public.applications (
     application_reference TEXT,
     notes TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT chk_application_status CHECK (status IN ('draft', 'submitted', 'in_review', 'under_review', 'verified', 'sanctioned', 'approved', 'rejected'))
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Safely ensure standardized application status check constraint without swallowing exceptions
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'chk_application_status' 
+          AND conrelid = 'public.applications'::regclass
+    ) THEN
+        ALTER TABLE public.applications DROP CONSTRAINT chk_application_status;
+    END IF;
+    ALTER TABLE public.applications ADD CONSTRAINT chk_application_status 
+        CHECK (status IN ('draft', 'submitted', 'in_review', 'under_review', 'verified', 'sanctioned', 'approved', 'rejected'));
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_applications_user_id ON public.applications(user_id);
 CREATE INDEX IF NOT EXISTS idx_applications_scheme_id ON public.applications(scheme_id);
@@ -193,7 +211,37 @@ CREATE TRIGGER on_auth_user_created
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- =============================================================================
--- SECTION 3: ROW LEVEL SECURITY (RLS) POLICIES
+-- SECTION 3: ATOMIC IDEMPOTENCY RPC FUNCTION
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION public.save_assessment_idempotent(
+    p_user_id UUID,
+    p_assessment_data JSONB,
+    p_idempotency_key TEXT,
+    p_completed_at TIMESTAMPTZ DEFAULT now()
+)
+RETURNS TABLE (
+    id UUID,
+    is_duplicate BOOLEAN
+) AS $$
+DECLARE
+    v_id UUID;
+    v_is_duplicate BOOLEAN;
+BEGIN
+    -- Race-safe atomic insert with conflict resolution on unique constraint
+    -- DO UPDATE on conflict triggers RETURNING with (xmax <> 0) as true indicating an update (duplicate)
+    INSERT INTO public.assessments (user_id, assessment_data, idempotency_key, completed_at)
+    VALUES (p_user_id, p_assessment_data, p_idempotency_key, p_completed_at)
+    ON CONFLICT (user_id, idempotency_key) WHERE idempotency_key IS NOT NULL
+    DO UPDATE SET idempotency_key = EXCLUDED.idempotency_key
+    RETURNING assessments.id, (xmax <> 0) INTO v_id, v_is_duplicate;
+
+    RETURN QUERY SELECT v_id, v_is_duplicate;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =============================================================================
+-- SECTION 4: ROW LEVEL SECURITY (RLS) POLICIES
 -- =============================================================================
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -299,7 +347,7 @@ CREATE POLICY "Users can manage own household members"
     ON public.household_members FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 -- =============================================================================
--- SECTION 4: EXPLICIT LEAST-PRIVILEGE ROLE GRANTS
+-- SECTION 5: EXPLICIT LEAST-PRIVILEGE ROLE GRANTS
 -- =============================================================================
 
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
@@ -316,8 +364,11 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.saved_schemes TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.applications TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.household_members TO authenticated;
 
+-- RPC Execution Grants
+GRANT EXECUTE ON FUNCTION public.save_assessment_idempotent(UUID, JSONB, TEXT, TIMESTAMPTZ) TO authenticated, service_role;
+
 -- =============================================================================
--- SECTION 5: PRIVATE STORAGE BUCKET CONFIGURATION
+-- SECTION 6: PRIVATE STORAGE BUCKET CONFIGURATION
 -- =============================================================================
 
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -370,7 +421,7 @@ CREATE POLICY "Users can delete own documents"
     );
 
 -- =============================================================================
--- SECTION 6: CANONICAL SCHEME SEED DATA
+-- SECTION 7: CANONICAL SCHEME SEED DATA
 -- =============================================================================
 
 INSERT INTO public.schemes (

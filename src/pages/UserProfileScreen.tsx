@@ -126,7 +126,7 @@ export const UserProfileScreen: React.FC = () => {
         </div>
 
         {/* Member Avatar Chips */}
-        <div className="flex gap-2.5 overflow-x-auto pb-2 no-scrollbar">
+        <div className="w-full max-w-full min-w-0 flex gap-2.5 overflow-x-auto pb-2 no-scrollbar overscroll-x-contain">
           {profiles.map((p) => {
             const isActive = p.id === activeProfileId;
             return (
@@ -134,7 +134,7 @@ export const UserProfileScreen: React.FC = () => {
                 key={p.id}
                 type="button"
                 onClick={() => setActiveProfileId(p.id)}
-                className={`p-3 rounded-2xl border text-left min-w-[140px] flex-shrink-0 transition-all ${
+                className={`p-3 rounded-2xl border text-left min-w-[140px] flex-shrink-0 transition-all min-h-[48px] ${
                   isActive
                     ? 'border-amber-600 bg-amber-50/70 dark:bg-amber-950/40 ring-1 ring-amber-600'
                     : 'border-slate-200 dark:border-slate-800 hover:border-slate-300'

@@ -3,9 +3,9 @@ import { translations } from '../data/translations';
 import { SupportedLanguage } from '../types';
 
 describe('Localization & Translation System', () => {
-  const languages: SupportedLanguage[] = ['en', 'kn', 'hi'];
+  const languages: SupportedLanguage[] = ['en', 'kn', 'hi', 'bn'];
 
-  it('supports all required official languages (English, Kannada, Hindi)', () => {
+  it('supports all required official languages (English, Kannada, Hindi, Bengali)', () => {
     languages.forEach(lang => {
       expect(translations[lang]).toBeDefined();
       expect(typeof translations[lang]).toBe('object');
@@ -44,12 +44,15 @@ describe('Localization & Translation System', () => {
     const enKeys = Object.keys(translations.en);
     const knKeys = new Set(Object.keys(translations.kn));
     const hiKeys = new Set(Object.keys(translations.hi));
+    const bnKeys = new Set(Object.keys(translations.bn));
 
     const missingInKn = enKeys.filter(k => !knKeys.has(k));
     const missingInHi = enKeys.filter(k => !hiKeys.has(k));
+    const missingInBn = enKeys.filter(k => !bnKeys.has(k));
 
     expect(missingInKn, `Kannada missing keys: ${missingInKn.join(', ')}`).toEqual([]);
     expect(missingInHi, `Hindi missing keys: ${missingInHi.join(', ')}`).toEqual([]);
+    expect(missingInBn, `Bengali missing keys: ${missingInBn.join(', ')}`).toEqual([]);
   });
 
   it('verifies no empty string values in translations', () => {

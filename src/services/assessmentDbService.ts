@@ -17,39 +17,62 @@ export interface SavedAssessmentRecord {
 }
 
 /**
- * Canonicalizes an assessment answers object and computes a SHA-256 hex hash.
- * Works universally across modern browsers, Node.js, and Vitest.
+ * Deterministic canonical JSON serialization.
+ * - Recursively sorts object keys lexicographically.
+ * - Preserves original value types (numbers, booleans, strings, null).
+ * - Preserves string case exactly without mutations.
+ * - Omits undefined properties from objects.
+ * - Serializes arrays in their exact item order.
+ */
+export function canonicalJsonStringify(data: any): string {
+  if (data === null || typeof data !== 'object') {
+    return JSON.stringify(data);
+  }
+
+  if (Array.isArray(data)) {
+    return '[' + data.map(item => (item === undefined ? 'null' : canonicalJsonStringify(item))).join(',') + ']';
+  }
+
+  const sortedKeys = Object.keys(data).sort();
+  const entries: string[] = [];
+  for (const key of sortedKeys) {
+    const val = data[key];
+    if (val !== undefined) {
+      entries.push(`${JSON.stringify(key)}:${canonicalJsonStringify(val)}`);
+    }
+  }
+  return '{' + entries.join(',') + '}';
+}
+
+/**
+ * Computes a deterministic SHA-256 digest from canonical JSON serialization of assessment answers.
+ * Preserves original value types and case.
+ * Strictly uses SHA-256 via native Web Crypto API.
+ * Throws a clear error if secure cryptographic hashing is unavailable (no weak fallback).
  */
 export async function computeCanonicalAnswersSha256(
   userId: string,
   answers: AssessmentAnswers
 ): Promise<string> {
-  const canonicalEntries = Object.keys(answers || {})
-    .filter(k => (answers as any)[k] !== undefined && (answers as any)[k] !== null)
-    .sort()
-    .map(k => `${k}:${String((answers as any)[k]).trim().toLowerCase()}`);
+  // Deterministic canonical JSON serialization preserving exact types and casing
+  const canonicalPayload = canonicalJsonStringify({ answers: answers || {}, userId });
 
-  const rawCanonicalString = `${userId}::${canonicalEntries.join('|')}`;
+  const cryptoObj = typeof crypto !== 'undefined' ? crypto : (globalThis as any)?.crypto;
+  const subtle = cryptoObj?.subtle;
 
-  if (typeof crypto !== 'undefined' && crypto.subtle) {
-    const msgBuffer = new TextEncoder().encode(rawCanonicalString);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return `sha256-${hashArray.map(b => b.toString(16).padStart(2, '0')).join('')}`;
+  if (!subtle || typeof subtle.digest !== 'function') {
+    throw new Error('Secure hashing unavailable: Web Crypto API (crypto.subtle) with SHA-256 is required.');
   }
 
-  // Safe fallback
-  let hash = 0;
-  for (let i = 0; i < rawCanonicalString.length; i++) {
-    hash = ((hash << 5) - hash) + rawCanonicalString.charCodeAt(i);
-    hash |= 0;
-  }
-  return `sha256-fallback-${Math.abs(hash).toString(16)}`;
+  const msgBuffer = new TextEncoder().encode(canonicalPayload);
+  const hashBuffer = await subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return `sha256-${hashArray.map(b => b.toString(16).padStart(2, '0')).join('')}`;
 }
 
 /**
  * Persist an assessment session and its scheme outcomes to Supabase.
- * Enforces deduplication via SHA-256 hash of canonicalized answers and transaction rollback on partial failure.
+ * Enforces race-safe idempotency via PostgreSQL unique constraint and RPC (INSERT ... ON CONFLICT ... RETURNING).
  * In Guest Mode, gracefully returns local ID without network error.
  */
 export const saveAssessmentToBackend = async (
@@ -67,44 +90,39 @@ export const saveAssessmentToBackend = async (
   }
 
   try {
-    // 1. Compute SHA-256 hash of canonicalized assessment inputs
+    // 1. Compute SHA-256 hash using deterministic canonical JSON
     const idempotencyKey = await computeCanonicalAnswersSha256(userId, answers);
 
-    // Check if an assessment with this exact fingerprint already exists for this citizen
-    const { data: existingAssessment } = await supabase
-      .from('assessments')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('idempotency_key', idempotencyKey)
-      .maybeSingle();
+    // 2. Race-safe atomic insert using database RPC with INSERT ... ON CONFLICT ... RETURNING
+    const { data: rpcData, error: rpcError } = await supabase.rpc('save_assessment_idempotent', {
+      p_user_id: userId,
+      p_assessment_data: answers as any,
+      p_idempotency_key: idempotencyKey,
+      p_completed_at: new Date().toISOString()
+    });
 
-    if (existingAssessment) {
+    if (rpcError) {
+      return { success: false, error: rpcError.message || "Failed to persist assessment via database function." };
+    }
+
+    const row = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+    if (!row || !row.id) {
+      return { success: false, error: "Database function did not return an assessment record." };
+    }
+
+    const assessmentId = row.id;
+    const isDuplicate = Boolean(row.is_duplicate);
+
+    // If duplicate was detected by unique constraint, return existing assessment ID immediately
+    if (isDuplicate) {
       return {
         success: true,
-        assessmentId: existingAssessment.id,
+        assessmentId,
         isDuplicate: true
       };
     }
 
-    // 2. Insert assessment parent record with idempotency key
-    const { data: assessment, error: assessmentError } = await supabase
-      .from('assessments')
-      .insert({
-        user_id: userId,
-        assessment_data: answers as any,
-        idempotency_key: idempotencyKey,
-        completed_at: new Date().toISOString()
-      })
-      .select('id')
-      .single();
-
-    if (assessmentError || !assessment) {
-      return { success: false, error: assessmentError?.message || "Failed to create assessment record." };
-    }
-
-    const assessmentId = assessment.id;
-
-    // 3. Prepare individual scheme outcome records
+    // 3. Prepare individual scheme outcome records for new assessment
     const schemeResultsToInsert: any[] = [];
 
     const { data: dbSchemes, error: fetchSchemesError } = await supabase
@@ -156,7 +174,8 @@ export const saveAssessmentToBackend = async (
 
     return {
       success: true,
-      assessmentId
+      assessmentId,
+      isDuplicate: false
     };
   } catch (err: any) {
     return {

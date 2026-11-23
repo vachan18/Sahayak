@@ -1,4 +1,4 @@
-export type SupportedLanguage = 'en' | 'kn' | 'hi';
+export type SupportedLanguage = 'en' | 'kn' | 'hi' | 'bn';
 
 export type LifeEventId = 
   | 'farming'
@@ -150,12 +150,14 @@ export interface EligibilityQuestion {
   audioVoiceKey: string;
   helpKey?: string;
   type: 'single_choice' | 'number' | 'boolean';
-  fieldName: 'occupation' | 'landholdingAcres' | 'gender' | 'age' | 'socialCategory' | 'annualIncome' | 'isGovtEmployee';
+  fieldName: 'occupation' | 'landholdingAcres' | 'gender' | 'age' | 'socialCategory' | 'annualIncome' | 'isGovtEmployee' | string;
+  condition?: (answers: any) => boolean;
   options?: {
     value: string | number | boolean;
     labelKey: string;
     iconName?: string;
     sublabelKey?: string;
+    payload?: Record<string, any>;
   }[];
 }
 
@@ -185,14 +187,33 @@ export interface EligibilityAssessmentResult {
 
 export type ApplicationStage = 1 | 2 | 3 | 4;
 
+export interface CitizenNote {
+  id: string;
+  createdAt: string;
+  text: string;
+  author: string;
+}
+
+export interface MissingDocumentAlert {
+  documentId: string;
+  documentName: string;
+  reason: string;
+  requestedBy: string;
+  actionRequired: string;
+  resolved: boolean;
+}
+
 export interface ApplicationMilestone {
   stage: ApplicationStage;
   titleKey: string;
-  date: string;
+  date?: string;
+  timestamp?: string;
+  description?: string;
   isCompleted: boolean;
   isCurrent: boolean;
   handlingOfficer?: string;
   remarksKey?: string;
+  isOfficial?: boolean;
 }
 
 export interface ApplicationRecord {
@@ -210,6 +231,16 @@ export interface ApplicationRecord {
   submittedVia: 'self_online' | 'csc_assisted';
   handlingOffice: string;
   audioStatusNarrationKey: string;
+  pendingActions?: string[];
+  missingDocuments?: MissingDocumentAlert[];
+  citizenNotes?: CitizenNote[];
+  disbursementDetails?: {
+    amount: number;
+    accountMasked: string;
+    utrNumber?: string;
+    disbursedDate?: string;
+    status: 'pending' | 'credited' | 'na';
+  };
 }
 
 export interface UserProfile {
@@ -237,4 +268,15 @@ export interface NotificationItem {
   isRead: boolean;
   audioKey?: string;
   actionUrl?: string;
+}
+
+export interface AssessmentHistoryRecord {
+  id: string;
+  completedAt: string;
+  profileId?: string;
+  profileName?: string;
+  status: EligibilityAssessmentStatus;
+  eligibleCount: number;
+  totalAnnualBenefitValue: number;
+  answers: Record<string, any>;
 }

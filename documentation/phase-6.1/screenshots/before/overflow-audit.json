@@ -1,0 +1,1116 @@
+[
+  {
+    "viewport": "mobile-360",
+    "route": "/home",
+    "hasOverflow": true,
+    "scrollWidth": 415,
+    "clientWidth": 360,
+    "overflowAmount": 55,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 414.453125,
+        "clientWidth": 360
+      },
+      {
+        "tag": "button",
+        "className": "relative p-2 rounded-full text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-wh",
+        "right": 376.453125,
+        "clientWidth": 360
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 368.453125,
+        "clientWidth": 360
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 361.6077880859375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 366.453369140625,
+        "clientWidth": 360
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-360",
+    "route": "/schemes",
+    "hasOverflow": true,
+    "scrollWidth": 415,
+    "clientWidth": 360,
+    "overflowAmount": 55,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 414.453125,
+        "clientWidth": 360
+      },
+      {
+        "tag": "button",
+        "className": "relative p-2 rounded-full text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-wh",
+        "right": 376.453125,
+        "clientWidth": 360
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 368.453125,
+        "clientWidth": 360
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 361.6077880859375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 366.453369140625,
+        "clientWidth": 360
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-360",
+    "route": "/schemes/pm-kisan",
+    "hasOverflow": true,
+    "scrollWidth": 373,
+    "clientWidth": 360,
+    "overflowAmount": 13,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 372.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "div",
+        "className": "flex items-center gap-1",
+        "right": 372.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "a",
+        "className": "p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:ring-2 hover:ring-amber-500 text-slate-700 d",
+        "right": 372.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 366.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 362.7604064941406,
+        "clientWidth": 360
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-360",
+    "route": "/eligibility",
+    "hasOverflow": true,
+    "scrollWidth": 415,
+    "clientWidth": 360,
+    "overflowAmount": 55,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 414.453125,
+        "clientWidth": 360
+      },
+      {
+        "tag": "button",
+        "className": "relative p-2 rounded-full text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-wh",
+        "right": 376.453125,
+        "clientWidth": 360
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 368.453125,
+        "clientWidth": 360
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 361.6077880859375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 366.453369140625,
+        "clientWidth": 360
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-360",
+    "route": "/eligibility/results",
+    "hasOverflow": true,
+    "scrollWidth": 373,
+    "clientWidth": 360,
+    "overflowAmount": 13,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 372.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "div",
+        "className": "flex items-center gap-1",
+        "right": 372.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "a",
+        "className": "p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:ring-2 hover:ring-amber-500 text-slate-700 d",
+        "right": 372.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 366.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 362.7604064941406,
+        "clientWidth": 360
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-360",
+    "route": "/documents",
+    "hasOverflow": true,
+    "scrollWidth": 415,
+    "clientWidth": 360,
+    "overflowAmount": 55,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 414.453125,
+        "clientWidth": 360
+      },
+      {
+        "tag": "button",
+        "className": "relative p-2 rounded-full text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-wh",
+        "right": 376.453125,
+        "clientWidth": 360
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 368.453125,
+        "clientWidth": 360
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 361.6077880859375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 366.453369140625,
+        "clientWidth": 360
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-360",
+    "route": "/guidance/pm-kisan",
+    "hasOverflow": true,
+    "scrollWidth": 373,
+    "clientWidth": 360,
+    "overflowAmount": 13,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 372.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "div",
+        "className": "flex items-center gap-1",
+        "right": 372.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "a",
+        "className": "p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:ring-2 hover:ring-amber-500 text-slate-700 d",
+        "right": 372.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 366.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 362.7604064941406,
+        "clientWidth": 360
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-360",
+    "route": "/csc-slip/KA-KISAN-2026-84920",
+    "hasOverflow": true,
+    "scrollWidth": 373,
+    "clientWidth": 360,
+    "overflowAmount": 13,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 372.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "div",
+        "className": "flex items-center gap-1",
+        "right": 372.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "a",
+        "className": "p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:ring-2 hover:ring-amber-500 text-slate-700 d",
+        "right": 372.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 366.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 362.7604064941406,
+        "clientWidth": 360
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-360",
+    "route": "/tracker",
+    "hasOverflow": true,
+    "scrollWidth": 415,
+    "clientWidth": 360,
+    "overflowAmount": 55,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 414.453125,
+        "clientWidth": 360
+      },
+      {
+        "tag": "button",
+        "className": "relative p-2 rounded-full text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-wh",
+        "right": 376.453125,
+        "clientWidth": 360
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 368.453125,
+        "clientWidth": 360
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 361.6077880859375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 366.453369140625,
+        "clientWidth": 360
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-360",
+    "route": "/profile",
+    "hasOverflow": true,
+    "scrollWidth": 373,
+    "clientWidth": 360,
+    "overflowAmount": 13,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 372.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "div",
+        "className": "flex items-center gap-1",
+        "right": 372.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "a",
+        "className": "p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:ring-2 hover:ring-amber-500 text-slate-700 d",
+        "right": 372.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 366.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 362.7604064941406,
+        "clientWidth": 360
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-360",
+    "route": "/notifications",
+    "hasOverflow": true,
+    "scrollWidth": 373,
+    "clientWidth": 360,
+    "overflowAmount": 13,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 372.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "div",
+        "className": "flex items-center gap-1",
+        "right": 372.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "a",
+        "className": "p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:ring-2 hover:ring-amber-500 text-slate-700 d",
+        "right": 372.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 366.09375,
+        "clientWidth": 360
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 362.7604064941406,
+        "clientWidth": 360
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-390",
+    "route": "/home",
+    "hasOverflow": true,
+    "scrollWidth": 414,
+    "clientWidth": 390,
+    "overflowAmount": 24,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 414.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "div",
+        "className": "flex items-center gap-1",
+        "right": 414.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "a",
+        "className": "p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:ring-2 hover:ring-amber-500 text-slate-700 d",
+        "right": 414.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 408.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 405.1197814941406,
+        "clientWidth": 390
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-390",
+    "route": "/schemes",
+    "hasOverflow": true,
+    "scrollWidth": 414,
+    "clientWidth": 390,
+    "overflowAmount": 24,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 414.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "div",
+        "className": "flex items-center gap-1",
+        "right": 414.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "a",
+        "className": "p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:ring-2 hover:ring-amber-500 text-slate-700 d",
+        "right": 414.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 408.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 405.1197814941406,
+        "clientWidth": 390
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-390",
+    "route": "/eligibility",
+    "hasOverflow": true,
+    "scrollWidth": 414,
+    "clientWidth": 390,
+    "overflowAmount": 24,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 414.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "div",
+        "className": "flex items-center gap-1",
+        "right": 414.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "a",
+        "className": "p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:ring-2 hover:ring-amber-500 text-slate-700 d",
+        "right": 414.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 408.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 405.1197814941406,
+        "clientWidth": 390
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-390",
+    "route": "/documents",
+    "hasOverflow": true,
+    "scrollWidth": 414,
+    "clientWidth": 390,
+    "overflowAmount": 24,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 414.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "div",
+        "className": "flex items-center gap-1",
+        "right": 414.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "a",
+        "className": "p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:ring-2 hover:ring-amber-500 text-slate-700 d",
+        "right": 414.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 408.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 405.1197814941406,
+        "clientWidth": 390
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-390",
+    "route": "/tracker",
+    "hasOverflow": true,
+    "scrollWidth": 414,
+    "clientWidth": 390,
+    "overflowAmount": 24,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 414.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "div",
+        "className": "flex items-center gap-1",
+        "right": 414.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "a",
+        "className": "p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:ring-2 hover:ring-amber-500 text-slate-700 d",
+        "right": 414.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 408.453125,
+        "clientWidth": 390
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 405.1197814941406,
+        "clientWidth": 390
+      }
+    ]
+  },
+  {
+    "viewport": "tablet-768",
+    "route": "/home",
+    "hasOverflow": true,
+    "scrollWidth": 952,
+    "clientWidth": 768,
+    "overflowAmount": 184,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 951.875,
+        "clientWidth": 768
+      },
+      {
+        "tag": "button",
+        "className": "p-2 rounded-full text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover",
+        "right": 778.328125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 770.328125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "button",
+        "className": "relative p-2 rounded-full text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-wh",
+        "right": 820.328125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 812.328125,
+        "clientWidth": 768
+      }
+    ]
+  },
+  {
+    "viewport": "tablet-768",
+    "route": "/schemes",
+    "hasOverflow": true,
+    "scrollWidth": 952,
+    "clientWidth": 768,
+    "overflowAmount": 184,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 951.875,
+        "clientWidth": 768
+      },
+      {
+        "tag": "button",
+        "className": "p-2 rounded-full text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover",
+        "right": 778.328125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 770.328125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "button",
+        "className": "relative p-2 rounded-full text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-wh",
+        "right": 820.328125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 812.328125,
+        "clientWidth": 768
+      }
+    ]
+  },
+  {
+    "viewport": "tablet-768",
+    "route": "/schemes/pm-kisan",
+    "hasOverflow": true,
+    "scrollWidth": 900,
+    "clientWidth": 768,
+    "overflowAmount": 132,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 900.125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "div",
+        "className": "flex items-center gap-1",
+        "right": 900.125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "button",
+        "className": "hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-",
+        "right": 866.125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 804.578125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 802.828125,
+        "clientWidth": 768
+      }
+    ]
+  },
+  {
+    "viewport": "tablet-768",
+    "route": "/eligibility",
+    "hasOverflow": true,
+    "scrollWidth": 952,
+    "clientWidth": 768,
+    "overflowAmount": 184,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 951.875,
+        "clientWidth": 768
+      },
+      {
+        "tag": "button",
+        "className": "p-2 rounded-full text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover",
+        "right": 778.328125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 770.328125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "button",
+        "className": "relative p-2 rounded-full text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-wh",
+        "right": 820.328125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 812.328125,
+        "clientWidth": 768
+      }
+    ]
+  },
+  {
+    "viewport": "tablet-768",
+    "route": "/eligibility/results",
+    "hasOverflow": true,
+    "scrollWidth": 900,
+    "clientWidth": 768,
+    "overflowAmount": 132,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 900.125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "div",
+        "className": "flex items-center gap-1",
+        "right": 900.125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "button",
+        "className": "hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-",
+        "right": 866.125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 804.578125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 802.828125,
+        "clientWidth": 768
+      }
+    ]
+  },
+  {
+    "viewport": "tablet-768",
+    "route": "/documents",
+    "hasOverflow": true,
+    "scrollWidth": 952,
+    "clientWidth": 768,
+    "overflowAmount": 184,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 951.875,
+        "clientWidth": 768
+      },
+      {
+        "tag": "button",
+        "className": "p-2 rounded-full text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover",
+        "right": 778.328125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 770.328125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "button",
+        "className": "relative p-2 rounded-full text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-wh",
+        "right": 820.328125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 812.328125,
+        "clientWidth": 768
+      }
+    ]
+  },
+  {
+    "viewport": "tablet-768",
+    "route": "/guidance/pm-kisan",
+    "hasOverflow": true,
+    "scrollWidth": 900,
+    "clientWidth": 768,
+    "overflowAmount": 132,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 900.125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "div",
+        "className": "flex items-center gap-1",
+        "right": 900.125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "button",
+        "className": "hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-",
+        "right": 866.125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 804.578125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 802.828125,
+        "clientWidth": 768
+      }
+    ]
+  },
+  {
+    "viewport": "tablet-768",
+    "route": "/csc-slip/KA-KISAN-2026-84920",
+    "hasOverflow": true,
+    "scrollWidth": 900,
+    "clientWidth": 768,
+    "overflowAmount": 132,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 900.125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "div",
+        "className": "flex items-center gap-1",
+        "right": 900.125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "button",
+        "className": "hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-",
+        "right": 866.125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 804.578125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 802.828125,
+        "clientWidth": 768
+      }
+    ]
+  },
+  {
+    "viewport": "tablet-768",
+    "route": "/tracker",
+    "hasOverflow": true,
+    "scrollWidth": 952,
+    "clientWidth": 768,
+    "overflowAmount": 184,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 951.875,
+        "clientWidth": 768
+      },
+      {
+        "tag": "button",
+        "className": "p-2 rounded-full text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover",
+        "right": 778.328125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 770.328125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "button",
+        "className": "relative p-2 rounded-full text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-wh",
+        "right": 820.328125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 812.328125,
+        "clientWidth": 768
+      }
+    ]
+  },
+  {
+    "viewport": "tablet-768",
+    "route": "/profile",
+    "hasOverflow": true,
+    "scrollWidth": 900,
+    "clientWidth": 768,
+    "overflowAmount": 132,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 900.125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "div",
+        "className": "flex items-center gap-1",
+        "right": 900.125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "button",
+        "className": "hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-",
+        "right": 866.125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 804.578125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 802.828125,
+        "clientWidth": 768
+      }
+    ]
+  },
+  {
+    "viewport": "tablet-768",
+    "route": "/notifications",
+    "hasOverflow": true,
+    "scrollWidth": 900,
+    "clientWidth": 768,
+    "overflowAmount": 132,
+    "overflowingElements": [
+      {
+        "tag": "div",
+        "className": "flex items-center gap-2 sm:gap-2.5",
+        "right": 900.125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "div",
+        "className": "flex items-center gap-1",
+        "right": 900.125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "button",
+        "className": "hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-",
+        "right": 866.125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "svg",
+        "className": "[object SVGAnimatedString]",
+        "right": 804.578125,
+        "clientWidth": 768
+      },
+      {
+        "tag": "path",
+        "className": "[object SVGAnimatedString]",
+        "right": 802.828125,
+        "clientWidth": 768
+      }
+    ]
+  },
+  {
+    "viewport": "tablet-1024",
+    "route": "/schemes",
+    "hasOverflow": true,
+    "scrollWidth": 1045,
+    "clientWidth": 1024,
+    "overflowAmount": 21,
+    "overflowingElements": [
+      {
+        "tag": "button",
+        "className": "px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all active:scale-95 ",
+        "right": 1179.234375,
+        "clientWidth": 1024
+      },
+      {
+        "tag": "button",
+        "className": "px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all active:scale-95 ",
+        "right": 1384.640625,
+        "clientWidth": 1024
+      },
+      {
+        "tag": "button",
+        "className": "inline-flex items-center gap-1.5 font-medium transition-all active:scale-95 focus:outline-none focus",
+        "right": 1045.4375,
+        "clientWidth": 1024
+      },
+      {
+        "tag": "span",
+        "className": "",
+        "right": 1034.4375,
+        "clientWidth": 1024
+      }
+    ]
+  }
+]

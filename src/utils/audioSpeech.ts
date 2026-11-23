@@ -22,6 +22,10 @@ export const speakVernacularText = (text: string, language: SupportedLanguage, o
       utterance.lang = 'hi-IN';
       utterance.rate = 0.95;
       break;
+    case 'bn':
+      utterance.lang = 'bn-IN';
+      utterance.rate = 0.95;
+      break;
     default:
       utterance.lang = 'en-IN';
       utterance.rate = 1.0;

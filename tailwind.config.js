@@ -37,11 +37,13 @@ export default {
       fontFamily: {
         kannada: ['"Noto Sans Kannada"', 'Tunga', 'sans-serif'],
         devanagari: ['"Noto Sans Devanagari"', 'Mangal', 'sans-serif'],
+        bengali: ['"Noto Sans Bengali"', 'sans-serif'],
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
       },
       lineHeight: {
         'kannada': '1.75',
         'devanagari': '1.65',
+        'bengali': '1.65',
       },
       boxShadow: {
         'crisp-sm': '0 1px 2px 0 rgba(15, 23, 42, 0.05), 0 0 0 1px rgba(15, 23, 42, 0.06)',

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { User } from '@supabase/supabase-js';
 import { 
   SupportedLanguage, UserProfile, ApplicationRecord, NotificationItem, 
-  Scheme, EligibilityAssessmentStatus 
+  Scheme, EligibilityAssessmentStatus, AssessmentHistoryRecord 
 } from '../types';
 import { verifiedSchemes } from '../data/schemes';
 import { mockApplicationsData } from '../data/mockApplications';
@@ -55,6 +55,9 @@ interface AppState {
   compareSchemeIds: string[];
   toggleCompareScheme: (schemeId: string) => void;
   clearCompareSchemes: () => void;
+  recentlyViewedSchemeIds: string[];
+  addRecentlyViewedScheme: (schemeId: string) => void;
+  clearRecentlyViewedSchemes: () => void;
 
   // Eligibility Engine State
   eligibilityStatus: EligibilityAssessmentStatus;
@@ -70,10 +73,14 @@ interface AppState {
   };
   setEligibilityAnswer: (field: string, value: any) => void;
   resetEligibilityAnswers: () => void;
+  assessmentHistory: AssessmentHistoryRecord[];
+  recordAssessment: (record: AssessmentHistoryRecord) => void;
 
   // Applications
   applications: ApplicationRecord[];
   addApplication: (newApp: ApplicationRecord) => void;
+  addCitizenNote: (applicationId: string, noteText: string) => void;
+  resolveMissingDocument: (applicationId: string, documentId: string) => void;
 
   // Notifications
   notifications: NotificationItem[];
@@ -165,7 +172,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     return { isDarkMode: next };
   }),
   isHighSunlightMode: false,
-  toggleHighSunlightMode: () => set((state) => ({ isHighSunlightMode: !state.isHighSunlightMode })),
+  toggleHighSunlightMode: () => set((state) => {
+    const next = !state.isHighSunlightMode;
+    if (next) {
+      document.documentElement.classList.add('high-contrast');
+    } else {
+      document.documentElement.classList.remove('high-contrast');
+    }
+    return { isHighSunlightMode: next };
+  }),
 
   hasCompletedOnboarding: false,
   completeOnboarding: () => set({ hasCompletedOnboarding: true }),
@@ -258,6 +273,26 @@ export const useAppStore = create<AppState>((set, get) => ({
   }),
   clearCompareSchemes: () => set({ compareSchemeIds: [] }),
 
+  recentlyViewedSchemeIds: (() => {
+    try {
+      const stored = localStorage.getItem('sahayak_recent_schemes');
+      return stored ? JSON.parse(stored) : ['pm-kisan', 'gruha-lakshmi'];
+    } catch {
+      return ['pm-kisan', 'gruha-lakshmi'];
+    }
+  })(),
+  addRecentlyViewedScheme: (schemeId: string) => {
+    set((state) => {
+      const updated = [schemeId, ...state.recentlyViewedSchemeIds.filter(id => id !== schemeId)].slice(0, 8);
+      try { localStorage.setItem('sahayak_recent_schemes', JSON.stringify(updated)); } catch {}
+      return { recentlyViewedSchemeIds: updated };
+    });
+  },
+  clearRecentlyViewedSchemes: () => {
+    try { localStorage.removeItem('sahayak_recent_schemes'); } catch {}
+    set({ recentlyViewedSchemeIds: [] });
+  },
+
   // Eligibility Engine State: Starts as 'not_assessed' with empty inputs
   eligibilityStatus: 'not_assessed',
   setEligibilityStatus: (status) => set({ eligibilityStatus: status }),
@@ -270,6 +305,22 @@ export const useAppStore = create<AppState>((set, get) => ({
     eligibilityAnswers: {}, 
     eligibilityStatus: 'not_assessed' 
   }),
+
+  assessmentHistory: (() => {
+    try {
+      const stored = localStorage.getItem('sahayak_assessment_history');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  })(),
+  recordAssessment: (record: AssessmentHistoryRecord) => {
+    set((state) => {
+      const updated = [record, ...state.assessmentHistory.filter(h => h.id !== record.id)].slice(0, 10);
+      try { localStorage.setItem('sahayak_assessment_history', JSON.stringify(updated)); } catch {}
+      return { assessmentHistory: updated };
+    });
+  },
 
   applications: mockApplicationsData,
   addApplication: (newApp) => {
@@ -285,6 +336,42 @@ export const useAppStore = create<AppState>((set, get) => ({
         notes: `Application filed via SAHAYAK portal on ${newApp.submittedAt}`
       }).catch(console.warn);
     }
+  },
+  addCitizenNote: (applicationId, noteText) => {
+    const newNote = {
+      id: `note-${Date.now()}`,
+      createdAt: new Date().toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      text: noteText,
+      author: 'Citizen Self-Report (Personal Record)'
+    };
+    set((state) => ({
+      applications: state.applications.map((app) =>
+        app.id === applicationId
+          ? { ...app, citizenNotes: [newNote, ...(app.citizenNotes || [])] }
+          : app
+      )
+    }));
+  },
+  resolveMissingDocument: (applicationId, documentId) => {
+    set((state) => ({
+      applications: state.applications.map((app) =>
+        app.id === applicationId
+          ? {
+              ...app,
+              missingDocuments: (app.missingDocuments || []).map((doc) =>
+                doc.documentId === documentId ? { ...doc, resolved: true } : doc
+              ),
+              statusBadge: 'under_review'
+            }
+          : app
+      )
+    }));
   },
 
   notifications: mockNotificationsData,

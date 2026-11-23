@@ -1,162 +1,157 @@
-# SAHAYAK — Phase 5.2: Database Schema & Relational Integrity Verification
+# SAHAYAK — Phase 5.2.1: Database Schema & Relational Integrity Verification
 
 **Project:** PIXEL THEORY  
 **Product:** SAHAYAK  
 **Track:** DS-02 Government Schemes in Your Language  
-**Phase:** 5.2 — Final Supabase Deployment Verification  
+**Phase:** 5.2.1 — Final Backend Corrections & Verification  
 **Date:** November 2026  
-**Status:** VERIFIED & HARDENED
+**Status:** SCHEMA AUDITED & VERIFIED (Ready for Cloud Execution)
 
 ---
 
 ## 1. Executive Summary
 
-This report provides the exhaustive relational architecture audit of SAHAYAK's database schema. It documents table structures, primary/foreign key relationships, column data types, cascading constraints, index performance optimizations, standardized enumeration checks, and the cryptographic SHA-256 idempotency mechanism.
+This report documents the relational schema, constraints, indexes, triggers, and RPC functions prepared for the SAHAYAK Supabase backend. In Phase 5.2.1, the schema setup was audited across all six migrations and consolidated into `supabase/full_schema_setup.sql`.
+
+Key architectural enhancements include:
+- **Deterministic Canonical JSON Hashing**: Strict SHA-256 digest over canonicalized JSON answers, preserving original value types (boolean, number, string, null) and character casing.
+- **Race-Safe Atomic Idempotency RPC**: Introduced `save_assessment_idempotent` in PostgreSQL to execute atomic `INSERT ... ON CONFLICT (user_id, idempotency_key) ... DO UPDATE ... RETURNING assessments.id, (xmax <> 0) AS is_duplicate`.
+- **Constraint Standardization**: Safe update of `chk_application_status` across all 8 lifecycle statuses without silently swallowing SQL exceptions.
+- **Non-Destructive Safe Rerun**: Guarantees that `full_schema_setup.sql` can be re-executed at any time without dropping tables or altering existing user records.
 
 ---
 
-## 2. Table & Column Definitions
+## 2. Table Definitions & Constraints
 
-### 2.1 Table: `profiles`
-Represents citizen identity and localized preferences, synchronizing automatically from `auth.users`.
+### 2.1 Table: `public.profiles`
 - `id`: `UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE`
 - `full_name`: `TEXT`
-- `preferred_language`: `VARCHAR(10) DEFAULT 'en'`
-- `state`: `TEXT`
-- `district`: `TEXT`
-- `created_at`: `TIMESTAMPTZ DEFAULT NOW()`
-- `updated_at`: `TIMESTAMPTZ DEFAULT NOW()`
+- `preferred_language`: `TEXT NOT NULL DEFAULT 'kn'`
+- `state`: `TEXT DEFAULT 'Karnataka'`
+- `district`: `TEXT DEFAULT 'Mandya'`
+- `created_at`: `TIMESTAMPTZ NOT NULL DEFAULT now()`
+- `updated_at`: `TIMESTAMPTZ NOT NULL DEFAULT now()`
+- **Indexes**: `idx_profiles_preferred_language`
 
-### 2.2 Table: `schemes`
-Central government scheme registry containing official details, structured rules, and benefit descriptions.
+### 2.2 Table: `public.schemes`
 - `id`: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`
-- `scheme_code`: `VARCHAR(50) UNIQUE NOT NULL`
-- `name`: `VARCHAR(255) NOT NULL`
+- `scheme_code`: `TEXT UNIQUE NOT NULL`
+- `name`: `TEXT NOT NULL`
 - `description`: `TEXT NOT NULL`
-- `department`: `VARCHAR(255)`
-- `category`: `VARCHAR(100)`
-- `state`: `VARCHAR(100)` (NULL indicates central scheme)
-- `official_url`: `TEXT`
-- `eligibility_rules`: `JSONB DEFAULT '{}'::jsonb`
-- `benefits`: `JSONB DEFAULT '{}'::jsonb`
-- `is_active`: `BOOLEAN DEFAULT true`
-- `created_at`: `TIMESTAMPTZ DEFAULT NOW()`
-- `updated_at`: `TIMESTAMPTZ DEFAULT NOW()`
+- `department`: `TEXT NOT NULL`
+- `category`: `TEXT NOT NULL`
+- `state`: `TEXT NOT NULL DEFAULT 'ALL'`
+- `official_url`: `TEXT NOT NULL`
+- `eligibility_rules`: `JSONB NOT NULL DEFAULT '[]'::jsonb`
+- `benefits`: `JSONB NOT NULL DEFAULT '{}'::jsonb`
+- `is_active`: `BOOLEAN NOT NULL DEFAULT true`
+- `created_at`: `TIMESTAMPTZ NOT NULL DEFAULT now()`
+- `updated_at`: `TIMESTAMPTZ NOT NULL DEFAULT now()`
+- **Indexes**: `idx_schemes_code`, `idx_schemes_category`, `idx_schemes_is_active`, `idx_schemes_state`
 
-### 2.3 Table: `assessments`
-Tracks comprehensive eligibility questionnaire evaluations for citizens.
+### 2.3 Table: `public.assessments`
 - `id`: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`
 - `user_id`: `UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE`
-- `assessment_data`: `JSONB NOT NULL` (Captured citizen responses)
-- `idempotency_key`: `TEXT` (Cryptographic `sha256-<hex>` digest)
+- `assessment_data`: `JSONB NOT NULL DEFAULT '{}'::jsonb`
+- `idempotency_key`: `TEXT` (Format: `sha256-<64-char-hex>`)
 - `completed_at`: `TIMESTAMPTZ`
-- `created_at`: `TIMESTAMPTZ DEFAULT NOW()`
-- **Constraint**: `CONSTRAINT uq_assessments_user_idempotency UNIQUE (user_id, idempotency_key)`
+- `created_at`: `TIMESTAMPTZ NOT NULL DEFAULT now()`
+- **Indexes**:
+  - `idx_assessments_user_id ON assessments(user_id)`
+  - `idx_assessments_created_at ON assessments(created_at DESC)`
+  - `idx_assessments_user_idempotency UNIQUE (user_id, idempotency_key) WHERE idempotency_key IS NOT NULL`
 
-### 2.4 Table: `assessment_results`
-Individual scheme eligibility outcomes calculated during an assessment session.
+### 2.4 Table: `public.assessment_results`
 - `id`: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`
-- `assessment_id`: `UUID NOT NULL REFERENCES assessments(id) ON DELETE CASCADE`
-- `scheme_id`: `UUID NOT NULL REFERENCES schemes(id) ON DELETE CASCADE`
-- `eligibility_status`: `VARCHAR(50) NOT NULL` (`eligible`, `ineligible`, `conditional`, `missing_information`, `needs_review`)
-- `missing_information`: `JSONB DEFAULT '[]'::jsonb`
-- `explanation`: `JSONB DEFAULT '{}'::jsonb`
-- `created_at`: `TIMESTAMPTZ DEFAULT NOW()`
+- `assessment_id`: `UUID NOT NULL REFERENCES public.assessments(id) ON DELETE CASCADE`
+- `scheme_id`: `UUID NOT NULL REFERENCES public.schemes(id) ON DELETE CASCADE`
+- `eligibility_status`: `TEXT NOT NULL`
+- `missing_information`: `JSONB NOT NULL DEFAULT '[]'::jsonb`
+- `explanation`: `JSONB NOT NULL DEFAULT '{}'::jsonb`
+- `created_at`: `TIMESTAMPTZ NOT NULL DEFAULT now()`
+- **Indexes**: `idx_assessment_results_assessment_id`, `idx_assessment_results_scheme_id`, `idx_assessment_results_status`
 
-### 2.5 Table: `saved_schemes`
-Citizen bookmarks for quick reference.
-- `id`: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`
-- `user_id`: `UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE`
-- `scheme_id`: `UUID NOT NULL REFERENCES schemes(id) ON DELETE CASCADE`
-- `created_at`: `TIMESTAMPTZ DEFAULT NOW()`
-- **Constraint**: `UNIQUE(user_id, scheme_id)`
-
-### 2.6 Table: `applications`
-Citizen application tracker reflecting actual stored data without fabricated government verification states.
+### 2.5 Table: `public.saved_schemes`
 - `id`: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`
 - `user_id`: `UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE`
-- `scheme_id`: `UUID NOT NULL REFERENCES schemes(id) ON DELETE CASCADE`
-- `status`: `VARCHAR(50) DEFAULT 'submitted'`
-- `application_reference`: `VARCHAR(100)`
+- `scheme_id`: `UUID NOT NULL REFERENCES public.schemes(id) ON DELETE CASCADE`
+- `created_at`: `TIMESTAMPTZ NOT NULL DEFAULT now()`
+- **Constraint**: `CONSTRAINT uq_user_saved_scheme UNIQUE (user_id, scheme_id)`
+- **Indexes**: `idx_saved_schemes_user_id`, `idx_saved_schemes_scheme_id`
+
+### 2.6 Table: `public.applications`
+- `id`: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`
+- `user_id`: `UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE`
+- `scheme_id`: `UUID NOT NULL REFERENCES public.schemes(id) ON DELETE CASCADE`
+- `status`: `TEXT NOT NULL DEFAULT 'submitted'`
+- `application_reference`: `TEXT`
 - `notes`: `TEXT`
-- `created_at`: `TIMESTAMPTZ DEFAULT NOW()`
-- `updated_at`: `TIMESTAMPTZ DEFAULT NOW()`
+- `created_at`: `TIMESTAMPTZ NOT NULL DEFAULT now()`
+- `updated_at`: `TIMESTAMPTZ NOT NULL DEFAULT now()`
 - **Constraint**:
-  ```sql
-  CONSTRAINT check_application_status CHECK (
-    status IN (
-      'submitted',
-      'under_review',
-      'document_verification',
-      'sanctioned',
-      'approved',
-      'disbursed',
-      'rejected',
-      'appealed'
-    )
-  )
-  ```
+  `CONSTRAINT chk_application_status CHECK (status IN ('draft', 'submitted', 'in_review', 'under_review', 'verified', 'sanctioned', 'approved', 'rejected'))`
+- **Indexes**: `idx_applications_user_id`, `idx_applications_scheme_id`, `idx_applications_status`
 
-### 2.7 Table: `household_members`
-Citizen household registry supporting joint family eligibility checks.
+### 2.7 Table: `public.household_members`
 - `id`: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`
 - `user_id`: `UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE`
-- `name`: `VARCHAR(255) NOT NULL`
-- `relation`: `VARCHAR(50) NOT NULL`
-- `age`: `INTEGER`
-- `gender`: `VARCHAR(20)`
-- `occupation`: `VARCHAR(100)`
-- `annual_income`: `NUMERIC(12,2)`
-- `social_category`: `VARCHAR(50)`
-- `disability`: `BOOLEAN DEFAULT false`
-- `created_at`: `TIMESTAMPTZ DEFAULT NOW()`
-- `updated_at`: `TIMESTAMPTZ DEFAULT NOW()`
+- `name`: `TEXT NOT NULL`
+- `relation`: `TEXT NOT NULL`
+- `age`: `INTEGER NOT NULL DEFAULT 18`
+- `gender`: `TEXT NOT NULL DEFAULT 'other'`
+- `occupation`: `TEXT NOT NULL DEFAULT 'other'`
+- `state`: `TEXT NOT NULL DEFAULT 'Karnataka'`
+- `district`: `TEXT DEFAULT 'Mandya'`
+- `social_category`: `TEXT DEFAULT 'general'`
+- `landholding_acres`: `NUMERIC(6, 2) NOT NULL DEFAULT 0`
+- `annual_income`: `NUMERIC(12, 2) NOT NULL DEFAULT 0`
+- `is_aadhaar_linked_bank`: `BOOLEAN NOT NULL DEFAULT false`
+- `is_digilocker_linked`: `BOOLEAN NOT NULL DEFAULT false`
+- `created_at`: `TIMESTAMPTZ NOT NULL DEFAULT now()`
+- `updated_at`: `TIMESTAMPTZ NOT NULL DEFAULT now()`
+- **Indexes**: `idx_household_members_user_id`
 
 ---
 
-## 3. Performance Indexing Strategy
+## 3. Database Functions & Procedures
 
-To maintain low latencies as citizen records scale, B-tree indexes are defined on foreign keys and frequently filtered columns:
+### 3.1 Idempotency RPC Function: `save_assessment_idempotent`
 
 ```sql
-CREATE INDEX IF NOT EXISTS idx_schemes_code ON schemes(scheme_code);
-CREATE INDEX IF NOT EXISTS idx_schemes_active ON schemes(is_active);
-CREATE INDEX IF NOT EXISTS idx_assessments_user_id ON assessments(user_id);
-CREATE INDEX IF NOT EXISTS idx_assessments_idempotency ON assessments(user_id, idempotency_key);
-CREATE INDEX IF NOT EXISTS idx_assessment_results_assessment ON assessment_results(assessment_id);
-CREATE INDEX IF NOT EXISTS idx_assessment_results_scheme ON assessment_results(scheme_id);
-CREATE INDEX IF NOT EXISTS idx_saved_schemes_user ON saved_schemes(user_id);
-CREATE INDEX IF NOT EXISTS idx_applications_user ON applications(user_id);
-CREATE INDEX IF NOT EXISTS idx_household_members_user ON household_members(user_id);
+CREATE OR REPLACE FUNCTION public.save_assessment_idempotent(
+    p_user_id UUID,
+    p_assessment_data JSONB,
+    p_idempotency_key TEXT,
+    p_completed_at TIMESTAMPTZ DEFAULT now()
+)
+RETURNS TABLE (
+    id UUID,
+    is_duplicate BOOLEAN
+) AS $$
+DECLARE
+    v_id UUID;
+    v_is_duplicate BOOLEAN;
+BEGIN
+    INSERT INTO public.assessments (user_id, assessment_data, idempotency_key, completed_at)
+    VALUES (p_user_id, p_assessment_data, p_idempotency_key, p_completed_at)
+    ON CONFLICT (user_id, idempotency_key) WHERE idempotency_key IS NOT NULL
+    DO UPDATE SET idempotency_key = EXCLUDED.idempotency_key
+    RETURNING assessments.id, (xmax <> 0) INTO v_id, v_is_duplicate;
+
+    RETURN QUERY SELECT v_id, v_is_duplicate;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 ```
 
----
-
-## 4. Idempotency Hashing Specification
-
-To prevent duplicate assessment records caused by network retries or rapid double-clicks:
-1. Citizen questionnaire answers are canonicalized by sorting top-level keys alphabetically.
-2. The payload `${userId}:${JSON.stringify(canonicalObj)}` is encoded using UTF-8.
-3. Native Web Crypto calculates the SHA-256 digest:
-   $$\text{Hash} = \operatorname{SHA-256}(U_{id} \mathbin{\Vert} \text{Canonical}(A))$$
-4. The output is formatted as `sha256-<64-char-hex>`.
-5. Database insertion uses `ON CONFLICT (user_id, idempotency_key) DO NOTHING RETURNING id`.
-6. If an assessment with the identical hash already exists, its existing primary key is returned, preserving idempotent consistency without raising runtime exceptions.
+**Properties:**
+- **Race-Condition Immune**: Concurrency is handled entirely at the PostgreSQL transaction level using the partial unique index.
+- **Deduplication Output**: `(xmax <> 0)` is `true` when conflict occurs and the row is updated; `false` when a new row is inserted.
+- **Security**: Defined as `SECURITY DEFINER` and granted to `authenticated` and `service_role`.
 
 ---
 
-## 5. Automated Test Coverage
+## 4. Verification & Testing Distinction
 
-The database client interfaces, services, and offline fallbacks are validated through the automated Vitest test suite (`112 passing tests`):
-
-- **Auth Service**: `src/test/supabaseBackend.test.ts` (Validates signup, login, session recovery, guest-mode fallbacks).
-- **Assessment Persistence & Idempotency**: `src/test/backendCorrections.test.ts` (Validates SHA-256 idempotency handling, duplicate suppression, and partial failure detection).
-- **Application Status Constraints**: `src/test/backendCorrections.test.ts` (Validates that only the 8 standardized statuses are sent to the database).
-- **Household Members Service**: `src/test/supabaseBackend.test.ts` (Validates CRUD operations for family members).
-- **Scheme Search & Caching**: `src/test/schemeSearch.test.ts` and `src/test/schemeValidation.test.ts` (Validates statutory schemes and fallback behavior).
-
----
-
-## 6. Execution Verification
-
-The consolidation script `supabase/full_schema_setup.sql` has been formatted and audited. It is prepared for immediate deployment in the Supabase Dashboard SQL Editor, completing the backend activation for SAHAYAK Phase 5.2.
+- **Local Vitest Suite**: All 119 tests pass cleanly (`npm test`).
+- **Production Build**: Clean build with zero TypeScript errors (`tsc -b && vite build`).
+- **Live Supabase Cloud**: Currently pending manual execution of `supabase/full_schema_setup.sql` in the Supabase Dashboard SQL Editor by the project owner. Queries to the live project currently return `PGRST205` (indicating missing tables in schema cache), which is handled and reported accurately.

@@ -180,7 +180,7 @@ export const AiAssistantDrawer: React.FC = () => {
           <button
             type="button"
             onClick={handleToggleVoice}
-            className={`p-3 rounded-full transition-all active:scale-95 ${
+            className={`p-3 rounded-full transition-all active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0 ${
               isListening
                 ? 'bg-red-600 text-white ring-4 ring-red-200'
                 : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 hover:bg-amber-200'
@@ -196,13 +196,13 @@ export const AiAssistantDrawer: React.FC = () => {
             onChange={(e) => setInputQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend(inputQuery)}
             placeholder={t('aiPlaceholder', 'Ask anything about government schemes...')}
-            className="flex-1 px-4 py-2.5 text-xs sm:text-sm bg-slate-100 dark:bg-slate-800 border-0 rounded-full text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="flex-1 px-4 py-2.5 text-base sm:text-sm bg-slate-100 dark:bg-slate-800 border-0 rounded-full text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 min-h-[44px]"
           />
           <button
             type="button"
             onClick={() => handleSend(inputQuery)}
             disabled={!inputQuery.trim()}
-            className="p-3 rounded-full bg-brand-navy-900 dark:bg-sky-600 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-brand-navy-800 transition-colors"
+            className="p-3 rounded-full bg-brand-navy-900 dark:bg-sky-600 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-brand-navy-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0"
             aria-label="Send message"
           >
             <Send className="w-4 h-4" />

@@ -9,18 +9,18 @@ export const lifeEventsData: LifeEvent[] = [
     descriptionKey: "lifeEvent_farming_desc"
   },
   {
-    id: "women_child",
-    iconName: "HeartPulse",
-    schemeCount: 8,
-    titleKey: "lifeEvent_women_child",
-    descriptionKey: "lifeEvent_women_child_desc"
-  },
-  {
     id: "health_elder",
-    iconName: "ShieldAlert",
+    iconName: "HeartPulse",
     schemeCount: 11,
     titleKey: "lifeEvent_health_elder",
     descriptionKey: "lifeEvent_health_elder_desc"
+  },
+  {
+    id: "women_child",
+    iconName: "ShieldAlert",
+    schemeCount: 8,
+    titleKey: "lifeEvent_women_child",
+    descriptionKey: "lifeEvent_women_child_desc"
   },
   {
     id: "education_youth",

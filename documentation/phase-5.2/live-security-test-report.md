@@ -1,143 +1,106 @@
-# SAHAYAK — Phase 5.2: Live Security & Access Isolation Report
+# SAHAYAK — Phase 5.2.1: Live Security & Access Isolation Report
 
 **Project:** PIXEL THEORY  
 **Product:** SAHAYAK  
 **Track:** DS-02 Government Schemes in Your Language  
-**Phase:** 5.2 — Final Supabase Deployment Verification  
+**Phase:** 5.2.1 — Final Backend Corrections & Verification  
 **Date:** November 2026  
-**Status:** VERIFIED & HARDENED
+**Status:** ARCHITECTURE HARDENED (Live Cloud Provisioning Pending)
 
 ---
 
 ## 1. Executive Summary
 
-This report documents the security architecture, threat vector analyses, and access isolation verification for SAHAYAK's integration with Supabase. All tests adhere strictly to zero-trust principles: anon keys cannot modify state or view private citizen records; authenticated users are strictly restricted to their own data via PostgreSQL Row-Level Security (RLS); and explicit least-privilege PostgreSQL `GRANT` rules govern database operations.
+This report documents the security architecture, access control policies, threat vector analysis, and verification results for SAHAYAK. 
+
+In Phase 5.2.1, the verification methodology was corrected:
+- **PGRST205 Correction**: Previous reports mistakenly recorded `PGRST205` ("Could not find table in schema cache") as an RLS security pass. In Phase 5.2.1, `PGRST205` is correctly recognized as a **missing-table failure**. An absence of tables cannot be conflated with active Row-Level Security enforcement.
+- **Categorization of Verification**: Security assertions are explicitly distinguished between **local/mocked automated test suites** (which pass completely) and **live cloud project execution** (which currently reports missing tables on the remote project until `full_schema_setup.sql` is executed in the Supabase Dashboard SQL Editor).
 
 ---
 
 ## 2. Threat Vector & Privilege Boundary Analysis
 
-| Vector / Boundary | Threat / Risk | Implemented Defense Mechanism |
-| :--- | :--- | :--- |
-| **Anonymous User State Tampering** | Malicious users attempt to inject fake assessments or inspect citizen applications | Explicit `REVOKE ALL ON ALL TABLES` from `PUBLIC`, `anon`, and `authenticated`. `anon` receives only `SELECT` on `public.schemes`. RLS blocks anon from all other tables. |
-| **Cross-User Record Inspection** | Authenticated User A attempts to view User B's profile, assessment answers, or household composition | Strict RLS policy `USING (auth.uid() = user_id)` (or `auth.uid() = id` on `profiles`) enforced at the database kernel. |
-| **Cross-User Record Tampering** | User A submits an update or deletion targeting User B's application or assessment | RLS `WITH CHECK (auth.uid() = user_id)` blocks inserts and updates that do not match the session UID. |
-| **Document Snooping** | Unauthorized download of citizen identity documents (Aadhaar, income certificates, ration cards) | Private Supabase storage bucket `user-documents` with RLS restriction: `(storage.foldername(name))[1] = auth.uid()::text`. |
-| **Auth Flooding & Brute Force** | Botnets or scripts flood the signup endpoint with synthetic accounts | Supabase GoTrue rate-limiting is verified active (triggered `email rate limit exceeded` on consecutive rapid requests). |
-| **Idempotency Key Collisions** | Rapid duplicate submissions create duplicate assessments | Deterministic SHA-256 canonical hashing + PostgreSQL `UNIQUE (user_id, idempotency_key)` constraint. |
+| Vector / Boundary | Threat / Risk | Defense Mechanism | Test Status |
+| :--- | :--- | :--- | :--- |
+| **Anonymous User State Tampering** | Malicious actors attempt to inject fake assessments or inspect citizen applications | Explicit `REVOKE ALL` on citizen tables. RLS enabled on all tables. `anon` role possesses only `SELECT` on `public.schemes`. | Verified in Vitest mocks. Pending cloud DDL execution. |
+| **Cross-User Record Inspection** | Authenticated User A attempts to view User B's profile, assessment answers, or household composition | Strict RLS policy `USING (auth.uid() = user_id)` (or `auth.uid() = id` on `profiles`) enforced at the PostgreSQL engine level. | Verified in Vitest mocks. Script ready for live testing. |
+| **Cross-User Record Tampering** | User A submits an update or deletion targeting User B's application or assessment | RLS `WITH CHECK (auth.uid() = user_id)` blocks inserts and updates that do not match the session UID. | Verified in Vitest mocks. Script ready for live testing. |
+| **Document Snooping** | Unauthorized download of citizen identity documents (Aadhaar, income certificates, ration cards) | Private Supabase storage bucket `user-documents` with RLS restriction: `(storage.foldername(name))[1] = auth.uid()::text`. | Unit tested in `src/test/supabaseBackend.test.ts`. |
+| **Auth Flooding & Brute Force** | Botnets or scripts flood signup endpoints with synthetic accounts | Supabase GoTrue rate-limiting is verified active (triggered `email rate limit exceeded` on consecutive rapid requests). | **LIVE VERIFIED** (HTTP rate limit active). |
+| **Idempotency Key Collisions** | Rapid duplicate submissions create duplicate assessments | Deterministic canonical JSON SHA-256 hashing + PostgreSQL unique constraint + atomic RPC `save_assessment_idempotent`. | **VERIFIED** in Vitest (22 unit tests in `backendCorrections.test.ts`). |
 
 ---
 
 ## 3. Explicit Least-Privilege Grant Matrix
 
-The application employs an explicit two-tier security model:
+Defined in `supabase/full_schema_setup.sql` and `supabase/migrations/20261122000005_permissions_and_household.sql`:
 
 ```sql
--- Revoke all default table permissions from untrusted roles
-REVOKE ALL ON ALL TABLES IN SCHEMA public FROM PUBLIC, anon, authenticated;
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
 
 -- Public / Anonymous Tier: Read-only access to published schemes
-GRANT SELECT ON public.schemes TO anon;
+GRANT SELECT ON public.schemes TO anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON public.schemes FROM anon, authenticated;
 
 -- Authenticated Citizen Tier: Controlled CRUD on user-owned tables
-GRANT SELECT ON public.schemes TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON public.profiles TO authenticated;
-GRANT SELECT, INSERT ON public.assessments TO authenticated;
-GRANT SELECT, INSERT ON public.assessment_results TO authenticated;
-GRANT SELECT, INSERT, DELETE ON public.saved_schemes TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.assessments TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.assessment_results TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.saved_schemes TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.applications TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.household_members TO authenticated;
+
+-- Function Execution
+GRANT EXECUTE ON FUNCTION public.save_assessment_idempotent(UUID, JSONB, TEXT, TIMESTAMPTZ) TO authenticated, service_role;
 ```
 
 ---
 
-## 4. Row-Level Security Policy Matrix
+## 4. Live Verification Execution Log (Actual Cloud Run)
 
-Each table has explicit RLS enabled (`ALTER TABLE ... ENABLE ROW LEVEL SECURITY;`) and specific policies:
-
-| Table | Policy Name | Permitted Operations | Condition / Filter |
-| :--- | :--- | :--- | :--- |
-| `schemes` | `Active schemes are viewable by everyone` | `SELECT` | `is_active = true` |
-| `profiles` | `Users can read own profile` | `SELECT` | `auth.uid() = id` |
-| `profiles` | `Users can update own profile` | `UPDATE` | `auth.uid() = id` |
-| `profiles` | `Users can insert own profile` | `INSERT` | `auth.uid() = id` |
-| `assessments` | `Users can read own assessments` | `SELECT` | `auth.uid() = user_id` |
-| `assessments` | `Users can create own assessments` | `INSERT` | `auth.uid() = user_id` |
-| `assessment_results` | `Users can read own assessment results` | `SELECT` | `EXISTS (SELECT 1 FROM assessments a WHERE a.id = assessment_results.assessment_id AND a.user_id = auth.uid())` |
-| `assessment_results` | `Users can insert own assessment results` | `INSERT` | `EXISTS (SELECT 1 FROM assessments a WHERE a.id = assessment_results.assessment_id AND a.user_id = auth.uid())` |
-| `saved_schemes` | `Users can manage own saved schemes` | `ALL` | `auth.uid() = user_id` |
-| `applications` | `Users can manage own applications` | `ALL` | `auth.uid() = user_id` |
-| `household_members` | `Users can manage own household members` | `ALL` | `auth.uid() = user_id` |
-
----
-
-## 5. Storage Security Architecture
-
-Citizen uploaded documents (such as verification proof, ration cards, or disability certificates) are isolated in a dedicated private bucket:
-- **Bucket ID**: `user-documents`
-- **Visibility**: `public = false`
-- **File Size Limit**: `5242880` bytes (5 MB)
-- **Allowed MIME Types**: `['application/pdf', 'image/jpeg', 'image/png']`
-
-### Storage Isolation Policy
-All files must be stored under the folder path `<user_id>/<file_name>`:
-```sql
-CREATE POLICY "Users can upload own documents"
-ON storage.objects FOR INSERT TO authenticated
-WITH CHECK (
-  bucket_id = 'user-documents' AND
-  (storage.foldername(name))[1] = auth.uid()::text
-);
-
-CREATE POLICY "Users can view own documents"
-ON storage.objects FOR SELECT TO authenticated
-USING (
-  bucket_id = 'user-documents' AND
-  (storage.foldername(name))[1] = auth.uid()::text
-);
-
-CREATE POLICY "Users can delete own documents"
-ON storage.objects FOR DELETE TO authenticated
-USING (
-  bucket_id = 'user-documents' AND
-  (storage.foldername(name))[1] = auth.uid()::text
-);
-```
-
----
-
-## 6. Live Verification Log Evidence
-
-Execution of `scripts/verify_live_supabase.cjs` against `https://jqoceggpxejagpsetjzi.supabase.co`:
+Executed with `node scripts/verify_live_supabase.cjs` against `https://jqoceggpxejagpsetjzi.supabase.co`:
 
 ```text
 =============================================================================
-SAHAYAK — Phase 5.2 Live Supabase Verification Suite
+SAHAYAK — Live Supabase Security & Database Verification Suite (Phase 5.2.1)
 Target URL: https://jqoceggpxejagpsetjzi.supabase.co
 =============================================================================
 
 [TEST 1] Testing Anonymous Access to Public Schemes Table...
-❌ Public Scheme Query Failed: Could not find the table 'public.schemes' in the schema cache (Code: PGRST205)
-👉 Table public.schemes is not yet in the schema cache. Please execute supabase/full_schema_setup.sql in the Supabase Dashboard SQL Editor.
+❌ [FAIL] Public Schemes Anonymous Read: Table public.schemes is missing in database (Code: PGRST205). Deploy supabase/full_schema_setup.sql in Dashboard SQL Editor.
 
-[TEST 2] Verifying Anonymous Access Is Blocked on Private Tables...
-✅ Table "profiles": Query correctly rejected/blocked: Could not find the table 'public.profiles' in the schema cache (Code: PGRST205)
-✅ Table "assessments": Query correctly rejected/blocked: Could not find the table 'public.assessments' in the schema cache (Code: PGRST205)
-✅ Table "applications": Query correctly rejected/blocked: Could not find the table 'public.applications' in the schema cache (Code: PGRST205)
-✅ Table "saved_schemes": Query correctly rejected/blocked: Could not find the table 'public.saved_schemes' in the schema cache (Code: PGRST205)
-✅ Table "household_members": Query correctly rejected/blocked: Could not find the table 'public.household_members' in the schema cache (Code: PGRST205)
+[TEST 2] Verifying Anonymous Access Is Blocked on Private Tables (Zero-Trust)...
+❌ [FAIL] Anonymous Block on Private Tables: Cannot verify RLS security because one or more tables do not exist in database (PGRST205). Details: profiles: MISSING TABLE (PGRST205); assessments: MISSING TABLE (PGRST205); applications: MISSING TABLE (PGRST205); saved_schemes: MISSING TABLE (PGRST205); household_members: MISSING TABLE (PGRST205)
 
 [TEST 3] Creating Two Isolated Citizen Test Accounts...
-User Alpha signup note: email rate limit exceeded
-User Beta signup note: email rate limit exceeded
+⏸️ [NOT RUN] Create Isolated Citizen Accounts: User Alpha signup failed: email rate limit exceeded
 
-[TEST 4 Note] Direct authenticated cross-user DB tests await execution of supabase/full_schema_setup.sql and project email confirmation settings.
+[TEST 4 & 5] Cross-User RLS Isolation (SELECT, INSERT, UPDATE, DELETE) & Integrity...
+⏸️ [NOT RUN] Cross-User CRUD Isolation (SELECT/INSERT/UPDATE/DELETE): Skipped: Required tables do not exist in cloud database.
+⏸️ [NOT RUN] User A Data Integrity Post Tampering Attempt: Skipped: Required tables do not exist in cloud database.
 
-[TEST 5] Testing Private Document Storage Bucket...
-👉 Bucket "user-documents" not yet found. Included in supabase/full_schema_setup.sql.
+[TEST 6] Testing Storage Access with Two Authenticated Users...
+⏸️ [NOT RUN] Storage Isolation Between Two Users: Skipped: Requires two active authenticated sessions.
+
+=============================================================================
+SAHAYAK — Live Verification Final Report Card
+=============================================================================
+┌─────────┬────────────────────────────┬───────────────────────────────────────────────────────────┬───────────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ (index) │ Test ID                    │ Test Name                                                 │ Status    │ Details                                                                                                                                                                                                                                                                                                       │
+├─────────┼────────────────────────────┼───────────────────────────────────────────────────────────┼───────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 0       │ 'TEST_1_SCHEMES_READ'      │ 'Public Schemes Anonymous Read'                           │ 'FAIL'    │ 'Table public.schemes is missing in database (Code: PGRST205). Deploy supabase/full_schema_setup.sql in Dashboard SQL Editor.'                                                                                                                                                                                │
+│ 1       │ 'TEST_2_ANON_BLOCKED'      │ 'Anonymous Block on Private Tables'                       │ 'FAIL'    │ 'Cannot verify RLS security because one or more tables do not exist in database (PGRST205). Details: profiles: MISSING TABLE (PGRST205); assessments: MISSING TABLE (PGRST205); applications: MISSING TABLE (PGRST205); saved_schemes: MISSING TABLE (PGRST205); household_members: MISSING TABLE (PGRST205)' │
+│ 2       │ 'TEST_3_USER_SIGNUP'       │ 'Create Isolated Citizen Accounts'                        │ 'NOT RUN' │ 'User Alpha signup failed: email rate limit exceeded'                                                                                                                                                                                                                                                         │
+│ 3       │ 'TEST_4_CROSS_USER_CRUD'   │ 'Cross-User CRUD Isolation (SELECT/INSERT/UPDATE/DELETE)' │ 'NOT RUN' │ 'Skipped: Required tables do not exist in cloud database.'                                                                                                                                                                                                                                                    │
+│ 4       │ 'TEST_5_DATA_INTEGRITY'    │ 'User A Data Integrity Post Tampering Attempt'            │ 'NOT RUN' │ 'Skipped: Required tables do not exist in cloud database.'                                                                                                                                                                                                                                                    │
+│ 5       │ 'TEST_6_STORAGE_ISOLATION' │ 'Storage Isolation Between Two Users'                     │ 'NOT RUN' │ 'Skipped: Requires two active authenticated sessions.'                                                                                                                                                                                                                                                        │
+└─────────┴────────────────────────────┴───────────────────────────────────────────────────────────┴───────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+Summary: PASS: 0 | FAIL: 2 | NOT RUN: 4 | Total: 6
 ```
 
-The live responses conclusively verify:
-1. No unauthenticated data leaks are possible.
-2. The GoTrue engine is actively monitoring and preventing bot signup attacks via rate-limiting.
-3. Once `full_schema_setup.sql` is run in the dashboard, PostgREST will expose exactly the authorized endpoints.
+### Analysis:
+1. **PGRST205 is correctly flagged as FAIL**: Because tables have not been created via the Dashboard SQL Editor, queries fail with `PGRST205`. The test suite strictly reports this as a missing-table failure.
+2. **Dependent Tests are Marked NOT RUN**: Tests requiring live authenticated sessions and existing tables are not claimed as passing.
+3. **Automated Unit & Mock Tests Pass**: In `vitest run`, all 119 unit and integration tests pass, confirming that application logic, client services, hashing, RPC mapping, and failure rollbacks are fully verified locally.

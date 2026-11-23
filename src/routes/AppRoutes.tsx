@@ -36,6 +36,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="/documents" element={<DocumentChecklistScreen />} />
         <Route path="/guidance/:id" element={<ApplicationGuidanceScreen />} />
         <Route path="/csc-slip/:tokenId" element={<CscSlipScreen />} />
+        <Route path="/csc-slip" element={<CscSlipScreen />} />
         <Route path="/tracker" element={<ApplicationTrackerScreen />} />
         <Route path="/tracker/:id" element={<ApplicationTrackerDetailScreen />} />
         <Route path="/profile" element={<UserProfileScreen />} />

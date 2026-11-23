@@ -18,12 +18,14 @@ export const storageBucketName = getEnvVar('VITE_SUPABASE_STORAGE_BUCKET') || 'u
  * Validates whether Supabase credentials have been configured with real project values.
  */
 export const isSupabaseConfigured = (): boolean => {
+  const url = getEnvVar('VITE_SUPABASE_URL') || supabaseUrl;
+  const anonKey = getEnvVar('VITE_SUPABASE_ANON_KEY') || supabaseAnonKey;
   return (
-    Boolean(supabaseUrl) &&
-    Boolean(supabaseAnonKey) &&
-    !supabaseUrl.includes('your-project.supabase.co') &&
-    !supabaseAnonKey.includes('your-anon-key-here') &&
-    supabaseUrl.startsWith('https://')
+    Boolean(url) &&
+    Boolean(anonKey) &&
+    !url.includes('your-project.supabase.co') &&
+    !anonKey.includes('your-anon-key-here') &&
+    url.startsWith('https://')
   );
 };
 

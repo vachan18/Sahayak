@@ -25,6 +25,12 @@ export const LanguageSelectionScreen: React.FC = () => {
       greeting: 'नमस्ते! मैं आपकी सरकारी योजनाओं में सहायता करूँगा.'
     },
     {
+      code: 'bn',
+      label: 'বাংলা',
+      sublabel: 'Bengali (West Bengal / Pan-India)',
+      greeting: 'নমস্কার! সরকারি প্রকল্প জানতে এটি আপনার সহায়ক।'
+    },
+    {
       code: 'en',
       label: 'English',
       sublabel: 'English (Pan-India)',

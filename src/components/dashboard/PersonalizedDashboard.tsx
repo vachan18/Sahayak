@@ -200,7 +200,7 @@ export const PersonalizedDashboard: React.FC = () => {
                   <div className="flex items-center gap-2.5">
                     <Sparkles className="w-4 h-4 text-amber-600 flex-shrink-0" />
                     <span>
-                      Currently showing sovereign schemes based on household profile attributes. Complete the 2-minute check to establish verified eligibility.
+                      {t('recommendedBannerNotice', 'Currently showing schemes based on your profile. Complete the 2-minute check to establish verified eligibility.')}
                     </span>
                   </div>
                   <Link

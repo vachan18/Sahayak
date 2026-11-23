@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Globe, Bell, Sun, Moon, Volume2, User, ChevronLeft, LogIn, SunMedium } from 'lucide-react';
+import { Globe, Bell, Sun, Moon, Volume2, User, ChevronLeft, LogIn, SunMedium, Bot } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useTranslation } from '../../hooks/useTranslation';
 
@@ -25,7 +25,10 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
     toggleAudioAssistance,
     notifications,
     authUser,
-    openAuthModal
+    openAuthModal,
+    setAiDrawerOpen,
+    isAiFabDismissed,
+    setAiFabDismissed
   } = useAppStore();
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -166,6 +169,23 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
           >
             <SunMedium className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
           </button>
+
+          {/* Restorable Voice Assistant Icon (when FAB is dismissed) */}
+          {isAiFabDismissed && (
+            <button
+              type="button"
+              onClick={() => {
+                setAiDrawerOpen(true);
+                setAiFabDismissed(false);
+              }}
+              title={t('aiAssistantTitle', 'Sahayak Sathi') + ' (Voice)'}
+              className="p-1.5 sm:p-2 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700 hover:bg-amber-100 transition-all active:scale-90 min-w-[34px] sm:min-w-[38px] xl:min-w-[44px] min-h-[34px] sm:min-h-[38px] xl:min-h-[44px] flex items-center justify-center relative"
+              aria-label={t('openAssistantAria', 'Open Sahayak Sathi voice assistant')}
+            >
+              <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500" />
+            </button>
+          )}
 
           {/* Notifications Center */}
           <button

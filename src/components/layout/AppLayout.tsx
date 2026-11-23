@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Bot } from 'lucide-react';
+import { Bot, X } from 'lucide-react';
 import { TopUtilityBar } from '../navigation/TopUtilityBar';
 import { BottomNavBar } from '../navigation/BottomNavBar';
 import { LanguageModal } from '../navigation/LanguageModal';
@@ -8,13 +8,19 @@ import { NotificationsModal } from '../navigation/NotificationsModal';
 import { AiAssistantDrawer } from '../feedback/AiAssistantDrawer';
 import { AuthModal } from '../auth/AuthModal';
 import { useAppStore } from '../../store/useAppStore';
+import { useTranslation } from '../../hooks/useTranslation';
 import { PageMotion } from '../common/PageMotion';
 
 export const AppLayout: React.FC = () => {
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
+  const { t } = useTranslation();
   const { 
-    setAiDrawerOpen, 
+    setAiDrawerOpen,
+    isAiDrawerOpen,
+    isAiFabDismissed,
+    setAiFabDismissed,
+    compareSchemeIds,
     isAuthModalOpen, 
     authModalView, 
     closeAuthModal,
@@ -24,6 +30,9 @@ export const AppLayout: React.FC = () => {
   useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
+
+  // Adjust FAB position when comparison tray is active (tray occupies bottom on mobile)
+  const isComparisonActive = compareSchemeIds.length > 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
@@ -41,20 +50,47 @@ export const AppLayout: React.FC = () => {
       </main>
 
       {/* Floating Action Button (FAB) for Sahayak Sathi AI Voice Assistant */}
-      <aside aria-label="Voice assistance trigger">
-        <button
-          type="button"
-          onClick={() => setAiDrawerOpen(true)}
-          className="fixed bottom-20 lg:bottom-8 right-3.5 sm:right-6 md:right-8 z-30 flex items-center gap-2 py-3 px-4 rounded-full bg-amber-500 hover:bg-amber-600 text-white font-bold shadow-crisp-lg active:scale-95 transition-all group min-h-[48px]"
-          aria-label="Open Sahayak Sathi voice assistant"
+      {!isAiFabDismissed && !isAiDrawerOpen && (
+        <aside 
+          aria-label={t('aiAssistantTitle', 'Sahayak Sathi')}
+          className={`fixed z-30 flex items-center transition-all duration-300 right-3.5 sm:right-6 md:right-8 ${
+            isComparisonActive 
+              ? 'bottom-[calc(8.5rem+env(safe-area-inset-bottom,0px))] lg:bottom-24' 
+              : 'bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] lg:bottom-8'
+          }`}
         >
-          <div className="relative flex-shrink-0">
-            <Bot className="w-5 h-5" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-amber-500 animate-pulse" />
+          <div className="relative group flex items-center">
+            <button
+              type="button"
+              onClick={() => setAiDrawerOpen(true)}
+              className="flex items-center gap-2 p-3 sm:py-3 sm:px-4 rounded-full bg-amber-500 hover:bg-amber-600 text-white font-bold shadow-crisp-lg active:scale-95 transition-all min-h-[48px] min-w-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
+              aria-label={t('openAssistantAria', 'Open Sahayak Sathi voice assistant')}
+            >
+              <div className="relative flex-shrink-0">
+                <Bot className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-amber-500 animate-pulse" />
+              </div>
+              <span className="hidden sm:inline text-xs sm:text-sm tracking-tight pr-1">
+                {t('aiAssistantTitle', 'Sahayak Sathi')} (Voice)
+              </span>
+            </button>
+
+            {/* Quick Dismiss Trigger to prevent blocking content on touch screens */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setAiFabDismissed(true);
+              }}
+              className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity ml-1.5 p-1 rounded-full bg-slate-800/80 text-white hover:bg-slate-900 shadow-sm min-h-[28px] min-w-[28px] flex items-center justify-center text-xs"
+              title={t('dismissAssistantAria', 'Hide voice assistant button')}
+              aria-label={t('dismissAssistantAria', 'Hide voice assistant button')}
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <span className="text-xs sm:text-sm tracking-tight pr-1">ಸಹಾಯಕ ಸಾಥಿ (Voice)</span>
-        </button>
-      </aside>
+        </aside>
+      )}
 
       {/* Mobile Persistent Bottom Navigation Dock */}
       <BottomNavBar />

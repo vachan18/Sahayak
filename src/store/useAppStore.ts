@@ -87,9 +87,11 @@ interface AppState {
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
 
-  // Active AI Drawer
+  // Active AI Drawer & Floating Trigger
   isAiDrawerOpen: boolean;
   setAiDrawerOpen: (open: boolean) => void;
+  isAiFabDismissed: boolean;
+  setAiFabDismissed: (dismissed: boolean) => void;
 
   // Document Verification States
   documentUploadStatus: Record<string, 'verified' | 'uploaded' | 'pending' | 'rejected'>;
@@ -384,6 +386,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   isAiDrawerOpen: false,
   setAiDrawerOpen: (open) => set({ isAiDrawerOpen: open }),
+  isAiFabDismissed: false,
+  setAiFabDismissed: (dismissed) => set({ isAiFabDismissed: dismissed }),
 
   documentUploadStatus: {
     aadhaar: "verified",

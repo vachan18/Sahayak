@@ -161,6 +161,8 @@ export interface EligibilityQuestion {
   }[];
 }
 
+export type QuestionOption = NonNullable<EligibilityQuestion['options']>[number];
+
 export type EligibilityAssessmentStatus = 
   | 'not_assessed'
   | 'in_progress'

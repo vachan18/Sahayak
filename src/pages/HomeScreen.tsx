@@ -182,7 +182,7 @@ export const HomeScreen: React.FC = () => {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded bg-amber-200 text-amber-900 dark:bg-amber-900 dark:text-amber-200">
-                  SEASONAL NOTICE
+                  {t('seasonalNotice', 'SEASONAL NOTICE')}
                 </span>
                 <h2 id="seasonal-alert-heading" className="text-sm sm:text-base md:text-lg font-bold text-amber-950 dark:text-amber-100">
                   {t('urgentNoticeTitle', 'Seasonal Welfare Alert')}
@@ -199,7 +199,7 @@ export const HomeScreen: React.FC = () => {
               to="/schemes/pm-kisan"
               className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all shadow-sm min-h-[48px]"
             >
-              <span>View Scheme Details</span>
+              <span>{t('viewSchemeDetails', 'View Scheme Details')}</span>
               <ArrowRight className="w-4 h-4 flex-shrink-0" />
             </Link>
           </div>
@@ -270,7 +270,7 @@ export const HomeScreen: React.FC = () => {
               to="/eligibility"
               className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-crisp-sm flex-shrink-0 active:scale-95 transition-all min-h-[48px]"
             >
-              <span>Review Assessment</span>
+              <span>{t('reviewAnswers', 'Review Assessment')}</span>
               <ArrowRight className="w-5 h-5 flex-shrink-0" />
             </Link>
           </div>
@@ -287,20 +287,20 @@ export const HomeScreen: React.FC = () => {
                   {t('resultsSubtitle', 'Check Your Household\'s Welfare Entitlement')}
                 </h2>
                 <p className="text-xs sm:text-sm lg:text-base text-slate-300 leading-relaxed">
-                  Answer 4 plain-language questions. Sahayak provides preliminary guidance on cash transfers, subsidies, and free health covers under verified Union & Karnataka state scheme rules.
+                  {t('homeAssessmentIntro', 'Answer 4 plain-language questions. Sahayak provides preliminary guidance on cash transfers, subsidies, and free health covers under verified Union & Karnataka state scheme rules.')}
                 </p>
                 <div className="flex flex-wrap items-center gap-3 sm:gap-4 pt-1 text-xs text-slate-300">
                   <span className="flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span>Self-assessment only (No docs required)</span>
+                    <span>{t('selfAssessmentOnly', 'Self-assessment only (No docs required)')}</span>
                   </span>
                   <span className="flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span>Statutory fee schedules</span>
+                    <span>{t('statutoryFeeNotice', 'Statutory fee schedules')}</span>
                   </span>
                   <span className="flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span>Assisted CSC slip generation</span>
+                    <span>{t('assistedCscNotice', 'Assisted CSC slip generation')}</span>
                   </span>
                 </div>
               </div>

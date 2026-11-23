@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Mic, ArrowLeft, CheckCircle2, RotateCcw, Volume2, 
@@ -6,6 +6,7 @@ import {
   XCircle, AlertTriangle, HelpCircle, Loader2, StopCircle
 } from 'lucide-react';
 import { eligibilityQuestions } from '../data/questions';
+import { QuestionOption } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
 import { speakVernacularText, stopSpeech } from '../utils/audioSpeech';
@@ -19,7 +20,24 @@ export const EligibilityCheckerScreen: React.FC = () => {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [voiceState, setVoiceState] = useState<VoiceState>('idle');
+  const [voiceMode, setVoiceMode] = useState<'live' | 'simulation'>('simulation');
   const [recognizedTranscript, setRecognizedTranscript] = useState<string>('');
+  const [candidateOption, setCandidateOption] = useState<QuestionOption | null>(null);
+  const [voiceErrorMsg, setVoiceErrorMsg] = useState<string>('');
+
+  const recognitionRef = useRef<any>(null);
+  const simulationTimerRef = useRef<any>(null);
+
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch {}
+      }
+      if (simulationTimerRef.current) {
+        clearTimeout(simulationTimerRef.current);
+      }
+    };
+  }, []);
 
   // Dynamically filter active questions based on conditional criteria
   const activeQuestions = useMemo(() => {
@@ -90,69 +108,195 @@ export const EligibilityCheckerScreen: React.FC = () => {
     speakVernacularText(`${questionText}${helpText}`, language);
   };
 
-  // Voice Interaction Logic with discrete states
+  const speechLangMap: Record<string, string> = {
+    kn: 'kn-IN',
+    hi: 'hi-IN',
+    bn: 'bn-IN',
+    en: 'en-IN',
+  };
+
+  const findBestOptionMatch = (transcript: string): QuestionOption | null => {
+    const clean = transcript.toLowerCase().trim();
+    if (!question.options || question.options.length === 0) return null;
+
+    // 1. Direct match on labelKey or sublabelKey text
+    for (const opt of question.options) {
+      const label = (opt.labelKey || '').toLowerCase();
+      const sublabel = (opt.sublabelKey || '').toLowerCase();
+      if (clean.includes(label) || (label.length > 2 && label.includes(clean))) return opt;
+      if (sublabel && (clean.includes(sublabel) || (sublabel.length > 2 && sublabel.includes(clean)))) return opt;
+    }
+
+    // 2. Vernacular keyword intent matching per field
+    if (question.fieldName === 'occupation') {
+      if (clean.includes('farmer') || clean.includes('farm') || clean.includes('ರೈತ') || clean.includes('ಕೃಷಿ') || clean.includes('किसान') || clean.includes('কৃষক')) {
+        return question.options.find(o => o.value === 'farmer') || question.options[0];
+      }
+      if (clean.includes('vendor') || clean.includes('street') || clean.includes('ವ್ಯಾಪಾರ') || clean.includes('दुकान') || clean.includes('ব্যবসায়ী')) {
+        return question.options.find(o => o.value === 'street_vendor') || question.options[1];
+      }
+      if (clean.includes('artisan') || clean.includes('weaver') || clean.includes('ಕುಶಲಕರ್ಮಿ') || clean.includes('ಕಾರಿಗರ') || clean.includes('ਕਾਰੀಗರ್') || clean.includes('শিল্পী')) {
+        return question.options.find(o => o.value === 'artisan') || question.options[2];
+      }
+      if (clean.includes('student') || clean.includes('college') || clean.includes('ವಿದ್ಯಾರ್ಥಿ') || clean.includes('छात्र') || clean.includes('ছাত্র')) {
+        return question.options.find(o => o.value === 'student') || question.options[3];
+      }
+    }
+
+    // Boolean questions
+    if (clean.includes('yes') || clean.includes('ಹೌದು') || clean.includes('हाँ') || clean.includes('হ্যাঁ') || clean.includes('true')) {
+      return question.options.find(o => o.value === true) || question.options[0];
+    }
+    if (clean.includes('no') || clean.includes('ಇಲ್ಲ') || clean.includes('नहीं') || clean.includes('না') || clean.includes('false')) {
+      return question.options.find(o => o.value === false) || question.options[1];
+    }
+
+    // Numeric scales
+    if (question.fieldName === 'landholdingAcres') {
+      if (clean.includes('small') || clean.includes('ಕಡಿಮೆ') || clean.includes('कम') || clean.includes('কম') || clean.includes('1') || clean.includes('2')) {
+        return question.options.find(o => o.value === 1.5) || question.options[0];
+      }
+    }
+    if (question.fieldName === 'annualIncome') {
+      if (clean.includes('bpl') || clean.includes('low') || clean.includes('ಕಡಿಮೆ') || clean.includes('कम') || clean.includes('লাখ')) {
+        return question.options.find(o => o.value === 100000) || question.options[0];
+      }
+    }
+
+    return question.options[0];
+  };
+
+  // Voice Interaction Logic with browser speech recognition & explicit user confirmation
   const handleStartVoice = () => {
     stopSpeech();
-    setVoiceState('listening');
+    setVoiceErrorMsg('');
+    setCandidateOption(null);
     setRecognizedTranscript('');
 
-    // Simulate natural speech detection window (2 seconds of audio listening)
-    setTimeout(() => {
+    const SpeechRecognitionClass = 
+      typeof window !== 'undefined' 
+        ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) 
+        : null;
+
+    if (SpeechRecognitionClass) {
+      try {
+        setVoiceMode('live');
+        setVoiceState('listening');
+
+        const recognition = new SpeechRecognitionClass();
+        recognitionRef.current = recognition;
+        recognition.lang = speechLangMap[language] || 'en-IN';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        recognition.onstart = () => {
+          setVoiceState('listening');
+        };
+
+        recognition.onresult = (event: any) => {
+          const transcript = event.results?.[0]?.[0]?.transcript || '';
+          setRecognizedTranscript(transcript);
+          setVoiceState('processing');
+
+          setTimeout(() => {
+            const matched = findBestOptionMatch(transcript);
+            if (matched) {
+              setCandidateOption(matched);
+              setVoiceState('recognized');
+            } else {
+              setVoiceErrorMsg(t('voiceFallbackNote', 'Could not match speech to an option. Please select an option above.'));
+              setVoiceState('error');
+            }
+          }, 500);
+        };
+
+        recognition.onerror = (event: any) => {
+          if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+            setVoiceErrorMsg(t('voicePermDenied', 'Microphone permission was denied. Please tap an option above.'));
+          } else {
+            setVoiceErrorMsg(t('voiceFallbackNote', 'Could not detect clear speech. Please tap an option above.'));
+          }
+          setVoiceState('error');
+        };
+
+        recognition.onend = () => {
+          // If ended without transcript and still listening, transition to error
+          if (voiceState === 'listening' && !candidateOption) {
+            setVoiceState('idle');
+          }
+        };
+
+        recognition.start();
+        return;
+      } catch {
+        // Fall back to prototype simulation mode if speech recognition fails to initialize
+      }
+    }
+
+    // Fallback: Clear, honest demo simulation with REQUIRED manual confirmation
+    setVoiceMode('simulation');
+    setVoiceState('listening');
+
+    simulationTimerRef.current = setTimeout(() => {
       setVoiceState('processing');
 
-      // Processing & intent mapping (1 second)
-      setTimeout(() => {
-        // Find best matching option based on current field
-        let matchedOption = question.options?.[0];
+      simulationTimerRef.current = setTimeout(() => {
+        let simulatedText = '';
+        let matchedOption: QuestionOption | null = null;
 
         if (question.fieldName === 'occupation') {
-          matchedOption = question.options?.find(o => o.value === 'farmer') || question.options?.[0];
-          setRecognizedTranscript(language === 'kn' ? 'ರೈತ (Farmer)' : language === 'hi' ? 'किसान (Farmer)' : 'Farmer / Cultivator');
+          matchedOption = question.options?.find(o => o.value === 'farmer') || question.options?.[0] || null;
+          simulatedText = language === 'kn' ? 'ನಾನು ಸಣ್ಣ ರೈತ (Farmer)' : language === 'hi' ? 'मैं किसान हूँ (Farmer)' : language === 'bn' ? 'আমি কৃষক (Farmer)' : 'I am a farmer';
         } else if (question.fieldName === 'landholdingAcres') {
-          matchedOption = question.options?.find(o => o.value === 1.5) || question.options?.[0];
-          setRecognizedTranscript(language === 'kn' ? '2.5 ಎಕರೆಗಿಂತ ಕಡಿಮೆ' : 'Small Farmer (1.5 Acres)');
+          matchedOption = question.options?.find(o => o.value === 1.5) || question.options?.[0] || null;
+          simulatedText = language === 'kn' ? '2.5 ಎಕರೆಗಿಂತ ಕಡಿಮೆ ಜಮೀನು' : language === 'hi' ? '2.5 एकड़ से कम' : 'Small holding under 2.5 acres';
         } else if (question.fieldName === 'gender') {
-          matchedOption = question.options?.find(o => o.value === 'female') || question.options?.[0];
-          setRecognizedTranscript(language === 'kn' ? 'ಮಹಿಳೆ (Female)' : 'Female (ಮಹಿಳೆ)');
-        } else if (question.fieldName === 'isPregnantOrLactating') {
-          matchedOption = question.options?.find(o => o.value === true) || question.options?.[0];
-          setRecognizedTranscript(language === 'kn' ? 'ಹೌದು, ಗರ್ಭಿಣಿ' : 'Yes, Pregnant/Nursing');
-        } else if (question.fieldName === 'isUrbanStreetVendor') {
-          matchedOption = question.options?.find(o => o.value === true) || question.options?.[0];
-          setRecognizedTranscript(language === 'kn' ? 'ಹೌದು, ನಗರ ವ್ಯಾಪಾರಿ' : 'Yes, Urban Vendor');
-        } else if (question.fieldName === 'isEnrolledStudent') {
-          matchedOption = question.options?.find(o => o.value === true) || question.options?.[0];
-          setRecognizedTranscript(language === 'kn' ? 'ಹೌದು, ಕಾಲೇಜು ವಿದ್ಯಾರ್ಥಿ' : 'Yes, College Student');
+          matchedOption = question.options?.find(o => o.value === 'female') || question.options?.[0] || null;
+          simulatedText = language === 'kn' ? 'ಮಹಿಳೆ (Female)' : language === 'hi' ? 'महिला (Female)' : 'Female';
         } else if (question.fieldName === 'annualIncome') {
-          matchedOption = question.options?.find(o => o.value === 100000) || question.options?.[0];
-          setRecognizedTranscript(language === 'kn' ? '₹1.2 ಲಕ್ಷಕ್ಕಿಂತ ಕಡಿಮೆ (BPL)' : 'Below ₹1.2 Lakh (BPL)');
+          matchedOption = question.options?.find(o => o.value === 100000) || question.options?.[0] || null;
+          simulatedText = language === 'kn' ? '₹1.2 ಲಕ್ಷಕ್ಕಿಂತ ಕಡಿಮೆ ಆದಾಯ' : language === 'hi' ? '₹1.2 लाख से कम' : 'Income below ₹1.2 Lakh';
         } else if (question.fieldName === 'isGovtEmployee') {
-          matchedOption = question.options?.find(o => o.value === false) || question.options?.[0];
-          setRecognizedTranscript(language === 'kn' ? 'ಯಾರೂ ಇಲ್ಲ (No Govt Job)' : 'No Government Job');
+          matchedOption = question.options?.find(o => o.value === false) || question.options?.[0] || null;
+          simulatedText = language === 'kn' ? 'ಯಾರೂ ಇಲ್ಲ (No Govt Job)' : language === 'hi' ? 'कोई सरकारी नौकरी नहीं' : 'No Government Job';
+        } else {
+          matchedOption = question.options?.[0] || null;
+          simulatedText = language === 'kn' ? 'ಹೌದು, ಅನ್ವಯಿಸುತ್ತದೆ' : language === 'hi' ? 'हाँ, यह सही है' : 'Yes, this applies';
         }
 
         if (matchedOption) {
+          setRecognizedTranscript(simulatedText);
+          setCandidateOption(matchedOption);
           setVoiceState('recognized');
-          // Speak audible confirmation
+          // Audible read of candidate answer for low-literacy clarity
           speakVernacularText(matchedOption.labelKey.split('(')[0], language);
-
-          // Select option after brief visual recognition display
-          setTimeout(() => {
-            setVoiceState('idle');
-            handleSelectOption(matchedOption);
-          }, 800);
+          // NOTE: We DO NOT auto-select or auto-advance. Explicit citizen confirmation is required!
         } else {
           setVoiceState('error');
-          setTimeout(() => setVoiceState('idle'), 2500);
         }
-      }, 1000);
-    }, 2000);
+      }, 900);
+    }, 1800);
+  };
+
+  const handleConfirmVoiceAnswer = () => {
+    if (candidateOption) {
+      handleSelectOption(candidateOption);
+      handleCancelVoice();
+    }
   };
 
   const handleCancelVoice = () => {
     stopSpeech();
+    if (recognitionRef.current) {
+      try { recognitionRef.current.abort(); } catch {}
+    }
+    if (simulationTimerRef.current) {
+      clearTimeout(simulationTimerRef.current);
+    }
     setVoiceState('idle');
     setRecognizedTranscript('');
+    setCandidateOption(null);
+    setVoiceErrorMsg('');
   };
 
   return (
@@ -363,19 +507,88 @@ export const EligibilityCheckerScreen: React.FC = () => {
             </div>
           )}
 
-          {/* State 4: RECOGNIZED (Speech matched) */}
-          {voiceState === 'recognized' && (
-            <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center gap-2 text-emerald-900 dark:text-emerald-200 text-xs sm:text-sm font-bold animate-fadeIn">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-              <span>{t('voiceRecognized', 'Voice Recognized')}: <strong>{recognizedTranscript}</strong></span>
+          {/* State 4: RECOGNIZED / CONFIRMATION REQUIRED (Integrity Safeguard: Never auto-advances) */}
+          {voiceState === 'recognized' && candidateOption && (
+            <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border-2 border-emerald-400 dark:border-emerald-700 space-y-3.5 animate-fadeIn shadow-crisp-sm">
+              <div className="flex items-center justify-between gap-2 border-b border-emerald-200 dark:border-emerald-800 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm font-extrabold text-emerald-900 dark:text-emerald-100">
+                    {t('voiceRecognized', 'Voice Input Detected')}
+                  </span>
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                  voiceMode === 'live' 
+                    ? 'bg-emerald-200 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-200' 
+                    : 'bg-amber-200 text-amber-900 dark:bg-amber-900 dark:text-amber-200'
+                }`}>
+                  {voiceMode === 'live' ? t('voiceLiveBadge', 'Live Speech') : t('voiceSimBadge', 'Demo Simulation')}
+                </span>
+              </div>
+
+              {/* Spoken Transcript display */}
+              <div className="text-xs text-emerald-800 dark:text-emerald-300 bg-white/80 dark:bg-slate-900/80 p-2.5 rounded-xl border border-emerald-200/80 dark:border-emerald-800/80 space-y-1">
+                <div className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider">
+                  {t('voiceSpokenText', 'Spoken Words')}:
+                </div>
+                <div className="font-semibold text-slate-900 dark:text-white text-sm italic">
+                  "{recognizedTranscript}"
+                </div>
+              </div>
+
+              {/* Matched Option Preview */}
+              <div className="text-xs text-emerald-900 dark:text-emerald-100 font-medium">
+                {t('voiceManualPrompt', 'Review and confirm this answer before proceeding:')}
+                <div className="mt-1.5 p-3 rounded-xl bg-emerald-100/70 dark:bg-emerald-900/50 border border-emerald-300 dark:border-emerald-700 font-bold text-sm text-emerald-950 dark:text-emerald-100 flex items-center justify-between">
+                  <span>{candidateOption.labelKey}</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                </div>
+              </div>
+
+              {/* Explicit User Confirmation Actions */}
+              <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleConfirmVoiceAnswer}
+                  className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-sm min-h-[48px] focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/50 active:scale-95"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{t('voiceConfirmBtn', 'Confirm This Answer')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCancelVoice}
+                  className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-600 text-xs font-semibold transition-all min-h-[44px]"
+                >
+                  {t('voiceCancel', 'Cancel / Change')}
+                </button>
+              </div>
             </div>
           )}
 
-          {/* State 5: ERROR (Speech not detected) */}
+          {/* State 5: ERROR (Speech not detected or permission error) */}
           {voiceState === 'error' && (
-            <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium text-center space-y-1 animate-fadeIn">
-              <div className="font-bold text-amber-700 dark:text-amber-400">
-                {t('voiceFallbackNote', 'Could not detect clear speech. Please tap an option above.')}
+            <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-xs space-y-2 animate-fadeIn">
+              <div className="font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                <span>{voiceErrorMsg || t('voiceFallbackNote', 'Could not detect clear speech. Please tap an option above.')}</span>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleStartVoice}
+                  className="px-3 py-1.5 rounded-lg bg-amber-600 text-white font-bold text-xs hover:bg-amber-700 transition-colors"
+                >
+                  {t('voiceTryAgain', 'Try Again')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelVoice}
+                  className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 font-medium text-xs hover:bg-slate-100 transition-colors"
+                >
+                  {t('voiceCancel', 'Dismiss')}
+                </button>
               </div>
             </div>
           )}

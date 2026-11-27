@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Search, Mic, AlertTriangle, ArrowRight, Sparkles, 
@@ -12,12 +12,81 @@ import { SchemeCard } from '../components/schemes/SchemeCard';
 import { AudioListenButton } from '../components/feedback/AudioListenButton';
 import { TrustAndClarityBanner } from '../components/dashboard/TrustAndClarityBanner';
 import { PersonalizedDashboard } from '../components/dashboard/PersonalizedDashboard';
+import { speakVernacularText } from '../utils/audioSpeech';
+
+const WELCOME_SESSION_KEY = 'sahayak_welcome_spoken';
+
+function getWelcomeGreeting(lang: string): string {
+  switch (lang) {
+    case 'kn':
+      return 'ಸಹಾಯಕಕ್ಕೆ ಸ್ವಾಗತ';
+    case 'hi':
+      return 'सहायक में आपका स्वागत है';
+    case 'bn':
+      return 'সহায়কে স্বাগতম';
+    default:
+      return 'Welcome to Sahayak';
+  }
+}
 
 export const HomeScreen: React.FC = () => {
   const navigate = useNavigate();
   const { t, language } = useTranslation();
-  const { schemes, setAiDrawerOpen, eligibilityAnswers } = useAppStore();
+  const { schemes, setAiDrawerOpen, eligibilityAnswers, isAudioAssistanceEnabled } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    if (!isAudioAssistanceEnabled) return;
+    try {
+      if (window.sessionStorage.getItem(WELCOME_SESSION_KEY) === '1') return;
+    } catch {
+      // Ignore storage access errors
+    }
+
+    let retryAttached = false;
+    const greeting = getWelcomeGreeting(language);
+
+    const markSpoken = () => {
+      try {
+        window.sessionStorage.setItem(WELCOME_SESSION_KEY, '1');
+      } catch {
+        // Ignore storage access errors
+      }
+    };
+
+    const handleFirstInteraction = () => {
+      markSpoken();
+      speakVernacularText(greeting, language);
+      window.removeEventListener('pointerdown', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+    };
+
+    const attachInteractionFallback = () => {
+      if (retryAttached) return;
+      retryAttached = true;
+      window.addEventListener('pointerdown', handleFirstInteraction, { once: true });
+      window.addEventListener('keydown', handleFirstInteraction, { once: true });
+    };
+
+    markSpoken();
+    speakVernacularText(greeting, language, undefined, (reason) => {
+      if (reason === 'not-allowed') {
+        try {
+          window.sessionStorage.removeItem(WELCOME_SESSION_KEY);
+        } catch {
+          // Ignore
+        }
+        attachInteractionFallback();
+      }
+    });
+
+    return () => {
+      if (retryAttached) {
+        window.removeEventListener('pointerdown', handleFirstInteraction);
+        window.removeEventListener('keydown', handleFirstInteraction);
+      }
+    };
+  }, [isAudioAssistanceEnabled, language]);
 
   const featuredSchemes = schemes.slice(0, 3);
 

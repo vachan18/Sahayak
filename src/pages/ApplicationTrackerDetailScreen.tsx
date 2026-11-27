@@ -73,7 +73,7 @@ export const ApplicationTrackerDetailScreen: React.FC = () => {
           </div>
 
           <div className="self-start sm:self-center flex-shrink-0">
-            <AudioListenButton textToSpeak={app.audioStatusNarrationKey} label="Listen to Status (ಸ್ಥಿತಿ ಕೇಳಿ)" />
+            <AudioListenButton textToSpeak={app.audioStatusNarrationKey} />
           </div>
         </div>
 

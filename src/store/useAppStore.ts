@@ -4,6 +4,7 @@ import {
   SupportedLanguage, UserProfile, ApplicationRecord, NotificationItem, 
   Scheme, EligibilityAssessmentStatus, AssessmentHistoryRecord 
 } from '../types';
+import { SUPPORTED_LANGUAGES } from '../data/languages';
 import { verifiedSchemes } from '../data/schemes';
 import { mockApplicationsData } from '../data/mockApplications';
 import { mockNotificationsData } from '../data/mockNotifications';
@@ -94,7 +95,6 @@ interface AppState {
   setDocumentStatus: (docId: string, status: 'verified' | 'uploaded' | 'pending' | 'rejected') => void;
 }
 
-const SUPPORTED_LANGUAGES: SupportedLanguage[] = ['en', 'kn', 'hi', 'bn'];
 const LANGUAGE_STORAGE_KEY = 'sahayak_language';
 
 function getInitialLanguage(): SupportedLanguage {

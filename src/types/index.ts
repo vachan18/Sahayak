@@ -1,4 +1,15 @@
-export type SupportedLanguage = 'en' | 'kn' | 'hi' | 'bn';
+export type SupportedLanguage =
+  | 'en'
+  | 'kn'
+  | 'hi'
+  | 'bn'
+  | 'ta'
+  | 'te'
+  | 'mr'
+  | 'ml'
+  | 'gu'
+  | 'or'
+  | 'pa';
 
 export type LifeEventId = 
   | 'farming'

@@ -13,20 +13,13 @@ import { AudioListenButton } from '../components/feedback/AudioListenButton';
 import { TrustAndClarityBanner } from '../components/dashboard/TrustAndClarityBanner';
 import { PersonalizedDashboard } from '../components/dashboard/PersonalizedDashboard';
 import { speakVernacularText } from '../utils/audioSpeech';
+import { LANGUAGE_META } from '../data/languages';
+import { SupportedLanguage } from '../types';
 
 const WELCOME_SESSION_KEY = 'sahayak_welcome_spoken';
 
-function getWelcomeGreeting(lang: string): string {
-  switch (lang) {
-    case 'kn':
-      return 'ಸಹಾಯಕಕ್ಕೆ ಸ್ವಾಗತ';
-    case 'hi':
-      return 'सहायक में आपका स्वागत है';
-    case 'bn':
-      return 'সহায়কে স্বাগতম';
-    default:
-      return 'Welcome to Sahayak';
-  }
+function getWelcomeGreeting(lang: SupportedLanguage): string {
+  return (LANGUAGE_META[lang] || LANGUAGE_META.en).welcomeVoice;
 }
 
 export const HomeScreen: React.FC = () => {
@@ -168,7 +161,7 @@ export const HomeScreen: React.FC = () => {
             {/* Quick-Search Category Suggestion Pills */}
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-1 text-xs text-slate-300">
               <span className="font-semibold text-amber-300 w-full sm:w-auto">
-                {language === 'kn' ? 'ಜನಪ್ರಿಯ:' : language === 'hi' ? 'लोकप्रिय:' : language === 'bn' ? 'জনপ্রিয়:' : 'Popular:'}
+                {(LANGUAGE_META[language] || LANGUAGE_META.en).popularLabel}
               </span>
               {[
                 { query: 'PM-KISAN', label: language === 'kn' ? 'PM-KISAN (ಕೃಷಿ)' : language === 'hi' ? 'PM-KISAN (कृषि)' : language === 'bn' ? 'PM-KISAN (কৃষি)' : 'PM-KISAN (Farming)' },

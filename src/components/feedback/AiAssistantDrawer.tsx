@@ -4,18 +4,10 @@ import { useAppStore } from '../../store/useAppStore';
 import { useTranslation } from '../../hooks/useTranslation';
 import { speakVernacularText } from '../../utils/audioSpeech';
 import { SupportedLanguage } from '../../types';
+import { LANGUAGE_META } from '../../data/languages';
 
 function getInitialGreeting(language: SupportedLanguage): string {
-  switch (language) {
-    case 'kn':
-      return "ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ ಸಹಾಯಕ ಸಾಥಿ. ಸರ್ಕಾರಿ ಯೋಜನೆಗಳ ಬಗ್ಗೆ ನಿಮ್ಮ ಯಾವುದೇ ಪ್ರಶ್ನೆಯನ್ನು ಇಲ್ಲಿ ಕೇಳಬಹುದು.";
-    case 'hi':
-      return "नमस्ते! मैं आपका सहायक साथी हूँ. सरकारी योजनाओं के बारे में अपनी भाषा में कोई भी सवाल पूछें.";
-    case 'bn':
-      return "নমস্কার! আমি আপনার সহায়ক সাথী। সরকারি প্রকল্প সম্পর্কে আপনার যেকোনো প্রশ্ন এখানে জিজ্ঞাসা করুন।";
-    default:
-      return "Hello! I am your Sahayak Sathi. Ask any question about government schemes in your mother tongue.";
-  }
+  return (LANGUAGE_META[language] || LANGUAGE_META.en).aiGreeting;
 }
 
 export const AiAssistantDrawer: React.FC = () => {
@@ -98,13 +90,7 @@ export const AiAssistantDrawer: React.FC = () => {
       // Simulate speech input in vernacular
       setTimeout(() => {
         setIsListening(false);
-        const sampleQuery = language === 'kn' 
-          ? "ಪಿಎಂ ಕಿಸಾನ್ ಕಂತು ಯಾವಾಗ ಬರುತ್ತದೆ?"
-          : language === 'hi'
-          ? "पीएम किसान की अगली किस्त कब आएगी?"
-          : language === 'bn'
-          ? "পিএম কিসানের পরবর্তী কিস্তি কবে আসবে?"
-          : "When will my next scheme payment arrive?";
+        const sampleQuery = (LANGUAGE_META[language] || LANGUAGE_META.en).aiVoiceSample;
         setInputQuery(sampleQuery);
         handleSend(sampleQuery);
       }, 2500);

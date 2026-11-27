@@ -32,7 +32,7 @@ export const CscSlipScreen: React.FC = () => {
   };
 
   return (
-    <div className="max-w-xl mx-auto py-4 sm:py-6 animate-fadeIn pb-16 px-2 sm:px-0">
+    <div className="max-w-3xl mx-auto py-2 sm:py-4 animate-fadeIn">
       {/* Top back navigation (hidden on print) */}
       <div className="no-print flex items-center justify-between mb-4">
         <Link

@@ -100,7 +100,7 @@ export const DocumentChecklistScreen: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-5xl mx-auto py-4 sm:py-6 animate-fadeIn pb-20 px-2 sm:px-0">
+    <div className="space-y-6 sm:space-y-8 max-w-5xl mx-auto py-2 sm:py-4 animate-fadeIn">
       {/* Top Banner & Scheme Selector */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-crisp-sm space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">

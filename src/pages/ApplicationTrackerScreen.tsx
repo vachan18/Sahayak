@@ -20,8 +20,14 @@ export const ApplicationTrackerScreen: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<'all' | 'in_progress' | 'action_needed' | 'completed'>('all');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
-  const handleCopy = (token: string) => {
-    navigator.clipboard.writeText(token);
+  const handleCopy = async (token: string) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(token);
+      }
+    } catch {
+      // Clipboard API may be restricted in non-HTTPS or embedded contexts
+    }
     setCopiedToken(token);
     setTimeout(() => setCopiedToken(null), 2000);
   };
@@ -40,7 +46,7 @@ export const ApplicationTrackerScreen: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-5xl mx-auto py-4 sm:py-6 animate-fadeIn pb-20 px-2 sm:px-0">
+    <div className="space-y-6 sm:space-y-8 max-w-5xl mx-auto py-2 sm:py-4 animate-fadeIn">
       {/* Header & Quick Support Trigger */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -82,7 +88,7 @@ export const ApplicationTrackerScreen: React.FC = () => {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
         <button
           type="button"
           onClick={() => setFilterStatus('all')}
@@ -353,7 +359,7 @@ export const ApplicationTrackerScreen: React.FC = () => {
 
                 {/* Action Buttons */}
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     {app.isDelayed && (
                       <button
                         type="button"
@@ -378,7 +384,7 @@ export const ApplicationTrackerScreen: React.FC = () => {
                     to={`/tracker/${app.id}`}
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-navy-900 dark:text-sky-400 hover:underline min-h-[44px] py-1"
                   >
-                    <span>View Timeline & Add Notes (ಸಂಪೂರ್ಣ ವಿವರ)</span>
+                    <span>{t('viewDetailsBtn', 'View Details')}</span>
                     <ChevronRight className="w-4 h-4" />
                   </Link>
                 </div>

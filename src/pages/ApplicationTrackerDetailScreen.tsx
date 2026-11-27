@@ -6,11 +6,13 @@ import {
   Check, UserCheck, CreditCard, Printer 
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { useTranslation } from '../hooks/useTranslation';
 import { AudioListenButton } from '../components/feedback/AudioListenButton';
 import { GrievanceGuidanceModal } from '../components/support/GrievanceGuidanceModal';
 
 export const ApplicationTrackerDetailScreen: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { t } = useTranslation();
   const { applications, addCitizenNote, resolveMissingDocument } = useAppStore();
 
   const [isGrievanceOpen, setIsGrievanceOpen] = useState(false);
@@ -40,7 +42,7 @@ export const ApplicationTrackerDetailScreen: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto py-4 sm:py-6 animate-fadeIn pb-20 px-2 sm:px-0">
+    <div className="space-y-6 max-w-3xl mx-auto py-2 sm:py-4 animate-fadeIn">
       {/* Top back navigation */}
       <div>
         <Link
@@ -48,7 +50,7 @@ export const ApplicationTrackerDetailScreen: React.FC = () => {
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors py-1"
         >
           <ChevronLeft className="w-4 h-4" />
-          <span>Back to Applications List</span>
+          <span>{t('navBack', 'Back')}</span>
         </Link>
       </div>
 

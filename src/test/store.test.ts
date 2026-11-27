@@ -3,9 +3,10 @@ import { useAppStore } from '../store/useAppStore';
 
 describe('Global App State (Zustand Store)', () => {
   beforeEach(() => {
+    window.localStorage.removeItem('sahayak_language');
     // Reset store state where appropriate
     useAppStore.setState({
-      language: 'kn',
+      language: 'en',
       isDarkMode: false,
       isAudioAssistanceEnabled: true,
       savedSchemeIds: ['pm-kisan', 'pm-jay'],
@@ -14,7 +15,14 @@ describe('Global App State (Zustand Store)', () => {
     });
   });
 
-  it('updates language and updates documentElement lang', () => {
+  it('defaults to English and persists selected language to documentElement and localStorage', () => {
+    expect(useAppStore.getState().language).toBe('en');
+
+    useAppStore.getState().setLanguage('kn');
+    expect(useAppStore.getState().language).toBe('kn');
+    expect(document.documentElement.lang).toBe('kn');
+    expect(window.localStorage.getItem('sahayak_language')).toBe('kn');
+
     useAppStore.getState().setLanguage('hi');
     expect(useAppStore.getState().language).toBe('hi');
     expect(document.documentElement.lang).toBe('hi');

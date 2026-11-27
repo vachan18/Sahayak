@@ -94,6 +94,21 @@ interface AppState {
   setDocumentStatus: (docId: string, status: 'verified' | 'uploaded' | 'pending' | 'rejected') => void;
 }
 
+const SUPPORTED_LANGUAGES: SupportedLanguage[] = ['en', 'kn', 'hi', 'bn'];
+const LANGUAGE_STORAGE_KEY = 'sahayak_language';
+
+function getInitialLanguage(): SupportedLanguage {
+  try {
+    const saved = typeof window !== 'undefined' ? window.localStorage.getItem(LANGUAGE_STORAGE_KEY) : null;
+    if (saved && SUPPORTED_LANGUAGES.includes(saved as SupportedLanguage)) {
+      return saved as SupportedLanguage;
+    }
+  } catch {
+    // Ignore storage access errors in restricted environments
+  }
+  return 'en';
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
   // Authentication & Guest Mode
   authUser: null,
@@ -155,9 +170,16 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   // Defaults
-  language: 'kn', // Defaults to Kannada for Bharat-first demonstration
+  language: getInitialLanguage(),
   dialect: 'standard',
   setLanguage: (lang) => {
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+      }
+    } catch {
+      // Ignore storage access errors
+    }
     document.documentElement.lang = lang;
     set({ language: lang });
   },

@@ -6,6 +6,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { speakVernacularText } from '../utils/audioSpeech';
 import { LANGUAGE_LIST, LANGUAGE_META } from '../data/languages';
 import { SupportedLanguage } from '../types';
+import { SahayakLogo } from '../components/common/SahayakLogo';
 
 export const WelcomeScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -22,9 +23,7 @@ export const WelcomeScreen: React.FC = () => {
     <div className="min-h-[85vh] flex flex-col justify-between items-center max-w-md mx-auto py-6 text-center animate-fadeIn">
       {/* Top Sovereign Seal */}
       <div className="w-full flex flex-col items-center pt-4">
-        <div className="w-16 h-16 rounded-2xl bg-brand-navy-900 dark:bg-sky-500 text-white flex items-center justify-center font-bold text-3xl shadow-crisp-md ring-4 ring-amber-500/40 mb-4">
-          <span>ಸ</span>
-        </div>
+        <SahayakLogo className="w-16 h-16 mb-4 drop-shadow-sm" />
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 mb-2">
           <Shield className="w-3.5 h-3.5 text-emerald-600" />
           <span>{t('statutoryBadge', 'Official Sovereign Welfare Information Guide • Statutory Citizen Portal')}</span>

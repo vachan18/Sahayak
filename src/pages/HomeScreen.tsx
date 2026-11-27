@@ -61,17 +61,28 @@ export const HomeScreen: React.FC = () => {
       window.addEventListener('keydown', handleFirstInteraction, { once: true });
     };
 
-    markSpoken();
-    speakVernacularText(greeting, language, undefined, (reason) => {
-      if (reason === 'not-allowed') {
-        try {
-          window.sessionStorage.removeItem(WELCOME_SESSION_KEY);
-        } catch {
-          // Ignore
+    // Chrome deprecates speechSynthesis.speak() without user activation.
+    // Speak immediately only if the user has already interacted; otherwise wait for first gesture.
+    const hasUserActivation =
+      typeof navigator !== 'undefined' &&
+      'userActivation' in navigator &&
+      Boolean((navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive);
+
+    if (hasUserActivation) {
+      markSpoken();
+      speakVernacularText(greeting, language, undefined, (reason) => {
+        if (reason === 'not-allowed') {
+          try {
+            window.sessionStorage.removeItem(WELCOME_SESSION_KEY);
+          } catch {
+            // Ignore
+          }
+          attachInteractionFallback();
         }
-        attachInteractionFallback();
-      }
-    });
+      });
+    } else {
+      attachInteractionFallback();
+    }
 
     return () => {
       if (retryAttached) {

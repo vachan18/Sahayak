@@ -119,6 +119,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   closeAuthModal: () => set({ isAuthModalOpen: false }),
   initializeAuth: async () => {
     try {
+      const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+      const supabaseUrl = env?.VITE_SUPABASE_URL;
+      const supabaseKey = env?.VITE_SUPABASE_ANON_KEY;
+      if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('your-project')) {
+        return;
+      }
       const { getCurrentUser, onAuthStateChange } = await import('../services/authService');
       const user = await getCurrentUser();
       if (user) {

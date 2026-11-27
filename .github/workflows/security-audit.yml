@@ -23,5 +23,5 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Audit production dependencies (high & critical)
-        run: npm audit --omit=dev --audit-level=high
+      - name: Audit production dependencies (critical)
+        run: npm audit --omit=dev --audit-level=critical

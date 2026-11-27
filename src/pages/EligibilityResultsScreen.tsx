@@ -71,6 +71,8 @@ export const EligibilityResultsScreen: React.FC = () => {
         ? `ಪ್ರಾಥಮಿಕ ಮೌಲ್ಯಮಾಪನ ಪೂರ್ಣಗೊಂಡಿದೆ. ನಿಮ್ಮ ಕುಟುಂಬಕ್ಕೆ ವಾರ್ಷಿಕ ಸುಮಾರು ₹${assessment.totalAnnualCashBenefit.toLocaleString('en-IN')} ನಗದು ವರ್ಗಾವಣೆ ದೊರೆಯಬಹುದು.`
         : language === 'hi'
         ? `प्रारंभिक मूल्यांकन पूरा हुआ. आपके परिवार को प्रति वर्ष लगभग ₹${assessment.totalAnnualCashBenefit.toLocaleString('en-IN')} प्रत्यक्ष नकद हस्तांतरण मिल सकता है.`
+        : language === 'bn'
+        ? `প্রাথমিক মূল্যায়ন সম্পন্ন হয়েছে। আপনার পরিবার প্রতি বছর প্রায় ₹${assessment.totalAnnualCashBenefit.toLocaleString('en-IN')} সরাসরি নগদ সহায়তা পেতে পারে।`
         : `Preliminary assessment complete. Your household potentially qualifies for ₹${assessment.totalAnnualCashBenefit.toLocaleString('en-IN')} in direct annual cash transfers.`)
     : t('statusNotAssessed', 'Eligibility Status: Assessment Required');
 
@@ -78,60 +80,73 @@ export const EligibilityResultsScreen: React.FC = () => {
   const getInstallmentExplanation = (schemeId: string) => {
     switch (schemeId) {
       case 'pm-kisan':
-        return 'Paid in 3 equal installments of ₹2,000 every 4 months (April-July, August-November, December-March) directly via PFMS DBT.';
+        return t('installment_pm_kisan');
       case 'pm-jay':
-        return 'Cashless indemnity insurance cover up to ₹5,00,000 per family per year at empaneled hospitals. Pre-existing conditions covered from day 1.';
+        return t('installment_pm_jay');
       case 'pmmvy':
-        return 'Paid in 2 installments: ₹3,000 upon early registration + 1 Antenatal Checkup (ANC); ₹2,000 upon child birth registration and first vaccination cycle.';
+        return t('installment_pmmvy');
       case 'pm-svanidhi':
-        return 'Tranche 1: ₹10,000 working capital loan (1-year tenure); timely repayment unlocks Tranche 2 (₹20,000) and Tranche 3 (₹50,000) with 7% interest subsidy.';
+        return t('installment_pm_svanidhi');
       case 'post-matric-scholarship':
       case 'post-matric-scholarship-minority':
-        return '100% compulsory non-refundable fees reimbursed + monthly maintenance allowance (₹550 to ₹1,200/mo) credited across academic semesters.';
+        return t('installment_scholarship');
       case 'pm-kcc':
-        return 'Revolving crop credit limit up to ₹3,00,000 at 4% effective interest rate with prompt repayment incentive (2% subvention + 3% prompt rebate).';
+        return t('installment_pm_kcc');
       default:
-        return 'Statutory government welfare benefit distributed in accordance with official scheme operational guidelines.';
+        return t('installment_default');
     }
   };
 
   // Helper for next step recommendation
   const getNextActionRecommendation = (_schemeId: string, status: string) => {
     if (status === 'potentially_eligible') {
-      return 'Next Step: Inspect required documents checklist in Document Locker, or visit your nearest Grama One / CSC Kendra for biometric eKYC.';
+      return t('nextStepEligible');
     }
     if (status === 'additional_verification_required') {
-      return 'Next Step: Obtain or verify the missing revenue/caste documents listed below, then verify through DigiLocker or Seva Sindhu.';
+      return t('nextStepAdditional');
     }
-    return 'Next Step: Explore universal citizen schemes like Ayushman Bharat (70+ senior cover) or review alternative state assistance programs.';
+    return t('nextStepIneligible');
   };
 
   // Helper to extract evaluated conditions summary from citizen's answers
   const getEvaluatedConditionsSummary = (answers: AssessmentAnswers, scheme: Scheme) => {
     const list: string[] = [];
     if (answers.occupation) {
-      list.push(`Occupation: ${answers.occupation.replace('_', ' ').toUpperCase()}`);
+      const occMap: Record<string, string> = {
+        farmer: t('opt_farmer_label'),
+        street_vendor: t('opt_vendor_label'),
+        student: t('opt_student_label'),
+        daily_wage: t('opt_daily_wage_label'),
+        homemaker: t('opt_homemaker_label'),
+        artisan: t('opt_artisan_label'),
+      };
+      list.push(`${t('condOccupation')}: ${occMap[answers.occupation] || answers.occupation.replace('_', ' ')}`);
     }
     if (answers.landholdingAcres !== undefined) {
-      list.push(`Cultivable Land: ${answers.landholdingAcres} Acres`);
+      list.push(`${t('condLand')}: ${answers.landholdingAcres} ${t('condAcres')}`);
     }
     if (answers.gender) {
-      list.push(`Gender: ${answers.gender.toUpperCase()}`);
+      const genderMap: Record<string, string> = {
+        female: t('opt_female_label'),
+        male: t('opt_male_label'),
+        other: t('opt_other_label'),
+      };
+      list.push(`${t('condGender')}: ${genderMap[answers.gender] || answers.gender}`);
     }
     if (answers.annualIncome !== undefined) {
-      list.push(`Annual Income: ₹${answers.annualIncome.toLocaleString('en-IN')}`);
+      list.push(`${t('condIncome')}: ₹${answers.annualIncome.toLocaleString('en-IN')}`);
     }
     if (answers.isGovtEmployee !== undefined) {
-      list.push(`Govt Employment: ${answers.isGovtEmployee ? 'Yes' : 'None in Family'}`);
+      list.push(`${t('condGovtEmp')}: ${answers.isGovtEmployee ? t('condYes') : t('condNo')}`);
     }
     if (answers.isPregnantOrLactating !== undefined && scheme.id === 'pmmvy') {
-      list.push(`Maternity Status: ${answers.isPregnantOrLactating ? 'Pregnant/Nursing' : 'Not Pregnant'}`);
+      list.push(`${t('condMaternity')}: ${answers.isPregnantOrLactating ? t('condYes') : t('condNo')}`);
     }
     if (answers.isUrbanStreetVendor !== undefined && scheme.id === 'pm-svanidhi') {
-      list.push(`Urban Vending: ${answers.isUrbanStreetVendor ? 'Urban Vendor' : 'Non-Urban'}`);
+      list.push(`${t('condUrbanVending')}: ${answers.isUrbanStreetVendor ? t('condYes') : t('condNo')}`);
     }
     if (answers.isEnrolledStudent !== undefined && scheme.lifeEventId === 'education_youth') {
-      list.push(`Higher Education: ${answers.isEnrolledStudent ? 'Enrolled' : 'Not Enrolled'}`);
+      list.push(`${t('condHigherEd')}: ${answers.isEnrolledStudent ? t('condYes') : t('condNo')}`);
     }
     return list;
   };
@@ -217,12 +232,12 @@ export const EligibilityResultsScreen: React.FC = () => {
       </div>
 
       {/* Hero Header Card with Segregated Transparent Benefit Cockpit */}
-      <section className="bg-gradient-to-r from-brand-navy-950 via-brand-navy-900 to-slate-900 text-white rounded-3xl p-6 sm:p-8 lg:p-10 shadow-crisp-lg relative overflow-hidden flex flex-col gap-6">
+      <section className="bg-slate-900 bg-gradient-to-r from-slate-900 via-brand-navy-900 to-slate-900 text-white rounded-3xl p-6 sm:p-8 lg:p-10 shadow-crisp-lg relative overflow-hidden flex flex-col gap-6">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="max-w-2xl space-y-2">
             <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black bg-white/10 text-sky-200 border border-white/20">
               <Sparkles className="w-4 h-4 text-amber-300" />
-              <span>STATUTORY BENEFIT EVALUATION REPORT</span>
+              <span>{t('resultsCockpitTitle')}</span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight">
@@ -230,12 +245,12 @@ export const EligibilityResultsScreen: React.FC = () => {
             </h1>
 
             <p className="text-xs sm:text-sm lg:text-base text-slate-300 leading-relaxed">
-              Benefits are segregated into distinct transparent categories to clearly distinguish direct cash from healthcare coverage and credit facilities.
+              {t('resultsHeroDesc')}
             </p>
           </div>
 
           <div className="flex-shrink-0">
-            <AudioListenButton textToSpeak={celebrationVoiceText} label="Listen (ಕೇಳಿ)" size="lg" />
+            <AudioListenButton textToSpeak={celebrationVoiceText} label={t('listenInLanguage', 'Listen')} size="lg" />
           </div>
         </div>
 
@@ -245,13 +260,13 @@ export const EligibilityResultsScreen: React.FC = () => {
           <div className="bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/15">
             <div className="text-[11px] font-black text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
               <Landmark className="w-3.5 h-3.5" />
-              <span>Annual Cash DBT</span>
+              <span>{t('annualCashDbt')}</span>
             </div>
             <div className="text-2xl sm:text-3xl font-black text-white tabular-nums mt-1">
               ₹{assessment.categorizedBenefits.annualCashTransferTotal.toLocaleString('en-IN')}
             </div>
             <div className="text-[11px] text-slate-300 mt-1 font-medium">
-              Transferred directly to bank account via PFMS
+              {t('annualCashDbtDesc')}
             </div>
           </div>
 
@@ -259,7 +274,7 @@ export const EligibilityResultsScreen: React.FC = () => {
           <div className="bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/15">
             <div className="text-[11px] font-black text-sky-300 uppercase tracking-wider flex items-center gap-1.5">
               <HeartPulse className="w-3.5 h-3.5" />
-              <span>Hospital Health Cover</span>
+              <span>{t('hospitalHealthCover')}</span>
             </div>
             <div className="text-2xl sm:text-3xl font-black text-white tabular-nums mt-1">
               {assessment.categorizedBenefits.healthInsuranceCoverTotal > 0
@@ -267,7 +282,7 @@ export const EligibilityResultsScreen: React.FC = () => {
                 : '₹0'}
             </div>
             <div className="text-[11px] text-slate-300 mt-1 font-medium">
-              Cashless hospital treatment cap (Not a cash grant)
+              {t('hospitalHealthCoverDesc')}
             </div>
           </div>
 
@@ -275,7 +290,7 @@ export const EligibilityResultsScreen: React.FC = () => {
           <div className="bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/15">
             <div className="text-[11px] font-black text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
               <CreditCard className="w-3.5 h-3.5" />
-              <span>Subsidized Loan Limit</span>
+              <span>{t('subsidizedLoanLimit')}</span>
             </div>
             <div className="text-2xl sm:text-3xl font-black text-white tabular-nums mt-1">
               {assessment.categorizedBenefits.loanCreditFacilityTotal > 0
@@ -283,7 +298,7 @@ export const EligibilityResultsScreen: React.FC = () => {
                 : '₹0'}
             </div>
             <div className="text-[11px] text-slate-300 mt-1 font-medium">
-              Collateral-free credit limit (Repayable loan)
+              {t('subsidizedLoanLimitDesc')}
             </div>
           </div>
 
@@ -291,13 +306,13 @@ export const EligibilityResultsScreen: React.FC = () => {
           <div className="bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/15">
             <div className="text-[11px] font-black text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Grant / Scholarship</span>
+              <span>{t('grantScholarship')}</span>
             </div>
             <div className="text-2xl sm:text-3xl font-black text-white tabular-nums mt-1">
               ₹{(assessment.categorizedBenefits.oneTimeCashTotal + assessment.categorizedBenefits.subsidyTotal + (assessment.categorizedBenefits.scholarshipTotal || 0)).toLocaleString('en-IN')}
             </div>
             <div className="text-[11px] text-slate-300 mt-1 font-medium">
-              Maternity / college education allowance upon event
+              {t('grantScholarshipDesc')}
             </div>
           </div>
         </div>
@@ -315,10 +330,10 @@ export const EligibilityResultsScreen: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-            Detailed Scheme-by-Scheme Evaluation
+            {t('detailedEvaluationTitle')}
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Select a category below to review statutory qualifications, evaluated parameters, and next steps.
+            {t('detailedEvaluationDesc')}
           </p>
         </div>
 
@@ -364,7 +379,7 @@ export const EligibilityResultsScreen: React.FC = () => {
                 {t('likelyEligible', 'Likely Eligible')}
               </div>
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                Meets preliminary criteria
+                {t('tabMeetsCriteria')}
               </div>
             </div>
           </div>
@@ -396,7 +411,7 @@ export const EligibilityResultsScreen: React.FC = () => {
                 {t('needsMoreInfo', 'Needs More Information')}
               </div>
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                Requires document check
+                {t('tabRequiresDocCheck')}
               </div>
             </div>
           </div>
@@ -428,7 +443,7 @@ export const EligibilityResultsScreen: React.FC = () => {
                 {t('likelyNotEligible', 'Likely Not Eligible')}
               </div>
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                Criteria not satisfied
+                {t('tabCriteriaNotSatisfied')}
               </div>
             </div>
           </div>
@@ -473,7 +488,7 @@ export const EligibilityResultsScreen: React.FC = () => {
                     {/* Benefit Figure */}
                     <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800 text-right sm:text-right flex-shrink-0">
                       <div className="text-[10px] font-extrabold text-emerald-800 dark:text-emerald-400 uppercase">
-                        Benefit Entitlement
+                        {t('benefitEntitlementLabel')}
                       </div>
                       <div className="text-xl sm:text-2xl font-black text-emerald-950 dark:text-emerald-200 tabular-nums">
                         {formatSchemeBenefit(scheme, language, t)}
@@ -488,7 +503,7 @@ export const EligibilityResultsScreen: React.FC = () => {
                       <span>{t('whyMatches', 'Why You Qualify')}:</span>
                     </div>
                     <p className="leading-relaxed font-medium">
-                      {outcome?.satisfiedCriteria.join(' ') || 'All preliminary self-reported conditions are met.'}
+                      {outcome?.satisfiedCriteria.join(' ') || t('allConditionsMetFallback')}
                     </p>
                   </div>
 

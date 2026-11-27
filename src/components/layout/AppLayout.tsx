@@ -48,27 +48,27 @@ export const AppLayout: React.FC = () => {
       />
 
       {/* Main Viewport Container — Fluid Responsive Desktop Scaling */}
-      <main className="flex-1 layout-container pb-28 sm:pb-28 lg:pb-16 pt-3 sm:pt-6">
+      <main className="flex-1 layout-container pb-36 sm:pb-32 lg:pb-16 pt-3 sm:pt-6">
         <PageMotion>
           <Outlet />
         </PageMotion>
       </main>
 
-      {/* Floating Action Button (FAB) for Sahayak Sathi AI Voice Assistant */}
+      {/* Floating Action Button (FAB) for Sahayak Sathi AI Voice Assistant (Desktop only; mobile docks in BottomNavBar) */}
       {!isAiFabDismissed && !isAiDrawerOpen && (
         <aside 
           aria-label={t('aiAssistantTitle', 'Sahayak Sathi')}
-          className={`fixed z-30 flex items-center transition-all duration-300 right-3.5 sm:right-6 md:right-8 ${
+          className={`hidden lg:flex fixed z-30 items-center transition-all duration-300 right-6 md:right-8 ${
             needsElevatedFab
-              ? 'bottom-[calc(8.5rem+env(safe-area-inset-bottom,0px))] lg:bottom-24' 
-              : 'bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] lg:bottom-8'
+              ? 'bottom-24' 
+              : 'bottom-8'
           }`}
         >
           <div className="relative group flex items-center">
             <button
               type="button"
               onClick={() => setAiDrawerOpen(true)}
-              className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-crisp-lg active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
+              className="flex items-center justify-center w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-crisp-lg active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
               title={t('openAssistantAria', 'Open Sahayak Sathi voice assistant')}
               aria-label={t('openAssistantAria', 'Open Sahayak Sathi voice assistant')}
             >

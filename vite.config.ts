@@ -15,6 +15,9 @@ export default defineConfig({
     port: 3000,
   },
   build: {
+    target: 'es2020',
+    minify: 'esbuild',
+    cssMinify: 'esbuild',
     chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {

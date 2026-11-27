@@ -1,5 +1,8 @@
+import { eligibilityEn } from './eligibilityTranslations';
+
 export const westEastTranslations = {
   mr: {
+    ...eligibilityEn,
     appName: "सहायक",
     tagline: "तुमच्या भाषेत शासकीय योजना",
     statutoryBadge: "सार्वजनिक कल्याण माहिती मंच • नमुना आवृत्ती",
@@ -232,6 +235,7 @@ export const westEastTranslations = {
     homeAssessmentIntro: "४ सोप्या प्रश्नांची उत्तरे द्या. केंद्र आणि राज्य योजनांतर्गत प्राथमिक पात्रता मार्गदर्शन मिळवा.",
   },
   gu: {
+    ...eligibilityEn,
     appName: "સહાયક",
     tagline: "તમારી ભાષામાં સરકારી યોજનાઓ",
     statutoryBadge: "જાહેર કલ્યાણ માહિતી મંચ • નમૂના આવૃત્તિ",
@@ -464,6 +468,7 @@ export const westEastTranslations = {
     homeAssessmentIntro: "૪ સરળ પ્રશ્નોના જવાબ આપો. કેન્દ્ર અને રાજ્ય યોજનાઓ હેઠળ પ્રાથમિક પાત્રતા માર્ગદર્શન મેળવો.",
   },
   or: {
+    ...eligibilityEn,
     appName: "ସହାୟକ",
     tagline: "ଆପଣଙ୍କ ଭାଷାରେ ସରକାରୀ ଯୋଜନା",
     statutoryBadge: "ଜନ କଲ୍ୟାଣ ସୂଚନା ମଞ୍ଚ • ନମୁନା",
@@ -696,6 +701,7 @@ export const westEastTranslations = {
     homeAssessmentIntro: "୪ଟି ସହଜ ପ୍ରଶ୍ନର ଉତ୍ତର ଦିଅନ୍ତୁ। କେନ୍ଦ୍ର ଓ ରାଜ୍ୟ ଯୋଜନା ଅଧୀନରେ ପ୍ରାଥମିକ ମାର୍ଗଦର୍ଶନ ପାଆନ୍ତୁ।",
   },
   pa: {
+    ...eligibilityEn,
     appName: "ਸਹਾਇਕ",
     tagline: "ਤੁਹਾਡੀ ਭਾਸ਼ਾ ਵਿੱਚ ਸਰਕਾਰੀ ਯੋਜਨਾਵਾਂ",
     statutoryBadge: "ਜਨਤਕ ਭਲਾਈ ਜਾਣਕਾਰੀ ਪਲੇਟਫਾਰਮ • ਨਮੂਨਾ",

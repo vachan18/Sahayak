@@ -22,7 +22,7 @@ export const TrustAndClarityBanner: React.FC = () => {
                 {t('gazetteVerifiedBadge', 'Gazette Verified')}
               </span>
               <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-sky-100 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-700">
-                Sakala Act Standards
+                {t('officialSla', 'Statutory Time Limit')}
               </span>
             </div>
             <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mt-1">
@@ -40,7 +40,7 @@ export const TrustAndClarityBanner: React.FC = () => {
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all flex-shrink-0 min-h-[38px] active:scale-95"
           aria-expanded={isExpanded}
         >
-          <span>{isExpanded ? 'Hide Standards' : 'Read Trust Standards'}</span>
+          <span>{isExpanded ? t('navClose', 'Close') : t('viewDetailsBtn', 'View Details')}</span>
           {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
         </button>
       </div>
@@ -51,10 +51,10 @@ export const TrustAndClarityBanner: React.FC = () => {
           <div className="p-3.5 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1.5">
             <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
               <FileCheck2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Official Departmental Sources</span>
+              <span>{t('officialSourceTag', 'Official Ministry Source')}</span>
             </div>
             <p className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
-              Criteria and exclusions directly cite official gazettes from the Ministry of Agriculture, MoHFW, and Karnataka State Departments. No private third-party rules.
+              {t('statutoryNoticeDesc', 'Preliminary citizen guidance only.')}
             </p>
           </div>
 
@@ -62,10 +62,10 @@ export const TrustAndClarityBanner: React.FC = () => {
           <div className="p-3.5 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1.5">
             <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
               <Scale className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <span>Zero Government Application Fees</span>
+              <span>{t('statutoryFreeFee', 'Statutory Application Fee: ₹0.00')}</span>
             </div>
             <p className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
-              Government scheme enrollment carries ₹0 statutory fee. At assisted Common Service Centres (CSC / Grama One), service charges are legally capped at ₹30 per submission.
+              {t('statutoryFeeGuarantee', 'Government application fee is ₹0.00. Authorized CSC fee capped at ₹30.00.')}
             </p>
           </div>
 
@@ -73,10 +73,10 @@ export const TrustAndClarityBanner: React.FC = () => {
           <div className="p-3.5 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1.5">
             <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
               <AlertCircle className="w-4 h-4 text-sky-600 dark:text-sky-400" />
-              <span>Sakala Time Guarantees & Grievance</span>
+              <span>{t('officialSla', 'Statutory Time Limit')}</span>
             </div>
             <p className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
-              Processing windows (10–45 days) are statutory Citizen's Charter targets. If an application is delayed beyond SLA, citizens can file an appeal on Sakala (1902) or CPGRAMS.
+              {t('trackerSubtitle', 'Track processing stages, designated handling authorities, and statutory SLA timelines.')}
             </p>
           </div>
         </div>

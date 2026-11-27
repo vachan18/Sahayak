@@ -107,7 +107,7 @@ export const HomeScreen: React.FC = () => {
           <div className="lg:col-span-7 xl:col-span-8 space-y-3.5 sm:space-y-5">
             <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs font-bold bg-white/10 text-amber-300 border border-white/15 backdrop-blur-sm">
               <Sparkles className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-              <span className="truncate">{t('sovereignMotto', 'ಅಧಿಕೃತ ಕಲ್ಯಾಣ ಮಾಹಿತಿ ಪೋರ್ಟಲ್ • GOI & GOK Portal')}</span>
+              <span className="truncate">{t('sovereignMotto', 'Sovereign Welfare Information Portal • Official Public Guide')}</span>
             </div>
 
             <h1 className="text-xl sm:text-3xl lg:text-4xl xl:text-5xl font-black tracking-tight leading-tight">
@@ -188,10 +188,10 @@ export const HomeScreen: React.FC = () => {
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
                 <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-amber-300">
                   <Shield className="w-4 h-4 text-amber-400" />
-                  <span>Statutory Information Guide</span>
+                  <span>{t('statutoryNoticeTitle', 'Statutory Information Guide')}</span>
                 </div>
                 <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-400/30">
-                  Gazette Verified
+                  {t('gazetteVerifiedBadge', 'Gazette Verified')}
                 </span>
               </div>
 
@@ -199,24 +199,24 @@ export const HomeScreen: React.FC = () => {
                 <div className="flex items-start gap-3">
                   <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-bold flex-shrink-0 mt-0.5">✓</div>
                   <div>
-                    <strong className="text-white block">Official Ministry Sources:</strong>
-                    <span className="text-slate-300 text-xs">Criteria and rules verified against central and state departmental gazettes.</span>
+                    <strong className="text-white block">{t('officialSourceTag', 'Official Ministry Sources')}</strong>
+                    <span className="text-slate-300 text-xs">{t('statutoryNoticeDesc', 'Criteria and rules verified against central and state departmental gazettes.')}</span>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-bold flex-shrink-0 mt-0.5">✓</div>
                   <div>
-                    <strong className="text-white block">Scheme-Specific Fee Schedules:</strong>
-                    <span className="text-slate-300 text-xs">Official government fees displayed per scheme; authorized CSC fee capped at ₹30.</span>
+                    <strong className="text-white block">{t('statutoryFeeNotice', 'Scheme-Specific Fee Schedules')}</strong>
+                    <span className="text-slate-300 text-xs">{t('statutoryFreeFee', 'Statutory Application Fee: ₹0.00 (No Official Fee)')}</span>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-bold flex-shrink-0 mt-0.5">✓</div>
                   <div>
-                    <strong className="text-white block">Citizens' Charter SLAs:</strong>
-                    <span className="text-slate-300 text-xs">Official processing targets (10–45 days) with Sakala/CPGRAMS grievance avenues.</span>
+                    <strong className="text-white block">{t('officialSla', 'Statutory Time Limit')}</strong>
+                    <span className="text-slate-300 text-xs">{t('assistedCscNotice', 'Assisted CSC slip generation')}</span>
                   </div>
                 </div>
               </div>
@@ -224,7 +224,7 @@ export const HomeScreen: React.FC = () => {
               <div className="pt-2 border-t border-white/10">
                 <div className="flex items-center gap-1.5 text-[11px] text-amber-300/90 mb-3">
                   <Info className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span>Demonstration portal with sample evaluation profiles.</span>
+                  <span>{t('demoDataBadge', 'Demonstration Data')}</span>
                 </div>
                 <Link
                   to="/eligibility"
@@ -310,10 +310,10 @@ export const HomeScreen: React.FC = () => {
                 <span>{t('statusInProgress', 'Assessment In Progress')}</span>
               </div>
               <h2 id="eligibility-status-banner" className="text-xl sm:text-2xl font-extrabold tracking-tight">
-                Complete Your Questionnaire
+                {t('statusInProgress', 'Assessment In Progress')}
               </h2>
               <p className="text-xs sm:text-sm text-amber-100 leading-relaxed max-w-2xl">
-                You have unanswered questions. Complete all 4 questions to calculate your complete preliminary welfare entitlement.
+                {t('statusInProgressDesc', 'Questionnaire incomplete. Please complete all questions to generate preliminary results.')}
               </p>
             </div>
             <Link
@@ -332,10 +332,10 @@ export const HomeScreen: React.FC = () => {
                 <span>{t('statusNotEstablished', 'Eligibility Not Established')}</span>
               </div>
               <h2 id="eligibility-status-banner" className="text-xl sm:text-2xl font-extrabold tracking-tight">
-                No Direct Scheme Matches on Current Inputs
+                {t('statusNotEstablished', 'Eligibility Not Established')}
               </h2>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-2xl">
-                Review your questionnaire inputs or browse the comprehensive public scheme directory.
+                {t('statusNotEstablishedDesc', 'Based on current inputs, no exact matching central or state welfare schemes were identified.')}
               </p>
             </div>
             <Link
@@ -353,7 +353,7 @@ export const HomeScreen: React.FC = () => {
               <div className="lg:col-span-8 space-y-3">
                 <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold bg-white/10 text-amber-300 border border-white/15">
                   <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                  <span>{t('statusNotAssessed', 'Eligibility Status: Not Assessed (ಮೌಲ್ಯಮಾಪನ ಮಾಡಿಲ್ಲ)')}</span>
+                  <span>{t('statusNotAssessed', 'Not Yet Assessed')}</span>
                 </div>
                 <h2 id="eligibility-status-banner" className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight">
                   {t('resultsSubtitle', 'Check Your Household\'s Welfare Entitlement')}

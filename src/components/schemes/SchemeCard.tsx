@@ -15,8 +15,13 @@ interface SchemeCardProps {
 }
 
 export const SchemeCard: React.FC<SchemeCardProps> = ({ scheme }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { savedSchemeIds, toggleSaveScheme, compareSchemeIds, toggleCompareScheme } = useAppStore();
+
+  const formattedBenefitDisplay =
+    language === 'kn'
+      ? scheme.financialBenefit.formattedDisplay
+      : `₹${scheme.financialBenefit.amount.toLocaleString('en-IN')} / ${t(scheme.financialBenefit.frequencyKey, scheme.financialBenefit.frequencyKey)}`;
 
   const isSaved = savedSchemeIds.includes(scheme.id);
   const isCompared = compareSchemeIds.includes(scheme.id);
@@ -146,7 +151,7 @@ export const SchemeCard: React.FC<SchemeCardProps> = ({ scheme }) => {
               {getBenefitCategoryLabel(scheme.benefitType)}
             </div>
             <div className="text-xl sm:text-2xl lg:text-3xl font-black text-emerald-950 dark:text-emerald-200 tabular-nums mt-0.5 break-words">
-              {scheme.financialBenefit.formattedDisplay}
+              {formattedBenefitDisplay}
             </div>
             <div className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5 line-clamp-1 font-medium">
               {getBenefitMechanismLabel(scheme.benefitType)}

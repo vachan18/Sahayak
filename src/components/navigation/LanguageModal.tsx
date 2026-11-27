@@ -27,12 +27,12 @@ export const LanguageModal: React.FC<LanguageModalProps> = ({ isOpen, onClose })
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
       <div 
-        className="w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl shadow-crisp-xl border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto p-5"
+        className="w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl shadow-crisp-xl border border-slate-200 dark:border-slate-800 max-h-[85vh] flex flex-col overflow-hidden"
         role="dialog"
         aria-modal="true"
         aria-labelledby="lang-modal-title"
       >
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+        <div className="flex items-center justify-between p-5 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
           <div>
             <h2 id="lang-modal-title" className="text-lg font-bold text-slate-900 dark:text-white">
               {t('langSelectTitle', 'Choose Your Language')}
@@ -51,8 +51,10 @@ export const LanguageModal: React.FC<LanguageModalProps> = ({ isOpen, onClose })
           </button>
         </div>
 
+        {/* Scrollable Language Options & Dialect */}
+        <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
         {/* Language Options Grid */}
-        <div className="space-y-3 mb-5">
+        <div className="space-y-2.5">
           {languages.map((item) => {
             const isSelected = language === item.code;
             return (
@@ -117,14 +119,18 @@ export const LanguageModal: React.FC<LanguageModalProps> = ({ isOpen, onClose })
           </select>
         </div>
 
-        {/* Confirm CTA */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full py-3 px-4 rounded-xl bg-brand-navy-900 dark:bg-sky-600 hover:bg-brand-navy-800 dark:hover:bg-sky-500 text-white font-bold text-sm shadow-sm transition-all"
-        >
-          {t('confirmLanguage', 'Confirm Language & Continue')}
-        </button>
+        </div>
+
+        {/* Sticky Confirm CTA */}
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex-shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full py-3 px-4 rounded-xl bg-brand-navy-900 dark:bg-sky-600 hover:bg-brand-navy-800 dark:hover:bg-sky-500 text-white font-bold text-sm shadow-sm transition-all"
+          >
+            {t('confirmLanguage', 'Confirm Language & Continue')}
+          </button>
+        </div>
       </div>
     </div>
   );

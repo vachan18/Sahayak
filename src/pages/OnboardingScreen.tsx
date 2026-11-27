@@ -53,7 +53,7 @@ export const OnboardingScreen: React.FC = () => {
   const Icon = current.icon;
 
   return (
-    <div className="min-h-[82vh] flex flex-col justify-between max-w-md mx-auto py-4 animate-fadeIn">
+    <div className="min-h-[82vh] flex flex-col justify-between max-w-md mx-auto px-4 py-6 animate-fadeIn">
       {/* Top Bar: Slide Indicators & Skip */}
       <div className="flex items-center justify-between">
         <div className="flex gap-2">

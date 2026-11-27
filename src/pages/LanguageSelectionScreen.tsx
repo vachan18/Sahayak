@@ -20,7 +20,7 @@ export const LanguageSelectionScreen: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto py-4 animate-fadeIn">
+    <div className="max-w-md mx-auto px-4 py-6 animate-fadeIn">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
           {t('langSelectTitle', 'Choose Your Language')}

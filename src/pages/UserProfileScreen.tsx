@@ -47,7 +47,7 @@ export const UserProfileScreen: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto py-4 sm:py-6 animate-fadeIn pb-16">
+    <div className="space-y-6 max-w-3xl mx-auto py-2 sm:py-4 animate-fadeIn">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">

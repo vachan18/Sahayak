@@ -20,7 +20,7 @@ export const WelcomeScreen: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[85vh] flex flex-col justify-between items-center max-w-md mx-auto py-6 text-center animate-fadeIn">
+    <div className="min-h-[85vh] flex flex-col justify-between items-center max-w-md mx-auto px-4 py-6 text-center animate-fadeIn">
       {/* Top Sovereign Seal */}
       <div className="w-full flex flex-col items-center pt-4">
         <SahayakLogo className="w-20 h-20 mb-4 drop-shadow-sm" />

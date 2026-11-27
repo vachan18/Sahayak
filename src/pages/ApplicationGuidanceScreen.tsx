@@ -78,7 +78,7 @@ export const ApplicationGuidanceScreen: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto py-4 sm:py-6 animate-fadeIn pb-16">
+    <div className="space-y-6 max-w-3xl mx-auto py-2 sm:py-4 animate-fadeIn">
       <div>
         <span className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
           {scheme.titleKey}

@@ -65,16 +65,14 @@ export const AppLayout: React.FC = () => {
             <button
               type="button"
               onClick={() => setAiDrawerOpen(true)}
-              className="flex items-center gap-2 p-3 sm:py-3 sm:px-4 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black shadow-crisp-lg active:scale-95 transition-all min-h-[48px] min-w-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
-              aria-label={`${t('aiAssistantTitle', 'Sahayak Sathi')} (Voice)`}
+              className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-crisp-lg active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
+              title={t('openAssistantAria', 'Open Sahayak Sathi voice assistant')}
+              aria-label={t('openAssistantAria', 'Open Sahayak Sathi voice assistant')}
             >
               <div className="relative flex-shrink-0">
-                <Bot className="w-5 h-5 text-slate-950" />
+                <Bot className="w-6 h-6 text-slate-950" />
                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-600 ring-2 ring-amber-500 animate-pulse" />
               </div>
-              <span className="hidden sm:inline text-xs sm:text-sm tracking-tight pr-1">
-                {t('aiAssistantTitle', 'Sahayak Sathi')} (Voice)
-              </span>
             </button>
 
             {/* Quick Dismiss Trigger to prevent blocking content on touch screens */}

@@ -194,4 +194,4 @@ npm run preview  # Preview production build
 
 ---
 
-**Crafted for PixelCraft 2026 (Track DS-02) by [vachan18](https://github.com/vachan18)**
+**Crafted for PixelCraft 2026 (Track DS-02) by [vachan18](https://github.com/vachan18) and Muddassir**

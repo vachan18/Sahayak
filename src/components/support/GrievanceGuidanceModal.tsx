@@ -1,299 +1,248 @@
-import React, { useState } from 'react';
-import { 
-  AlertCircle, ExternalLink, PhoneCall, 
-  FileText, CheckCircle2, X, Building2, 
-  Copy, Check 
-} from 'lucide-react';
-import { ApplicationRecord } from '../../types';
+import React, { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Clock, HandCoins, ArrowLeft, Copy, WhatsappLogo, ArrowSquareOut, Phone, ShieldCheck, CaretRight, Check } from '@phosphor-icons/react';
+import type { ApplicationRecord } from '../../types';
+import { useTranslation } from '../../hooks/useTranslation';
+import { useAppStore } from '../../store/useAppStore';
+import { Sheet } from '../../ui/Sheet';
+import { Button } from '../../ui/Button';
+import { TextField, SelectField, TextArea } from '../../ui/Field';
+import { Chip } from '../../ui/Chip';
+import { cx } from '../../ui/cx';
+import { ease } from '../../ui/motion';
+import { openWhatsApp } from '../../lib/share';
+import { haptic } from '../../lib/haptics';
+
+export type GrievancePath = 'late' | 'fee';
 
 interface GrievanceGuidanceModalProps {
   isOpen: boolean;
   onClose: () => void;
   application?: ApplicationRecord;
+  /** Open straight onto one path (e.g. /tracker?report=fee) */
+  initialPath?: GrievancePath;
 }
 
-export const GrievanceGuidanceModal: React.FC<GrievanceGuidanceModalProps> = ({
-  isOpen,
-  onClose,
-  application
-}) => {
-  const [copiedToken, setCopiedToken] = useState(false);
-  const [activeTab, setActiveTab] = useState<'cpgrams' | 'state' | 'documents'>('cpgrams');
+const CPGRAMS = 'https://pgportal.gov.in';
+const STATE_LINE = '1902';
+const CSC_LINE = '1800-121-3468';
 
-  if (!isOpen) return null;
+type Who = 'operator' | 'agent' | 'official' | 'other';
 
-  const handleCopyToken = () => {
-    if (application?.tokenNumber) {
-      navigator.clipboard.writeText(application.tokenNumber);
-      setCopiedToken(true);
-      setTimeout(() => setCopiedToken(false), 2000);
+/**
+ * Complaint flow — two plain-language doors instead of a wall of legal text.
+ *  1. "My application is late"   → pre-filled delay complaint with token, dates and days overdue
+ *  2. "Someone asked me for money" → overcharge / bribe report (amount, place, who)
+ * Both end in a ready-to-send complaint in the user's language, the official CPGRAMS portal,
+ * free helplines, and WhatsApp (how most families actually pass this on).
+ */
+export const GrievanceGuidanceModal: React.FC<GrievanceGuidanceModalProps> = ({ isOpen, onClose, application, initialPath }) => {
+  const { t } = useTranslation();
+  const { applications, schemes, pushToast } = useAppStore();
+  const [path, setPath] = useState<GrievancePath | null>(initialPath ?? null);
+  const [appId, setAppId] = useState<string>(application?.id ?? '');
+  const [amount, setAmount] = useState('');
+  const [where, setWhere] = useState('');
+  const [who, setWho] = useState<Who>('operator');
+  const [details, setDetails] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setPath(initialPath ?? null);
+      setAppId(application?.id ?? (initialPath === 'fee' ? '' : applications[0]?.id ?? ''));
+      setCopied(false);
     }
+  }, [isOpen, initialPath, application, applications]);
+
+  const app = applications.find((a) => a.id === appId);
+  const scheme = app ? schemes.find((s) => s.id === app.schemeId) : undefined;
+  const schemeName = scheme ? t(scheme.titleKey, app?.schemeTitle) : app?.schemeTitle ?? '';
+  const schemeLine = scheme?.helplinePhone?.split('/')[0]?.trim();
+
+  const letter = useMemo(() => {
+    const L: string[] = [];
+    if (path === 'late') {
+      L.push(t('tracker.g.letter.lateSubject'), '', t('tracker.g.letter.lateBody'), '');
+      if (app) {
+        L.push(`${t('tracker.g.letter.scheme')}: ${schemeName}`);
+        L.push(`${t('tracker.g.letter.token')}: ${app.tokenNumber}`);
+        L.push(`${t('tracker.g.letter.submitted')}: ${app.submittedAt}`);
+        L.push(`${t('tracker.g.letter.limit')}: ${app.slaDeadlineDays} ${t('tracker.detail.days', 'days')}`);
+        if (app.slaDaysRemaining < 0) L.push(`${t('tracker.g.letter.overdue')}: ${Math.abs(app.slaDaysRemaining)}`);
+        L.push(`${t('tracker.detail.office', 'Office')}: ${app.handlingOffice}`);
+      }
+    } else if (path === 'fee') {
+      L.push(t('tracker.g.letter.feeSubject'), '', t('tracker.g.letter.feeBody'), '');
+      if (amount) L.push(`${t('tracker.g.letter.amount')}: ₹${amount}`);
+      if (where) L.push(`${t('tracker.g.letter.where')}: ${where}`);
+      L.push(`${t('tracker.g.letter.who')}: ${t(`tracker.g.who.${who}`)}`);
+      if (app) {
+        L.push(`${t('tracker.g.letter.scheme')}: ${schemeName}`);
+        L.push(`${t('tracker.g.letter.token')}: ${app.tokenNumber}`);
+      }
+      if (details.trim()) L.push(`${t('tracker.g.letter.details')}: ${details.trim()}`);
+    }
+    L.push('', t('tracker.g.letter.close'));
+    return L.join('\n');
+  }, [path, app, schemeName, amount, where, who, details, t]);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(letter);
+    } catch {
+      /* clipboard blocked — text is still selectable */
+    }
+    haptic('success');
+    setCopied(true);
+    pushToast({ message: t('tracker.g.copied', 'Complaint copied'), tone: 'success' });
+    setTimeout(() => setCopied(false), 2400);
   };
 
+  const doors: { id: GrievancePath; icon: React.ReactNode; title: string; sub: string; tone: string }[] = [
+    { id: 'late', icon: <Clock size={28} weight="duotone" />, title: t('tracker.g.pathLate', 'My application is late'), sub: t('tracker.g.pathLateSub'), tone: 'bg-kesar-tint text-kesar' },
+    { id: 'fee', icon: <HandCoins size={28} weight="duotone" />, title: t('tracker.g.pathFee', 'Someone asked me for money'), sub: t('tracker.g.pathFeeSub'), tone: 'bg-sindoor-tint text-sindoor' },
+  ];
+
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/70 backdrop-blur-sm animate-fadeIn overflow-y-auto"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="grievance-modal-title"
+    <Sheet
+      open={isOpen}
+      onClose={onClose}
+      title={path ? (path === 'late' ? t('tracker.g.pathLate') : t('tracker.g.pathFee')) : t('tracker.g.title', 'Raise a complaint')}
+      description={path ? undefined : t('tracker.g.subtitle')}
+      closeLabel={t('navClose', 'Close')}
+      size="md"
+      desktop="side"
     >
-      <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-crisp-xl space-y-5 my-auto max-h-[92vh] flex flex-col justify-between">
-        {/* Header */}
-        <div>
-          <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3.5">
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-950/70 border border-red-200 dark:border-red-800/80 flex items-center justify-center text-red-600 dark:text-red-400 flex-shrink-0">
-                <AlertCircle className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 id="grievance-modal-title" className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
-                  Official Citizen Grievance & Escalation Guide
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  How to lodge a legally binding complaint for delayed or rejected applications
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              aria-label="Close grievance guidance"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Context Token Pill if available */}
-          {application && (
-            <div className="mt-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/70 flex flex-wrap items-center justify-between gap-2 text-xs">
-              <div>
-                <span className="text-slate-500 dark:text-slate-400">Application Reference: </span>
-                <strong className="font-mono text-slate-900 dark:text-white">{application.tokenNumber}</strong>
-                <span className="text-slate-500 dark:text-slate-400 ml-2">({application.schemeTitle})</span>
-              </div>
-              <button
+      <AnimatePresence mode="wait" initial={false}>
+        {!path ? (
+          <motion.div key="doors" initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0, transition: { duration: 0.24, ease: ease.out } }} exit={{ opacity: 0, x: -16, transition: { duration: 0.14 } }} className="space-y-3 pt-1">
+            {doors.map((d) => (
+              <motion.button
+                key={d.id}
                 type="button"
-                onClick={handleCopyToken}
-                className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 text-slate-700 dark:text-slate-300 font-bold text-[11px] flex items-center gap-1 active:scale-95 transition-all"
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  haptic('select');
+                  setPath(d.id);
+                }}
+                className="w-full flex items-center gap-4 p-4 rounded-lg bg-surface shadow-hair hover:shadow-lift transition-shadow text-start"
               >
-                {copiedToken ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Copy Token</span>
-                  </>
-                )}
+                <span className={cx('w-14 h-14 rounded-md grid place-items-center shrink-0', d.tone)}>{d.icon}</span>
+                <span className="flex-1 min-w-0">
+                  <span className="block font-semibold text-lead">{d.title}</span>
+                  <span className="block text-small text-ink-2">{d.sub}</span>
+                </span>
+                <CaretRight size={20} className="text-ink-3 flip-rtl" />
+              </motion.button>
+            ))}
+            <p className="flex items-start gap-2 pt-3 text-small text-ink-2">
+              <ShieldCheck size={20} weight="duotone" className="text-patti shrink-0" />
+              {t('tracker.g.safe')}
+            </p>
+          </motion.div>
+        ) : (
+          <motion.div key={path} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0, transition: { duration: 0.24, ease: ease.out } }} exit={{ opacity: 0, x: 16, transition: { duration: 0.14 } }} className="space-y-5 pt-1">
+            {!initialPath && (
+              <button type="button" onClick={() => setPath(null)} className="inline-flex items-center gap-1.5 h-10 -ms-1 px-1 text-small font-semibold text-neel-ink">
+                <ArrowLeft size={16} weight="bold" className="flip-rtl" /> {t('tracker.g.back', 'Choose again')}
               </button>
-            </div>
-          )}
+            )}
 
-          {/* Tab Navigation */}
-          <div className="flex items-center gap-2 pt-3 border-b border-slate-100 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={() => setActiveTab('cpgrams')}
-              className={`pb-2.5 px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-1.5 ${
-                activeTab === 'cpgrams'
-                  ? 'border-red-600 text-red-600 dark:text-red-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400'
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              <span>Central CPGRAMS Portal</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('state')}
-              className={`pb-2.5 px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-1.5 ${
-                activeTab === 'state'
-                  ? 'border-red-600 text-red-600 dark:text-red-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400'
-              }`}
-            >
-              <PhoneCall className="w-3.5 h-3.5" />
-              <span>State & Department Helplines</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('documents')}
-              className={`pb-2.5 px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-1.5 ${
-                activeTab === 'documents'
-                  ? 'border-red-600 text-red-600 dark:text-red-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400'
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Documents for Escalation</span>
-            </button>
-          </div>
-        </div>
+            {path === 'late' ? (
+              <p className="text-ink-2">{t('tracker.g.lateIntro')}</p>
+            ) : (
+              <p className="p-4 rounded-md bg-haldi-tint text-ink text-small font-medium">{t('tracker.g.remember')}</p>
+            )}
 
-        {/* Tab Content */}
-        <div className="py-2 overflow-y-auto max-h-[50vh] space-y-4">
-          {activeTab === 'cpgrams' && (
-            <div className="space-y-3.5 text-xs">
-              <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/60 leading-relaxed text-red-950 dark:text-red-200">
-                <strong>What is CPGRAMS?</strong> Centralized Public Grievance Redress and Monitoring System (CPGRAMS) is an official online platform by the Department of Administrative Reforms & Public Grievances (DARPG), Government of India. Any complaint lodged here is assigned a time-bound statutory inquiry with a 30-day resolution deadline.
-              </div>
+            <SelectField label={t('tracker.g.application', 'Which application?')} value={appId} onChange={(e) => setAppId(e.target.value)}>
+              {path === 'fee' && <option value="">{t('tracker.g.none', 'Not about a specific application')}</option>}
+              {applications.map((a) => {
+                const s = schemes.find((x) => x.id === a.schemeId);
+                return (
+                  <option key={a.id} value={a.id}>
+                    {(s ? t(s.titleKey, a.schemeTitle) : a.schemeTitle).split('(')[0].trim()} · {a.tokenNumber}
+                  </option>
+                );
+              })}
+            </SelectField>
 
-              <div className="space-y-2">
-                <div className="font-extrabold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">
-                  Step-by-Step Filing Procedure
-                </div>
-                <div className="space-y-2 text-slate-700 dark:text-slate-300">
-                  <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
-                    <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-700 text-white flex items-center justify-center font-bold text-[10px] flex-shrink-0">
-                      1
-                    </span>
-                    <div>
-                      <strong>Visit Official Portal:</strong> Open <code>pgportal.gov.in</code> and click <em>Lodge Public Grievance</em>.
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
-                    <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-700 text-white flex items-center justify-center font-bold text-[10px] flex-shrink-0">
-                      2
-                    </span>
-                    <div>
-                      <strong>Select Ministry:</strong> Choose the respective nodal department (e.g., <em>Agriculture & Farmers Welfare</em> for PM-KISAN, <em>Housing & Urban Affairs</em> for PM-SVANidhi).
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
-                    <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-700 text-white flex items-center justify-center font-bold text-[10px] flex-shrink-0">
-                      3
-                    </span>
-                    <div>
-                      <strong>Enter Reference & Details:</strong> Paste your Token Number (<code>{application?.tokenNumber || 'KA-KISAN-2026-84920'}</code>) and state that statutory SLA period has elapsed without reasonable cause.
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
-                    <span className="w-5 h-5 rounded-full bg-slate-900 dark:bg-slate-700 text-white flex items-center justify-center font-bold text-[10px] flex-shrink-0">
-                      4
-                    </span>
-                    <div>
-                      <strong>Upload Evidence:</strong> Attach the PDF of your CSC pre-verified token slip or application acknowledgement receipt.
-                    </div>
+            {path === 'fee' && (
+              <div className="space-y-4">
+                <TextField label={t('tracker.g.amount', 'How much did they ask for? (₹)')} inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d]/g, '').slice(0, 7))} className="num" />
+                <div>
+                  <p className="text-small font-semibold mb-2">{t('tracker.g.who', 'Who asked?')}</p>
+                  <div className="flex flex-wrap gap-2" role="group" aria-label={t('tracker.g.who', 'Who asked?')}>
+                    {(['operator', 'agent', 'official', 'other'] as Who[]).map((w) => (
+                      <Chip key={w} selected={who === w} onClick={() => setWho(w)} checkable>
+                        {t(`tracker.g.who.${w}`)}
+                      </Chip>
+                    ))}
                   </div>
                 </div>
+                <TextField label={t('tracker.g.where', 'Where did this happen?')} placeholder={t('tracker.g.wherePh')} value={where} onChange={(e) => setWhere(e.target.value)} />
+                <TextArea label={t('tracker.g.details', 'What happened? (optional)')} placeholder={t('tracker.g.detailsPh')} value={details} onChange={(e) => setDetails(e.target.value)} className="min-h-[96px]" />
               </div>
+            )}
 
-              <div className="pt-2">
-                <a
-                  href="https://pgportal.gov.in"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm"
-                >
-                  <span>Go to CPGRAMS Portal (pgportal.gov.in)</span>
-                  <ExternalLink className="w-4 h-4" />
-                </a>
+            <ol className="space-y-2">
+              {['tracker.g.step1', 'tracker.g.step2', 'tracker.g.step3'].map((k, i) => (
+                <li key={k} className="flex items-center gap-3 text-small">
+                  <span className="w-7 h-7 rounded-full bg-ink text-paper grid place-items-center num text-micro font-semibold shrink-0">{i + 1}</span>
+                  {t(k)}
+                </li>
+              ))}
+            </ol>
+
+            <div>
+              <p className="text-small font-semibold mb-2">{t('tracker.g.complaintText', 'Your complaint, ready to send')}</p>
+              <pre className="whitespace-pre-wrap break-words font-sans text-small leading-body p-4 rounded-md bg-sunken text-ink max-h-64 overflow-y-auto">{letter}</pre>
+              <div className="mt-3 grid grid-cols-1 xs:grid-cols-2 gap-2">
+                <Button variant="solid" onClick={copy} iconStart={copied ? <Check size={18} weight="bold" /> : <Copy size={18} />}>
+                  {copied ? t('tracker.g.copied', 'Complaint copied') : t('tracker.g.copy', 'Copy text')}
+                </Button>
+                <Button variant="secondary" onClick={() => openWhatsApp(letter)} iconStart={<WhatsappLogo size={20} weight="fill" className="text-[#1F9D55]" />}>
+                  {t('tracker.g.whatsapp', 'Send on WhatsApp')}
+                </Button>
               </div>
             </div>
-          )}
 
-          {activeTab === 'state' && (
-            <div className="space-y-3.5 text-xs">
-              <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 leading-relaxed text-amber-950 dark:text-amber-200">
-                <strong>Karnataka Sakala Guarantee:</strong> Under the Karnataka Sakala Services Act 2011, designated services have a statutory guarantee. Delay beyond SLA entitles citizens to ₹20/day compensatory allowance from the defaulting officer's salary.
-              </div>
+            <a href={CPGRAMS} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-lg bg-neel-tint text-neel-ink hover:brightness-[0.97] transition">
+              <ArrowSquareOut size={26} weight="duotone" className="shrink-0" />
+              <span className="min-w-0">
+                <span className="block font-semibold">{t('tracker.g.portal', 'Open CPGRAMS portal')}</span>
+                <span className="block text-micro opacity-85">{t('tracker.g.portalHint')}</span>
+              </span>
+            </a>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                  <div className="text-[10px] text-slate-500 uppercase font-bold">Sakala Call Center</div>
-                  <div className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">1902 / 080-44554455</div>
-                  <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1">
-                    Statewide toll-free grievance registration for all Grama One services.
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                  <div className="text-[10px] text-slate-500 uppercase font-bold">PM-KISAN Central Helpline</div>
-                  <div className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">155261 / 011-24300606</div>
-                  <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1">
-                    Ministry of Agriculture direct farmer assistance line.
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                  <div className="text-[10px] text-slate-500 uppercase font-bold">Ayushman PM-JAY Grievance</div>
-                  <div className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">14555</div>
-                  <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1">
-                    National Health Authority 24x7 toll-free grievance desk.
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                  <div className="text-[10px] text-slate-500 uppercase font-bold">PM SVANidhi Micro-Credit</div>
-                  <div className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">1800-11-1979</div>
-                  <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1">
-                    MoHUA bank branch escalation helpline.
-                  </p>
-                </div>
-              </div>
+            <div>
+              <p className="text-small font-semibold mb-2">{t('tracker.g.call', 'Or call for free')}</p>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {[
+                  { label: t('tracker.g.stateLine', 'Chief Minister’s helpline'), num: STATE_LINE },
+                  path === 'fee' ? { label: t('tracker.g.cscLine', 'CSC helpline'), num: CSC_LINE } : schemeLine ? { label: t('tracker.g.schemeLine', 'Scheme helpline'), num: schemeLine } : null,
+                ]
+                  .filter(Boolean)
+                  .map((l) => (
+                    <li key={l!.num}>
+                      <a href={`tel:${l!.num.replace(/[^\d+]/g, '')}`} className="flex items-center gap-3 p-3 min-h-[56px] rounded-md bg-surface shadow-hair hover:shadow-lift transition-shadow">
+                        <span className="w-10 h-10 rounded-full bg-patti-tint text-patti grid place-items-center shrink-0">
+                          <Phone size={20} weight="fill" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-micro text-ink-3 truncate">{l!.label}</span>
+                          <span className="block font-semibold num">{l!.num}</span>
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+              </ul>
             </div>
-          )}
-
-          {activeTab === 'documents' && (
-            <div className="space-y-3.5 text-xs">
-              <div className="font-extrabold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">
-                Checklist: Evidence Needed for Escalation
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <strong>Application Acknowledgment / Token Slip:</strong> Containing the unique reference number (e.g. <code>{application?.tokenNumber || 'KA-KISAN-2026-84920'}</code>) and date of submission.
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <strong>Proof of Statutory Time Expiry:</strong> Screenshot of your tracker timeline showing days elapsed beyond the statutory SLA limit ({application?.slaDeadlineDays || 21} days).
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <strong>CSC Operator Fee Receipt:</strong> If an operator charged more than ₹30.00, attach a photo of the receipt or transaction statement as anti-extortion evidence.
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <strong>Identity Verification Copy:</strong> Front copy of your Aadhaar or Voter ID confirming applicant identity.
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 text-xs">
-          <span className="text-[11px] text-slate-500">
-            Citizen Grievance Rights protected under Citizens' Charter
-          </span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-800 dark:text-slate-200 font-bold transition-colors"
-          >
-            Close Guide
-          </button>
-        </div>
-      </div>
-    </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Sheet>
   );
 };
+
+export default GrievanceGuidanceModal;

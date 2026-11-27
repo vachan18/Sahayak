@@ -1,25 +1,53 @@
-import React from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from '@phosphor-icons/react';
 import { useTranslation } from '../../hooks/useTranslation';
+import { cx } from '../../ui/cx';
 
 interface StatutoryFeeBadgeProps {
   maxCscCharge?: number;
   className?: string;
+  /** 'inline' = one quiet line · 'card' = two clear figures */
+  variant?: 'inline' | 'card';
 }
 
-export const StatutoryFeeBadge: React.FC<StatutoryFeeBadgeProps> = ({
-  maxCscCharge = 30,
-  className = ''
-}) => {
+/**
+ * The fee promise, stated as two numbers people can hold an operator to:
+ * government fee ₹0, help-centre charge at most ₹30.
+ */
+export const StatutoryFeeBadge = ({ maxCscCharge = 30, className, variant = 'card' }: StatutoryFeeBadgeProps) => {
   const { t } = useTranslation();
 
+  if (variant === 'inline') {
+    return (
+      <p className={cx('inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-small text-ink-2', className)}>
+        <ShieldCheck size={18} weight="duotone" className="text-patti shrink-0" />
+        <span>
+          {t('documents.fee.govShort', 'Government fee')} <strong className="num text-patti">₹0</strong>
+        </span>
+        <span aria-hidden className="text-line-strong">·</span>
+        <span>
+          {t('documents.fee.cscShort', 'Centre may charge at most')} <strong className="num text-ink">₹{maxCscCharge}</strong>
+        </span>
+      </p>
+    );
+  }
+
   return (
-    <div className={`inline-flex flex-wrap items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 ${className}`}>
-      <ShieldCheck className="w-4 h-4 text-emerald-700 dark:text-emerald-400 flex-shrink-0" />
-      <span>{t('statutoryFreeFee', 'Statutory Application Fee: ₹0.00 (No Official Fee)')}</span>
-      <span className="text-emerald-700 dark:text-emerald-400 font-medium border-l border-emerald-300 dark:border-emerald-700 pl-1.5">
-        Max CSC Fee: ₹{maxCscCharge}
+    <div className={cx('flex items-stretch gap-0 rounded-md bg-surface shadow-hair overflow-hidden', className)}>
+      <span className="grid place-items-center px-4 bg-patti-tint text-patti">
+        <ShieldCheck size={26} weight="duotone" />
       </span>
+      <dl className="flex-1 grid grid-cols-2 divide-x divide-line rtl:divide-x-reverse min-w-0">
+        <div className="px-4 py-3 min-w-0">
+          <dt className="text-micro text-ink-3">{t('documents.fee.govShort', 'Government fee')}</dt>
+          <dd className="text-h3 font-semibold num text-patti">₹0</dd>
+        </div>
+        <div className="px-4 py-3 min-w-0">
+          <dt className="text-micro text-ink-3">{t('documents.fee.cscMax', 'Most a centre can charge')}</dt>
+          <dd className="text-h3 font-semibold num">₹{maxCscCharge}</dd>
+        </div>
+      </dl>
     </div>
   );
 };
+
+export default StatutoryFeeBadge;

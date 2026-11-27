@@ -17,17 +17,19 @@ const CscSlipScreen = lazy(() => import('../pages/CscSlipScreen').then(m => ({ d
 const ApplicationTrackerScreen = lazy(() => import('../pages/ApplicationTrackerScreen').then(m => ({ default: m.ApplicationTrackerScreen })));
 const ApplicationTrackerDetailScreen = lazy(() => import('../pages/ApplicationTrackerDetailScreen').then(m => ({ default: m.ApplicationTrackerDetailScreen })));
 const UserProfileScreen = lazy(() => import('../pages/UserProfileScreen').then(m => ({ default: m.UserProfileScreen })));
+const HelpCentresScreen = lazy(() => import('../pages/HelpCentresScreen').then(m => ({ default: m.HelpCentresScreen })));
 const NotificationsScreen = lazy(() => import('../pages/NotificationsScreen').then(m => ({ default: m.NotificationsScreen })));
 
+/** Route fallback mirrors the page skeleton so nothing jumps when content arrives. */
 const RouteLoadingFallback: React.FC = () => (
-  <div 
-    className="min-h-[50vh] flex flex-col items-center justify-center p-8 space-y-3"
-    role="status"
-    aria-live="polite"
-    aria-label="Loading page content"
-  >
-    <div className="w-8 h-8 border-3 border-amber-500/20 border-t-amber-500 rounded-full animate-spin" />
-    <span className="text-xs font-semibold text-slate-400">Loading...</span>
+  <div className="pt-6 space-y-6" role="status" aria-live="polite" aria-label="Loading">
+    <div className="skeleton h-4 w-32 rounded-sm" />
+    <div className="skeleton h-10 w-2/3 max-w-md rounded-sm" />
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 pt-4">
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="skeleton h-48 rounded-lg" />
+      ))}
+    </div>
   </div>
 );
 
@@ -56,6 +58,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="/tracker/:id" element={<ApplicationTrackerDetailScreen />} />
           <Route path="/profile" element={<UserProfileScreen />} />
           <Route path="/notifications" element={<NotificationsScreen />} />
+          <Route path="/help-centres" element={<HelpCentresScreen />} />
         </Route>
 
         {/* Wildcard Fallback */}

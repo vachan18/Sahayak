@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Mic, MicOff, Send, Bot, Volume2, VolumeX, ArrowRight, AlertCircle } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, PaperPlaneRight, SpeakerHigh, SpeakerSlash, ArrowCounterClockwise, ShieldCheck } from '@phosphor-icons/react';
 import { useAppStore } from '../../store/useAppStore';
 import { useTranslation } from '../../hooks/useTranslation';
 import { speakVernacularText, stopSpeech } from '../../utils/audioSpeech';
@@ -8,301 +9,345 @@ import { SupportedLanguage } from '../../types';
 import { LANGUAGE_META } from '../../data/languages';
 import { useSpeechRecognition, SpeechErrorCode } from '../../hooks/useSpeechRecognition';
 import { buildAssistantReply, AssistantReply } from '../../utils/assistantResponder';
+import { Sheet } from '../../ui/Sheet';
+import { IconButton } from '../../ui/Button';
+import { cx } from '../../ui/cx';
+import { haptic } from '../../lib/haptics';
+import { VoiceOrb, MiniOrb, OrbState } from '../voice/VoiceOrb';
+import { useMicLevel } from '../voice/useMicLevel';
 
 interface ChatMessage {
+  id: number;
   sender: 'user' | 'assistant';
   text: string;
   time: string;
   actionLink?: AssistantReply['actionLink'];
 }
 
-function getInitialGreeting(language: SupportedLanguage): string {
-  return (LANGUAGE_META[language] || LANGUAGE_META.en).aiGreeting;
-}
-
-function getSpeechErrorMessage(error: SpeechErrorCode, t: (key: string, fallback?: string) => string): string {
-  switch (error) {
-    case 'not-allowed':
-      return t('voicePermDenied', 'Microphone permission was denied. Please allow mic access or type below.');
-    case 'no-speech':
-      return t('voiceFallbackNote', 'No speech detected clearly. Please tap the mic and try again, or type below.');
-    case 'audio-capture':
-      return 'No microphone detected on this device. You can type your question below.';
-    case 'unsupported':
-      return 'Live voice recognition is not supported in this browser. Please use Chrome/Edge or type below.';
-    case 'network':
-      return 'Network issue while recognizing speech. Please check your connection or type below.';
-    default:
-      return 'Could not capture voice clearly. Please try again or type below.';
+const greetingFor = (l: SupportedLanguage) => (LANGUAGE_META[l] || LANGUAGE_META.en).aiGreeting;
+const clock = (l: SupportedLanguage) => {
+  try {
+    return new Date().toLocaleTimeString(`${l}-IN`, { hour: 'numeric', minute: '2-digit' });
+  } catch {
+    return new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   }
+};
+
+const ERROR_KEY: Record<SpeechErrorCode, [string, string]> = {
+  'not-allowed': ['entry.voice.err.notAllowed', 'Sahayak needs permission to use the microphone. Allow it in your browser, or type below.'],
+  'no-speech': ['entry.voice.err.noSpeech', 'We did not hear anything. Hold the phone a little closer and try again, or type below.'],
+  'audio-capture': ['entry.voice.err.audioCapture', 'No microphone was found on this device. You can type your question below.'],
+  unsupported: ['entry.voice.err.unsupported', 'This browser cannot listen. Use Chrome or Edge, or type your question below.'],
+  network: ['entry.voice.err.network', 'The internet is weak right now. Try again, or type your question below.'],
+  unknown: ['entry.voice.err.unknown', 'Something went wrong while listening. Please try again, or type below.'],
+};
+
+/** Words of the live transcript fade up one by one as they are recognised. */
+function LiveWords({ text, className }: { text: string; className?: string }) {
+  const words = text.split(/\s+/).filter(Boolean);
+  return (
+    <span className={className}>
+      {words.map((w, i) => (
+        <motion.span key={`${i}-${w}`} initial={{ opacity: 0, y: 6, filter: 'blur(3px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} transition={{ duration: 0.22, ease: [0.2, 0, 0, 1] }} className="inline-block me-[0.28em]">
+          {w}
+        </motion.span>
+      ))}
+    </span>
+  );
 }
 
-export const AiAssistantDrawer: React.FC = () => {
+function TypingDots() {
+  return (
+    <span className="inline-flex items-center gap-1.5 h-5" aria-hidden>
+      {[0, 1, 2].map((i) => (
+        <motion.span key={i} className="w-2 h-2 rounded-full bg-ink-3" animate={{ y: [0, -5, 0], opacity: [0.4, 1, 0.4] }} transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15 }} />
+      ))}
+    </span>
+  );
+}
+
+/**
+ * SAHAYAK SATHI — voice-first assistant.
+ * Before the first question the orb is the whole screen: one big target, one instruction.
+ * Once a conversation starts it moves into the composer so answers get the space.
+ */
+export function AiAssistantDrawer() {
   const navigate = useNavigate();
-  const { isAiDrawerOpen, setAiDrawerOpen, language } = useAppStore();
+  const { isAiDrawerOpen, setAiDrawerOpen, language, isAudioAssistanceEnabled } = useAppStore();
   const { t } = useTranslation();
 
-  const [inputQuery, setInputQuery] = useState('');
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      sender: 'assistant',
-      text: getInitialGreeting(language),
-      time: 'Just now',
-    },
-  ]);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const idRef = useRef(1);
+  const [input, setInput] = useState('');
+  const [thinking, setThinking] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [{ id: 0, sender: 'assistant', text: greetingFor(language), time: clock(language) }]);
+  const listEndRef = useRef<HTMLDivElement>(null);
+  const replyTimer = useRef<number>();
 
-  const handleSend = (text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-
-    const userMsg: ChatMessage = { sender: 'user', text: trimmed, time: 'Just now' };
-    setMessages((prev) => [...prev, userMsg]);
-    setInputQuery('');
-
-    setTimeout(() => {
-      const reply = buildAssistantReply(trimmed, language);
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: 'assistant',
-          text: reply.text,
-          time: 'Just now',
-          actionLink: reply.actionLink,
-        },
-      ]);
-      speakVernacularText(reply.text, language);
-    }, 350);
+  const speak = (text: string) => {
+    setSpeaking(true);
+    speakVernacularText(text, language, () => setSpeaking(false), () => setSpeaking(false));
   };
 
-  const {
-    isListening,
-    interimTranscript,
-    error: speechError,
-    startListening,
-    stopListening,
-    reset: resetSpeech,
-  } = useSpeechRecognition({
+  const stopTalking = () => {
+    stopSpeech();
+    setSpeaking(false);
+  };
+
+  const handleSend = (raw: string) => {
+    const text = raw.trim();
+    if (!text) return;
+    haptic('select');
+    stopTalking();
+    setMessages((prev) => [...prev, { id: idRef.current++, sender: 'user', text, time: clock(language) }]);
+    setInput('');
+    setThinking(true);
+    window.clearTimeout(replyTimer.current);
+    replyTimer.current = window.setTimeout(() => {
+      const reply = buildAssistantReply(text, language);
+      setThinking(false);
+      setMessages((prev) => [...prev, { id: idRef.current++, sender: 'assistant', text: reply.text, time: clock(language), actionLink: reply.actionLink }]);
+      haptic('success');
+      if (isAudioAssistanceEnabled) speak(reply.text);
+    }, 650);
+  };
+
+  const { isListening, interimTranscript, error: speechError, startListening, stopListening, reset: resetSpeech } = useSpeechRecognition({
     language,
-    onFinalResult: (spoken) => {
-      setInputQuery(spoken);
-      handleSend(spoken);
-    },
+    onFinalResult: (spoken) => handleSend(spoken),
   });
 
+  const level = useMicLevel(isListening && isAiDrawerOpen);
+
+  // Re-greet in the new language if nothing has been asked yet
   useEffect(() => {
-    setMessages((prev) => {
-      if (prev.length === 1 && prev[0].sender === 'assistant') {
-        return [{ ...prev[0], text: getInitialGreeting(language) }];
-      }
-      return prev;
-    });
+    setMessages((prev) => (prev.length === 1 && prev[0].sender === 'assistant' ? [{ ...prev[0], text: greetingFor(language) }] : prev));
   }, [language]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isListening, interimTranscript]);
+    listEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages, thinking, interimTranscript, isListening]);
 
-  if (!isAiDrawerOpen) return null;
+  useEffect(() => () => window.clearTimeout(replyTimer.current), []);
 
-  const quickPrompts = [
-    t('promptChip1', 'When will the next PM-KISAN installment arrive?'),
-    t('promptChip2', 'What documents are needed for Ayushman Bharat?'),
-    t('promptChip3', 'Can a tenant farmer get crop assistance?'),
-  ];
+  const hasConversation = messages.some((m) => m.sender === 'user');
+  const state: OrbState = isListening ? 'listening' : thinking ? 'thinking' : speaking ? 'speaking' : speechError ? 'error' : 'idle';
 
-  const handleToggleVoice = () => {
+  const toggleMic = () => {
     if (isListening) {
       stopListening();
-    } else {
-      resetSpeech();
-      startListening();
+      return;
     }
+    if (speaking) {
+      stopTalking();
+      return;
+    }
+    resetSpeech();
+    startListening();
   };
 
-  const handleClose = () => {
+  const close = () => {
     stopListening();
-    stopSpeech();
+    stopTalking();
     setAiDrawerOpen(false);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-      <div
-        className="w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-3xl shadow-crisp-xl border border-slate-200 dark:border-slate-800 h-[88vh] flex flex-col"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="ai-drawer-title"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center">
-              <Bot className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 id="ai-drawer-title" className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <span>{t('aiAssistantTitle', 'Sahayak Sathi')}</span>
-                <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-semibold px-2 py-0.5 rounded-full">
-                  {(LANGUAGE_META[language] || LANGUAGE_META.en).label}
-                </span>
-              </h2>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                {t('aiAssistantSubtitle', 'Grounded strictly in government rules')}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={stopSpeech}
-              className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-              aria-label="Stop speaking"
-              title="Stop voice playback"
-            >
-              <VolumeX className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={handleClose}
-              className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-              aria-label="Close voice assistant"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
+  const restart = () => {
+    stopListening();
+    stopTalking();
+    resetSpeech();
+    setThinking(false);
+    setMessages([{ id: idRef.current++, sender: 'assistant', text: greetingFor(language), time: clock(language) }]);
+  };
 
-        {/* Messages Container */}
-        <div className="overflow-y-auto p-4 space-y-3 flex-1 bg-slate-50/50 dark:bg-slate-950/40">
-          {messages.map((m, idx) => (
-            <div
-              key={idx}
-              className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'}`}
+  const stateLabel = {
+    idle: t('entry.voice.state.idle', 'Tap the circle and speak'),
+    listening: t('entry.voice.state.listening', 'Listening… speak now'),
+    thinking: t('entry.voice.state.thinking', 'Finding the answer…'),
+    speaking: t('entry.voice.state.speaking', 'Speaking…'),
+    error: t('entry.voice.state.error', 'Could not hear you'),
+  }[state];
+
+  const orbLabel = isListening ? t('entry.voice.stopMic', 'Stop listening') : speaking ? t('entry.voice.stopSpeaking', 'Stop speaking') : t('entry.voice.startMic', 'Start speaking');
+  const errorText = speechError && !isListening ? t(...ERROR_KEY[speechError]) : null;
+  const suggestions = [t('promptChip1'), t('promptChip2'), t('promptChip3')];
+  const meta = LANGUAGE_META[language] || LANGUAGE_META.en;
+
+  const title = (
+    <span className="flex items-center gap-2.5">
+      {t('entry.voice.title', 'Sahayak Sathi')}
+      <span className="h-6 px-2 rounded-full bg-sunken text-micro font-semibold text-ink-2 grid place-items-center">{meta.label}</span>
+    </span>
+  );
+  const description = (
+    <span className="inline-flex items-center gap-1.5">
+      <ShieldCheck size={16} weight="duotone" className="text-patti" />
+      {t('entry.voice.subtitle', 'Answers come from official scheme rules')}
+    </span>
+  );
+
+  const footer = (
+    <div className="space-y-3">
+      {/* Suggestions — the question is often "what can I even ask?" */}
+      <div>
+        <p className="sr-only">{t('entry.voice.suggestions', 'You can ask')}</p>
+        <div className="-mx-5 md:-mx-7 px-5 md:px-7 flex gap-2 overflow-x-auto no-scrollbar snap-rail">
+          {suggestions.map((s) => (
+            <motion.button
+              key={s}
+              type="button"
+              whileTap={{ scale: 0.96 }}
+              onClick={() => handleSend(s)}
+              className="shrink-0 max-w-[80%] truncate h-10 px-4 rounded-full bg-sunken text-small font-medium text-ink hover:bg-neel-tint hover:text-neel-ink transition-colors"
             >
-              <div
-                className={`max-w-[85%] rounded-2xl p-3.5 text-xs sm:text-sm leading-relaxed shadow-sm ${
-                  m.sender === 'user'
-                    ? 'bg-brand-navy-900 dark:bg-sky-600 text-white rounded-br-none'
-                    : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-800 rounded-bl-none'
-                }`}
-              >
-                <p>{m.text}</p>
-                {m.actionLink && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const dest = m.actionLink!.to;
-                      handleClose();
-                      navigate(dest);
-                    }}
-                    className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors"
-                  >
-                    <span>{m.actionLink.label}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-              <div className="flex items-center gap-2 mt-1">
-                {m.sender === 'assistant' && (
-                  <button
-                    type="button"
-                    onClick={() => speakVernacularText(m.text, language)}
-                    className="text-[11px] text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1"
-                    aria-label="Replay audio"
-                  >
-                    <Volume2 className="w-3 h-3" />
-                    <span>{t('listenInLanguage', 'Listen')}</span>
-                  </button>
-                )}
-                <span className="text-[10px] text-slate-400">{m.time}</span>
-              </div>
-            </div>
+              {s}
+            </motion.button>
           ))}
-
-          {isListening && (
-            <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 space-y-1.5">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5">
-                  <Mic className="w-5 h-5 text-red-600 animate-pulse flex-shrink-0" />
-                  <span className="text-xs font-semibold text-amber-900 dark:text-amber-300">
-                    {t('aiListening', 'Listening... speak now in your mother tongue')}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={stopListening}
-                  className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-red-600 text-white hover:bg-red-700"
-                >
-                  {t('voiceCancel', 'Stop')}
-                </button>
-              </div>
-              {interimTranscript && (
-                <p className="text-xs text-slate-700 dark:text-slate-200 italic pl-7">
-                  “{interimTranscript}”
-                </p>
-              )}
-            </div>
-          )}
-
-          {speechError && !isListening && (
-            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 flex items-start gap-2 text-xs text-rose-800 dark:text-rose-200">
-              <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-              <span>{getSpeechErrorMessage(speechError, t)}</span>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Quick Suggestion Chips */}
-        <div className="px-4 py-2 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex gap-2 overflow-x-auto no-scrollbar">
-          {quickPrompts.map((q, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => handleSend(q)}
-              className="text-xs whitespace-nowrap px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-amber-100 hover:text-amber-900 dark:hover:bg-amber-950/60 dark:hover:text-amber-300 transition-colors border border-slate-200 dark:border-slate-700 flex-shrink-0"
-            >
-              {q}
-            </button>
-          ))}
-        </div>
-
-        {/* Input Bar */}
-        <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleToggleVoice}
-            className={`p-3 rounded-full transition-all active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0 ${
-              isListening
-                ? 'bg-red-600 text-white ring-4 ring-red-200 dark:ring-red-900'
-                : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 hover:bg-amber-200'
-            }`}
-            title={isListening ? 'Stop listening' : 'Speak into microphone'}
-            aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
-          >
-            {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-          </button>
-          <input
-            type="text"
-            value={isListening && interimTranscript ? interimTranscript : inputQuery}
-            onChange={(e) => setInputQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend(inputQuery)}
-            placeholder={t('aiPlaceholder', 'Ask anything about government schemes...')}
-            className="flex-1 px-4 py-2.5 text-base sm:text-sm bg-slate-100 dark:bg-slate-800 border-0 rounded-full text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 min-h-[44px]"
-          />
-          <button
-            type="button"
-            onClick={() => handleSend(inputQuery)}
-            disabled={!inputQuery.trim()}
-            className="p-3 rounded-full bg-brand-navy-900 dark:bg-sky-600 text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-brand-navy-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0"
-            aria-label="Send message"
-          >
-            <Send className="w-4 h-4" />
-          </button>
         </div>
       </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSend(input);
+        }}
+        className="flex items-center gap-2"
+      >
+        {hasConversation && (
+          <div className="shrink-0 me-1">
+            <MiniOrb state={state} level={level} onPress={toggleMic} label={orbLabel} />
+          </div>
+        )}
+        <label className="flex-1 min-w-0">
+          <span className="sr-only">{t('entry.voice.typeInstead', 'Or type your question…')}</span>
+          <input
+            value={isListening && interimTranscript ? interimTranscript : input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={t('entry.voice.typeInstead', 'Or type your question…')}
+            className="w-full h-[52px] px-4 rounded-full bg-sunken text-ink placeholder:text-ink-3 focus:outline-none focus:shadow-[0_0_0_2px_rgb(var(--c-neel))]"
+          />
+        </label>
+        <IconButton type="submit" label={t('entry.voice.send', 'Send')} variant="solid" disabled={!input.trim()} className="!rounded-full disabled:opacity-40 shrink-0">
+          <PaperPlaneRight size={22} weight="fill" className="flip-rtl" />
+        </IconButton>
+      </form>
     </div>
   );
-};
+
+  return (
+    <Sheet open={isAiDrawerOpen} onClose={close} title={title} description={description} footer={footer} desktop="side" size="md" closeLabel={t('navClose', 'Close')} className="md:h-full max-md:h-[90dvh]">
+      <div className="flex items-center justify-end gap-1 -mt-1 mb-2">
+        {speaking && (
+          <button type="button" onClick={stopTalking} className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-small font-semibold text-ink-2 hover:bg-sunken">
+            <SpeakerSlash size={18} /> {t('entry.voice.stopSpeaking', 'Stop speaking')}
+          </button>
+        )}
+        {hasConversation && (
+          <button type="button" onClick={restart} className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-small font-semibold text-ink-2 hover:bg-sunken">
+            <ArrowCounterClockwise size={18} /> {t('entry.voice.newChat', 'Start over')}
+          </button>
+        )}
+      </div>
+
+      <AnimatePresence mode="wait" initial={false}>
+        {!hasConversation ? (
+          /* ── Stage: one big target ─────────────────────────────── */
+          <motion.div key="stage" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.18 } }} className="flex flex-col items-center text-center pt-2 pb-4">
+            <VoiceOrb state={state} level={level} onPress={toggleMic} label={orbLabel} size={136} />
+            <p aria-live="polite" className={cx('mt-1 text-h3 font-semibold', state === 'error' ? 'text-sindoor' : 'text-ink')}>
+              {stateLabel}
+            </p>
+            <div className="mt-3 min-h-[4.5rem] w-full max-w-sm" aria-live="polite">
+              {isListening && interimTranscript ? (
+                <LiveWords text={interimTranscript} className="text-lead font-medium text-ink" />
+              ) : errorText ? (
+                <p className="text-small text-ink-2">{errorText}</p>
+              ) : (
+                <p className="text-ink-2">{messages[0].text}</p>
+              )}
+            </div>
+            {!isListening && !errorText && (
+              <button type="button" onClick={() => speak(messages[0].text)} className="mt-1 inline-flex items-center gap-2 h-10 px-4 rounded-full bg-neel-tint text-neel-ink text-small font-semibold">
+                <SpeakerHigh size={18} weight="duotone" /> {t('listenInLanguage', 'Listen')}
+              </button>
+            )}
+          </motion.div>
+        ) : (
+          /* ── Conversation ──────────────────────────────────────── */
+          <motion.ol key="chat" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 pb-2" aria-live="polite" aria-relevant="additions">
+            <AnimatePresence initial={false}>
+              {messages.map((m) => {
+                const mine = m.sender === 'user';
+                return (
+                  <motion.li
+                    key={m.id}
+                    layout
+                    initial={{ opacity: 0, y: 14, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    className={cx('flex flex-col', mine ? 'items-end' : 'items-start')}
+                  >
+                    <span className="sr-only">{mine ? t('entry.voice.you', 'You') : t('entry.voice.sathi', 'Sathi')}:</span>
+                    <div
+                      className={cx(
+                        'max-w-[88%] px-4 py-3 rounded-lg',
+                        mine ? 'bg-neel text-on-neel rounded-ee-xs' : 'bg-paper text-ink shadow-hair rounded-es-xs'
+                      )}
+                    >
+                      <p className="whitespace-pre-line">{m.text}</p>
+                      {m.actionLink && (
+                        <motion.button
+                          type="button"
+                          whileTap={{ scale: 0.96 }}
+                          onClick={() => {
+                            const to = m.actionLink!.to;
+                            close();
+                            navigate(to);
+                          }}
+                          className="mt-3 w-full inline-flex items-center justify-between gap-2 h-12 ps-4 pe-3 rounded-md bg-haldi text-[#111E33] font-semibold"
+                        >
+                          <span className="truncate">{m.actionLink.label}</span>
+                          <ArrowRight size={18} weight="bold" className="flip-rtl shrink-0" />
+                        </motion.button>
+                      )}
+                    </div>
+                    <div className="mt-1 flex items-center gap-3 px-1 text-micro text-ink-3">
+                      <span className="num">{m.time}</span>
+                      {!mine && (
+                        <button type="button" onClick={() => speak(m.text)} className="inline-flex items-center gap-1 h-8 font-semibold text-neel-ink hover:underline">
+                          <SpeakerHigh size={14} weight="duotone" /> {t('entry.voice.replay', 'Listen again')}
+                        </button>
+                      )}
+                    </div>
+                  </motion.li>
+                );
+              })}
+
+              {isListening && (
+                <motion.li key="draft" layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col items-end">
+                  <div className="max-w-[88%] px-4 py-3 rounded-lg rounded-ee-xs bg-neel-tint text-neel-ink">
+                    {interimTranscript ? <LiveWords text={interimTranscript} /> : <span className="text-small font-semibold">{stateLabel}</span>}
+                  </div>
+                </motion.li>
+              )}
+
+              {thinking && (
+                <motion.li key="typing" layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, transition: { duration: 0.1 } }} className="flex">
+                  <div className="px-4 py-3.5 rounded-lg rounded-es-xs bg-paper shadow-hair" role="status" aria-label={stateLabel}>
+                    <TypingDots />
+                  </div>
+                </motion.li>
+              )}
+
+              {errorText && (
+                <motion.li key="err" layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="rounded-md bg-sindoor-tint text-sindoor px-4 py-3 text-small font-medium" role="alert">
+                  {errorText}
+                </motion.li>
+              )}
+            </AnimatePresence>
+          </motion.ol>
+        )}
+      </AnimatePresence>
+      <div ref={listEndRef} />
+    </Sheet>
+  );
+}

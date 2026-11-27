@@ -1,176 +1,323 @@
-import React, { useState } from 'react';
-import { 
-  ShieldCheck, AlertTriangle, 
-  Upload, X, FileText 
-} from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Camera, CheckCircle, XCircle, CircleNotch, ImageSquare, ArrowClockwise, Lightbulb, VideoCamera } from '@phosphor-icons/react';
+import { useTranslation } from '../../hooks/useTranslation';
+import { Sheet } from '../../ui/Sheet';
+import { Button } from '../../ui/Button';
+import { cx } from '../../ui/cx';
+import { haptic } from '../../lib/haptics';
+import { spring, ease } from '../../ui/motion';
+import { MockDocument } from './MockDocument';
+import type { SampleKind } from './paperInfo';
 
 interface UploadConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  documentName: string;
   documentId: string;
+  documentName: string;
+  sampleKind?: SampleKind;
+  /** Demo of error recovery: the first capture fails the glare check */
+  failFirstAttempt?: boolean;
   onConfirmUpload: (docId: string) => void;
+  /** Called when a capture fails a quality check (marks the paper "needs attention") */
+  onQualityFail?: (docId: string) => void;
 }
 
-export const UploadConfirmationModal: React.FC<UploadConfirmationModalProps> = ({
+type Phase = 'frame' | 'checking' | 'failed' | 'passed';
+type CheckState = 'wait' | 'run' | 'pass' | 'fail';
+
+const CHECKS = [
+  { key: 'documents.scan.checkSharp', fallback: 'Text is sharp' },
+  { key: 'documents.scan.checkGlare', fallback: 'No shine or glare' },
+  { key: 'documents.scan.checkCorners', fallback: 'All 4 corners visible' },
+];
+
+/**
+ * Scan a paper.
+ * The phone checks the photo *before* it is submitted — so a blurry passbook is caught
+ * at home, not at the counter after a bus ride. Uses the real camera when allowed,
+ * falls back to an illustrated viewfinder.
+ */
+export const UploadConfirmationModal = ({
   isOpen,
   onClose,
-  documentName,
   documentId,
-  onConfirmUpload
-}) => {
-  const [hasAcknowledgedPrivacy, setHasAcknowledgedPrivacy] = useState(true);
-  const [hasCheckedGlare, setHasCheckedGlare] = useState(true);
-  const [hasCheckedNameMatch, setHasCheckedNameMatch] = useState(true);
-  const [isUploading, setIsUploading] = useState(false);
+  documentName,
+  sampleKind = 'certificate',
+  failFirstAttempt = false,
+  onConfirmUpload,
+  onQualityFail,
+}: UploadConfirmationModalProps) => {
+  const { t } = useTranslation();
+  const [phase, setPhase] = useState<Phase>('frame');
+  const [checks, setChecks] = useState<CheckState[]>(['wait', 'wait', 'wait']);
+  const [attempt, setAttempt] = useState(0);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [cameraOn, setCameraOn] = useState(false);
+  const [cameraError, setCameraError] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const timers = useRef<number[]>([]);
 
-  if (!isOpen) return null;
-
-  const handleUpload = () => {
-    setIsUploading(true);
-    setTimeout(() => {
-      setIsUploading(false);
-      onConfirmUpload(documentId);
-      onClose();
-    }, 1000);
+  const stopCamera = () => {
+    streamRef.current?.getTracks().forEach((tr) => tr.stop());
+    streamRef.current = null;
+    setCameraOn(false);
   };
 
-  const allChecked = hasAcknowledgedPrivacy && hasCheckedGlare && hasCheckedNameMatch;
+  useEffect(() => {
+    if (isOpen) {
+      setPhase('frame');
+      setChecks(['wait', 'wait', 'wait']);
+      setAttempt(0);
+      setFileName(null);
+      setCameraError(false);
+    } else {
+      stopCamera();
+    }
+    return () => {
+      timers.current.forEach((id) => window.clearTimeout(id));
+      timers.current = [];
+    };
+  }, [isOpen]);
+
+  useEffect(() => () => stopCamera(), []);
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+      streamRef.current = stream;
+      setCameraOn(true);
+      requestAnimationFrame(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => undefined);
+        }
+      });
+    } catch {
+      setCameraError(true);
+    }
+  };
+
+  const runChecks = () => {
+    haptic('select');
+    stopCamera();
+    setPhase('checking');
+    setChecks(['run', 'wait', 'wait']);
+    const willFail = failFirstAttempt && attempt === 0;
+    const failAt = willFail ? 1 : -1;
+    const step = 650;
+    CHECKS.forEach((_, i) => {
+      timers.current.push(
+        window.setTimeout(() => {
+          setChecks((prev) => {
+            const next = [...prev];
+            next[i] = i === failAt ? 'fail' : 'pass';
+            if (i + 1 < CHECKS.length && i !== failAt) next[i + 1] = 'run';
+            return next;
+          });
+          if (i === failAt) {
+            haptic('warning');
+            setPhase('failed');
+            onQualityFail?.(documentId);
+            timers.current.forEach((id) => window.clearTimeout(id));
+          } else if (i === CHECKS.length - 1) {
+            haptic('success');
+            setPhase('passed');
+          }
+        }, step * (i + 1))
+      );
+    });
+    setAttempt((a) => a + 1);
+  };
+
+  const retake = () => {
+    setPhase('frame');
+    setChecks(['wait', 'wait', 'wait']);
+    setFileName(null);
+  };
+
+  const confirm = () => {
+    onConfirmUpload(documentId);
+    onClose();
+  };
+
+  const flaw = phase === 'failed' ? 'glare' : 'none';
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/70 backdrop-blur-sm animate-fadeIn overflow-y-auto"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="upload-confirm-title"
+    <Sheet
+      open={isOpen}
+      onClose={onClose}
+      size="md"
+      title={t('documents.scan.title', 'Scan your paper')}
+      description={documentName}
+      closeLabel={t('navClose', 'Close')}
     >
-      <div className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-crisp-xl space-y-4 my-auto">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 id="upload-confirm-title" className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
-                Document Upload Confirmation
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Citizen Privacy & Quality Verification Protocol
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            aria-label="Close upload confirmation"
+      {/* Viewfinder */}
+      <div className="relative rounded-lg overflow-hidden bg-[#14120E] aspect-[4/3]">
+        {cameraOn ? (
+          <video ref={videoRef} playsInline muted className="absolute inset-0 w-full h-full object-cover" aria-label={t('documents.scan.liveCamera', 'Live camera')} />
+        ) : (
+          <motion.div
+            key={flaw}
+            initial={{ scale: 1.04, opacity: 0.6 }}
+            animate={{ scale: phase === 'frame' ? 0.92 : 0.88, opacity: 1 }}
+            transition={{ duration: 0.5, ease: ease.out }}
+            className="absolute inset-0 grid place-items-center"
           >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+            <MockDocument kind={sampleKind} flaw={flaw} className="w-full h-full" />
+          </motion.div>
+        )}
 
-        {/* Selected Document Pill */}
-        <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-            <span className="text-xs font-bold text-slate-900 dark:text-white">
-              {documentName}
-            </span>
-          </div>
-          <span className="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400 uppercase">
-            PDF / JPG &lt; 3MB
-          </span>
-        </div>
-
-        {/* Privacy & Safeguard Warning */}
-        <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs space-y-1.5">
-          <div className="flex items-center gap-1.5 font-bold text-amber-900 dark:text-amber-200">
-            <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-            <span>Citizen Privacy Protection Guardrails</span>
-          </div>
-          <p className="text-amber-800 dark:text-amber-300 leading-relaxed text-[11px]">
-            <strong>Do not upload sensitive unmasked credentials:</strong> Never share ATM PINs, CVV codes, net banking passwords, or full biometric iris prints. For Aadhaar, masked copies showing only the last 4 digits are legally preferred.
-          </p>
-        </div>
-
-        {/* Pre-upload Quality Checklist */}
-        <div className="space-y-2 pt-1">
-          <div className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-            Confirm Document Quality
-          </div>
-
-          <label className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 cursor-pointer hover:bg-slate-100/60 transition-colors">
-            <input 
-              type="checkbox" 
-              checked={hasCheckedGlare} 
-              onChange={(e) => setHasCheckedGlare(e.target.checked)}
-              className="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300"
-            />
-            <div className="text-xs text-slate-700 dark:text-slate-300">
-              <span className="font-bold">No Glare & All Corners Visible:</span> All four borders of the document are within frame and account/reference text is sharp and readable.
-            </div>
-          </label>
-
-          <label className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 cursor-pointer hover:bg-slate-100/60 transition-colors">
-            <input 
-              type="checkbox" 
-              checked={hasCheckedNameMatch} 
-              onChange={(e) => setHasCheckedNameMatch(e.target.checked)}
-              className="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300"
-            />
-            <div className="text-xs text-slate-700 dark:text-slate-300">
-              <span className="font-bold">Name & Spelling Consistency:</span> Name on document matches the applicant's official records or includes valid affidavit/gazette proof.
-            </div>
-          </label>
-
-          <label className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 cursor-pointer hover:bg-slate-100/60 transition-colors">
-            <input 
-              type="checkbox" 
-              checked={hasAcknowledgedPrivacy} 
-              onChange={(e) => setHasAcknowledgedPrivacy(e.target.checked)}
-              className="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300"
-            />
-            <div className="text-xs text-slate-700 dark:text-slate-300">
-              <span className="font-bold">Local Device Storage:</span> I understand this document is verified in-browser for this session and is never sold to third-party advertisers.
-            </div>
-          </label>
-        </div>
-
-        {/* Buttons */}
-        <div className="flex items-center gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-h-[48px]"
-          >
-            Cancel / ರದ್ದುಮಾಡಿ
-          </button>
-
-          <button
-            type="button"
-            disabled={!allChecked || isUploading}
-            onClick={handleUpload}
-            className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all min-h-[48px] ${
-              allChecked && !isUploading
-                ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm active:scale-95'
-                : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-            }`}
-          >
-            {isUploading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Verifying Integrity...</span>
-              </>
-            ) : (
-              <>
-                <Upload className="w-4 h-4" />
-                <span>Confirm & Upload</span>
-              </>
+        {/* corner guides */}
+        {[
+          'top-4 start-4 border-t-[3px] border-s-[3px] rounded-ss-md',
+          'top-4 end-4 border-t-[3px] border-e-[3px] rounded-se-md',
+          'bottom-4 start-4 border-b-[3px] border-s-[3px] rounded-es-md',
+          'bottom-4 end-4 border-b-[3px] border-e-[3px] rounded-ee-md',
+        ].map((pos, i) => (
+          <motion.span
+            key={pos}
+            aria-hidden
+            initial={{ opacity: 0, scale: 1.3 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1 + i * 0.05, ...spring.snappy }}
+            className={cx(
+              'absolute w-9 h-9',
+              pos,
+              phase === 'passed' ? 'border-[rgb(112_200_150)]' : phase === 'failed' ? 'border-[rgb(242_142_118)]' : 'border-haldi'
             )}
-          </button>
-        </div>
+          />
+        ))}
+
+        {/* scanning beam */}
+        {phase === 'checking' && (
+          <motion.span
+            aria-hidden
+            className="absolute inset-x-6 h-0.5 bg-haldi shadow-[0_0_18px_4px_rgb(var(--c-haldi)/0.6)]"
+            initial={{ top: '12%' }}
+            animate={{ top: ['12%', '88%', '12%'] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        )}
+
+        <p className="absolute bottom-3 inset-x-0 flex justify-center px-4 pointer-events-none" aria-live="polite">
+          <span className="max-w-full rounded-full bg-black/60 backdrop-blur px-3.5 py-1 text-small font-medium text-white">
+          {phase === 'frame' && t('documents.scan.hint', 'Fit the whole page inside the corners')}
+          {phase === 'checking' && t('documents.scan.checking', 'Checking your photo…')}
+          {phase === 'passed' && t('documents.scan.passedShort', 'Clear and readable')}
+          {phase === 'failed' && t('documents.scan.failedShort', 'Too much shine on the numbers')}
+          </span>
+        </p>
+        {fileName && phase !== 'frame' && (
+          <span className="absolute top-3 inset-x-14 text-center text-micro text-white/80 truncate">{fileName}</span>
+        )}
       </div>
-    </div>
+
+      {/* Quality checks */}
+      <ul className="mt-5 space-y-2" aria-label={t('documents.scan.checksLabel', 'Photo checks')}>
+        {CHECKS.map((c, i) => {
+          const s = checks[i];
+          return (
+            <li key={c.key} className="flex items-center gap-3 min-h-[40px]">
+              <span className="w-7 h-7 grid place-items-center shrink-0">
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.span key={s} initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.4, opacity: 0 }} transition={spring.snappy}>
+                    {s === 'wait' && <span className="block w-5 h-5 rounded-full border-2 border-line-strong" />}
+                    {s === 'run' && <CircleNotch size={22} className="animate-spin text-neel" />}
+                    {s === 'pass' && <CheckCircle size={24} weight="fill" className="text-patti" />}
+                    {s === 'fail' && <XCircle size={24} weight="fill" className="text-sindoor" />}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
+              <span className={cx('font-medium', s === 'wait' ? 'text-ink-3' : s === 'fail' ? 'text-sindoor' : 'text-ink')}>{t(c.key, c.fallback)}</span>
+            </li>
+          );
+        })}
+      </ul>
+
+      <AnimatePresence mode="wait">
+        {phase === 'failed' && (
+          <motion.div
+            key="fail"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="mt-4 flex gap-3 p-4 rounded-md bg-kesar-tint text-ink"
+            role="alert"
+          >
+            <Lightbulb size={24} weight="duotone" className="text-kesar shrink-0" />
+            <div>
+              <p className="font-semibold">{t('documents.scan.failedTitle', 'The bank seal and IFSC code are hard to read')}</p>
+              <p className="text-small text-ink-2 mt-1">{t('documents.scan.failedTip', 'Move away from the window or light, tilt the passbook a little, and try again.')}</p>
+            </div>
+          </motion.div>
+        )}
+        {phase === 'passed' && (
+          <motion.div key="pass" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-4 p-4 rounded-md bg-patti-tint">
+            <p className="font-semibold text-patti">{t('documents.scan.passedTitle', 'This photo will be accepted')}</p>
+            <p className="text-small text-ink-2 mt-1">{t('documents.scan.passedBody', 'Your paper is saved on this phone only. You choose when to share it.')}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {cameraError && phase === 'frame' && (
+        <p className="mt-3 text-small text-ink-2" role="status">
+          {t('documents.scan.cameraBlocked', 'Camera is not available. You can still choose a photo from your gallery.')}
+        </p>
+      )}
+
+      {/* Actions */}
+      <div className="mt-6 flex flex-col gap-2">
+        {phase === 'frame' && (
+          <>
+            <Button size="lg" block onClick={runChecks} iconStart={<Camera size={22} weight="fill" />}>
+              {t('documents.scan.capture', 'Take photo')}
+            </Button>
+            <div className="grid grid-cols-1 xs:grid-cols-2 gap-2">
+              {!cameraOn && (
+                <Button variant="secondary" onClick={startCamera} iconStart={<VideoCamera size={20} />}>
+                  {t('documents.scan.useCamera', 'Use my camera')}
+                </Button>
+              )}
+              <label className="relative inline-flex items-center justify-center gap-2 h-12 px-5 rounded-md bg-surface shadow-hair hover:bg-sunken font-semibold cursor-pointer focus-within:outline focus-within:outline-[3px] focus-within:outline-neel">
+                <ImageSquare size={20} />
+                <span>{t('documents.scan.gallery', 'Choose a photo or PDF')}</span>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  className="sr-only"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) {
+                      setFileName(f.name);
+                      runChecks();
+                    }
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+            </div>
+          </>
+        )}
+        {phase === 'failed' && (
+          <Button size="lg" block onClick={retake} iconStart={<ArrowClockwise size={20} weight="bold" />}>
+            {t('documents.scan.retake', 'Take it again')}
+          </Button>
+        )}
+        {phase === 'passed' && (
+          <div className="grid grid-cols-1 xs:grid-cols-[auto_1fr] gap-2">
+            <Button variant="secondary" size="lg" onClick={retake}>
+              {t('documents.scan.retakeShort', 'Retake')}
+            </Button>
+            <Button size="lg" onClick={confirm} iconStart={<CheckCircle size={22} weight="fill" />}>
+              {t('documents.scan.use', 'Use this photo')}
+            </Button>
+          </div>
+        )}
+      </div>
+    </Sheet>
   );
 };
+
+export default UploadConfirmationModal;

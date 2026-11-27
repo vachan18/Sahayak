@@ -1,514 +1,350 @@
-import React, { useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
-import { 
-  Shield, Camera, AlertCircle, CheckCircle2, 
-  HelpCircle, ArrowRight, FileText, Sparkles, 
-  Upload, Printer, Info, AlertTriangle, Eye
-} from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
+import {
+  Camera,
+  CloudArrowDown,
+  ImageSquare,
+  CheckCircle,
+  Warning,
+  Circle,
+  ArrowRight,
+  Lightbulb,
+  ArrowClockwise,
+  Confetti,
+} from '@phosphor-icons/react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
+import type { DocumentSpec, Scheme } from '../types';
+import {
+  PageHeader,
+  Surface,
+  Tag,
+  Chip,
+  Button,
+  LinkButton,
+  ProgressRing,
+  ListenButton,
+  toneTint,
+  cx,
+  spring,
+  ease,
+} from '../ui';
 import { VisualDosAndDontsModal } from '../components/documents/VisualDosAndDontsModal';
 import { DigiLockerSimulationModal } from '../components/documents/DigiLockerSimulationModal';
 import { UploadConfirmationModal } from '../components/documents/UploadConfirmationModal';
+import { collectPapers, paperInfo, paperState, PaperRow, PaperState, SampleKind } from '../components/documents/paperInfo';
 
-export const DocumentChecklistScreen: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const currentSchemeId = searchParams.get('scheme') || 'pm-kisan';
+const shortTitle = (s: Scheme, t: (k: string, f?: string) => string) => t(s.titleKey, s.titleKey).split('(')[0].trim();
+
+const GROUPS: { state: PaperState; key: string; fallback: string; tone: 'sindoor' | 'neutral' | 'patti' }[] = [
+  { state: 'attention', key: 'documents.group.attention', fallback: 'Needs a new photo', tone: 'sindoor' },
+  { state: 'todo', key: 'documents.group.todo', fallback: 'Not started', tone: 'neutral' },
+  { state: 'ready', key: 'documents.group.ready', fallback: 'Ready', tone: 'patti' },
+];
+
+/* ── One paper ────────────────────────────────────────────────────────────── */
+function PaperCard({
+  row,
+  state,
+  onScan,
+  onDigiLocker,
+  onExample,
+}: {
+  row: PaperRow;
+  state: PaperState;
+  onScan: () => void;
+  onDigiLocker: () => void;
+  onExample: () => void;
+}) {
   const { t } = useTranslation();
-  const { schemes, documentUploadStatus, setDocumentStatus } = useAppStore();
-
-  const [activeVisualGuide, setActiveVisualGuide] = useState<boolean>(false);
-  const [activeDigiLockerModal, setActiveDigiLockerModal] = useState<boolean>(false);
-  const [activeUploadModalDoc, setActiveUploadModalDoc] = useState<{ id: string; name: string } | null>(null);
-  const [blurAlertDoc, setBlurAlertDoc] = useState<string | null>(null);
-  const [simulatedScanningDoc, setSimulatedScanningDoc] = useState<string | null>(null);
-
-  const scheme = schemes.find(s => s.id === currentSchemeId) || schemes[0];
-
-  const handleSelectScheme = (schemeId: string) => {
-    setSearchParams({ scheme: schemeId });
-  };
-
-  const handleSimulateCameraCapture = (docId: string) => {
-    setSimulatedScanningDoc(docId);
-    setTimeout(() => {
-      setSimulatedScanningDoc(null);
-      // Passbook triggers blur detection demonstration to showcase error handling UX
-      if (docId === 'bank_passbook') {
-        setBlurAlertDoc(docId);
-      } else {
-        setDocumentStatus(docId, 'verified');
-      }
-    }, 1200);
-  };
-
-  const handleRetakeInBrightLight = (docId: string) => {
-    setBlurAlertDoc(null);
-    setSimulatedScanningDoc(docId);
-    setTimeout(() => {
-      setDocumentStatus(docId, 'verified');
-      setSimulatedScanningDoc(null);
-    }, 1200);
-  };
-
-  const handleDigiLockerComplete = (verifiedIds: string[]) => {
-    verifiedIds.forEach(id => setDocumentStatus(id, 'verified'));
-  };
-
-  const verifiedCount = scheme.documents.filter(d => documentUploadStatus[d.id] === 'verified').length;
-  const totalCount = scheme.documents.length;
-  const isAllReady = verifiedCount === totalCount;
-  const progressPercent = totalCount > 0 ? Math.round((verifiedCount / totalCount) * 100) : 0;
-
-  // Document metadata helpers for rich quality guidance
-  const getDocRationale = (docId: string): string => {
-    switch (docId) {
-      case 'aadhaar_card':
-        return 'Mandatory for statutory identity verification and direct subsidy routing under Aadhaar Act 2016.';
-      case 'land_record':
-      case 'land_record_rtc':
-        return 'Authenticates agricultural ownership and land extent in state land revenue archives (Bhoomi).';
-      case 'bank_passbook':
-        return 'Ensures DBT cash transfer reaches an active, NPCI-seeded Aadhaar-linked savings account.';
-      case 'ration_card':
-        return 'Establishes household family composition and NFSA/BPL priority entitlement category.';
-      case 'mcp_card':
-        return 'Verifies ANC registration, institutional delivery, and child vaccination milestones.';
-      case 'vending_certificate':
-        return 'Validates urban street vending identity under National Street Vendors Act 2014.';
-      case 'income_certificate':
-        return 'Verifies family annual income limit as determined by authorized Tahsildar revenue officers.';
-      default:
-        return 'Required by official government department guidelines for scheme eligibility verification.';
-    }
-  };
-
-  const getDocMistakes = (docId: string): string => {
-    switch (docId) {
-      case 'bank_passbook':
-        return 'Uploading transaction statement pages instead of the front cover; cropped IFSC or branch stamp; light reflection on printed numbers.';
-      case 'land_record':
-      case 'land_record_rtc':
-        return 'Uploading mutation notices instead of latest signed Record of Rights (Pahani); expired extracts or cut-off survey numbers.';
-      case 'aadhaar_card':
-        return 'Sharing unmasked 12 digits on insecure devices; blurry QR code; faded photograph on laminated card.';
-      case 'ration_card':
-        return 'Missing family member listing page; faded seal of Food & Civil Supplies Department.';
-      default:
-        return 'Low-resolution photograph, blurry text, cropped document margins, or expired official validity.';
-    }
-  };
+  const { doc, schemes } = row;
+  const info = paperInfo(doc.id);
+  const Icon = info.icon;
+  const name = t(doc.nameKey, doc.nameKey);
+  const why = t(info.whyKey, info.why);
+  const mistake = t(info.mistakeKey, info.mistake);
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-5xl mx-auto py-2 sm:py-4 animate-fadeIn">
-      {/* Top Banner & Scheme Selector */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-crisp-sm space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs font-black uppercase tracking-wider mb-2">
-              <Shield className="w-3.5 h-3.5 text-amber-600" />
-              <span>{t('officialAssistedPrep', 'Assisted Document Preparation & Verification')}</span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-              {t('docChecklistTitle', 'Required Document Checklist')}
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-2xl">
-              Inspect quality requirements, check visual Do's & Don'ts, and pre-verify documents to eliminate Grama One / CSC counter rejection.
-            </p>
-          </div>
-
-          {/* Dynamic Circular Readiness Meter */}
-          <div className="flex items-center gap-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/70 p-3.5 rounded-2xl self-start lg:self-center flex-shrink-0">
-            <div className="relative w-14 h-14 flex items-center justify-center">
-              <svg className="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
-                <path
-                  className="text-slate-200 dark:text-slate-700"
-                  strokeWidth="3.5"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-                <path
-                  className={isAllReady ? "text-emerald-500" : "text-amber-500"}
-                  strokeDasharray={`${progressPercent}, 100`}
-                  strokeLinecap="round"
-                  strokeWidth="3.5"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-              </svg>
-              <span className="absolute text-xs font-black text-slate-900 dark:text-white">
-                {progressPercent}%
-              </span>
-            </div>
-            <div>
-              <div className="text-xs font-black text-slate-900 dark:text-white">
-                {verifiedCount} of {totalCount} Ready
-              </div>
-              <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                {isAllReady ? (
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> 100% Prepared
-                  </span>
-                ) : (
-                  <span>Verification Pending</span>
-                )}
-              </div>
-            </div>
+    <motion.li
+      layout
+      layoutId={`paper-${doc.id}`}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={{ layout: spring.gentle, duration: 0.3, ease: ease.out }}
+      className={cx(
+        'min-w-0 rounded-lg bg-surface p-5 flex flex-col',
+        state === 'attention' ? 'shadow-[0_0_0_2px_rgb(var(--c-sindoor)/0.55)]' : 'shadow-hair'
+      )}
+    >
+      <div className="flex items-start gap-4">
+        <span className={cx('relative w-12 h-12 rounded-md grid place-items-center shrink-0', toneTint[info.tone])}>
+          <Icon size={26} weight="duotone" />
+          {state === 'ready' && (
+            <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={spring.bouncy} className="absolute -bottom-1 -end-1 rounded-full bg-surface">
+              <CheckCircle size={22} weight="fill" className="text-patti" />
+            </motion.span>
+          )}
+        </span>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold leading-snug">{name}</h3>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {doc.isMandatory ? (
+              <Tag tone="neutral" dot={false}>
+                {t('documents.card.mustHave', 'Must have')}
+              </Tag>
+            ) : (
+              <Tag tone="neutral" dot={false}>
+                {t('documents.card.optional', 'Optional')}
+              </Tag>
+            )}
+            {doc.digiLockerSupported && <Tag tone="neel">{t('documents.card.inDigiLocker', 'In DigiLocker')}</Tag>}
           </div>
         </div>
-
-        {/* Scheme Selector Tabs */}
-        <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
-          <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-2">
-            Select Scheme to View Specific Document Standards:
-          </label>
-          <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-thin">
-            {schemes.map((s) => {
-              const isSelected = s.id === currentSchemeId;
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => handleSelectScheme(s.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0 ${
-                    isSelected
-                      ? 'bg-brand-navy-900 text-white shadow-sm ring-2 ring-brand-navy-900/20 dark:ring-white/20'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                  }`}
-                >
-                  <span>{s.titleKey}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <ListenButton variant="icon" text={`${name}. ${why} ${mistake}`} />
       </div>
 
-      {/* Quick Action Tools Bar (DigiLocker Simulation & Visual Do's & Don'ts) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-        <button
-          type="button"
-          onClick={() => setActiveVisualGuide(true)}
-          className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/80 hover:bg-amber-100/70 text-left transition-all flex items-start gap-3 group active:scale-[0.99]"
-        >
-          <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform">
-            <Eye className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xs font-black text-amber-950 dark:text-amber-200 flex items-center gap-1.5">
-              <span>Visual Do's and Don'ts Guide</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-100 font-bold">
-                Passbook & RTC
-              </span>
-            </div>
-            <p className="text-[11px] text-amber-800 dark:text-amber-300/90 mt-0.5 leading-relaxed">
-              Compare acceptable versus blurry, glare-affected, or cropped uploads with side-by-side examples.
-            </p>
-          </div>
-        </button>
+      <p className="mt-4 text-ink-2">{why}</p>
 
-        <button
-          type="button"
-          onClick={() => setActiveDigiLockerModal(true)}
-          className="p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/80 hover:bg-blue-100/70 text-left transition-all flex items-start gap-3 group active:scale-[0.99]"
-        >
-          <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform">
-            <Shield className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xs font-black text-blue-950 dark:text-blue-200 flex items-center gap-1.5">
-              <span>DigiLocker 1-Click Pull</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-200 dark:bg-blue-900 text-blue-900 dark:text-blue-100 font-bold">
-                PROTOTYPE SIMULATION
-              </span>
-            </div>
-            <p className="text-[11px] text-blue-800 dark:text-blue-300/90 mt-0.5 leading-relaxed">
-              Simulate instant government repository authorization to auto-verify Aadhaar, RTC, and Certificates.
-            </p>
-          </div>
-        </button>
+      <p className="mt-3 flex gap-2 text-small text-ink-2">
+        <Lightbulb size={18} weight="duotone" className="text-kesar shrink-0 mt-0.5" />
+        <span>
+          <span className="font-semibold text-ink">{t('documents.card.commonMistake', 'Common mistake')}: </span>
+          {mistake}
+        </span>
+      </p>
+
+      <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-micro text-ink-3">
+        <span>
+          {t('documents.card.neededFor', 'Needed for')}: <span className="text-ink-2 font-medium">{schemes.map((s) => shortTitle(s, t)).join(' · ')}</span>
+        </span>
+        <span className="num">
+          {doc.acceptableFormats.join(', ')} · {t('documents.card.upTo', 'up to')} {doc.maxSizeMb} MB
+        </span>
       </div>
 
-      {/* Blur Detection Alert Box if triggered */}
-      {blurAlertDoc && (
-        <div className="p-4 sm:p-5 rounded-3xl bg-amber-50 dark:bg-amber-950/50 border-2 border-amber-400 dark:border-amber-600 space-y-3 animate-fadeIn">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0">
-              <AlertTriangle className="w-4 h-4" />
-            </div>
+      <div className="mt-5 pt-4 border-t border-line flex flex-wrap items-center gap-2">
+        {state === 'ready' ? (
+          <>
+            <span className="inline-flex items-center gap-1.5 text-small font-semibold text-patti me-auto">
+              <CheckCircle size={20} weight="fill" />
+              {t('documents.card.readyNote', 'Ready to submit')}
+            </span>
+            <Button variant="ghost" size="sm" onClick={onScan} iconStart={<ArrowClockwise size={18} />}>
+              {t('documents.card.replace', 'Replace')}
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button size="sm" onClick={onScan} iconStart={<Camera size={18} weight="fill" />}>
+              {state === 'attention' ? t('documents.card.retake', 'Take a new photo') : t('documents.card.scan', 'Scan paper')}
+            </Button>
+            {doc.digiLockerSupported && (
+              <Button variant="secondary" size="sm" onClick={onDigiLocker} iconStart={<CloudArrowDown size={18} />}>
+                DigiLocker
+              </Button>
+            )}
+            <Button variant="quiet" size="sm" onClick={onExample} iconStart={<ImageSquare size={18} />}>
+              {t('documents.card.example', 'See example')}
+            </Button>
+          </>
+        )}
+      </div>
+    </motion.li>
+  );
+}
+
+/* ── Screen ───────────────────────────────────────────────────────────────── */
+export const DocumentChecklistScreen = () => {
+  const [params, setParams] = useSearchParams();
+  const { t } = useTranslation();
+  const { schemes, savedSchemeIds, applications, documentUploadStatus, setDocumentStatus, pushToast } = useAppStore();
+
+  const selectedId = params.get('scheme') ?? 'mine';
+  const mySchemeIds = useMemo(() => {
+    const ids = new Set([...savedSchemeIds, ...applications.map((a) => a.schemeId)]);
+    return schemes.filter((s) => ids.has(s.id)).map((s) => s.id);
+  }, [schemes, savedSchemeIds, applications]);
+
+  const activeSchemes = useMemo(() => {
+    if (selectedId !== 'mine') {
+      const s = schemes.find((x) => x.id === selectedId);
+      return s ? [s] : schemes;
+    }
+    const mine = schemes.filter((s) => mySchemeIds.includes(s.id));
+    return mine.length ? mine : schemes;
+  }, [selectedId, schemes, mySchemeIds]);
+
+  const rows = useMemo(() => collectPapers(activeSchemes), [activeSchemes]);
+  const statusOf = (doc: DocumentSpec) => documentUploadStatus[doc.id] ?? doc.status ?? 'pending';
+  const stateOf = (doc: DocumentSpec) => paperState(statusOf(doc));
+  const readyCount = rows.filter((r) => stateOf(r.doc) === 'ready').length;
+  const total = rows.length;
+  const allReady = total > 0 && readyCount === total;
+
+  const [guideKind, setGuideKind] = useState<SampleKind | null>(null);
+  const [dlDocs, setDlDocs] = useState<DocumentSpec[] | null>(null);
+  const [scanRow, setScanRow] = useState<PaperRow | null>(null);
+  const [failedOnce, setFailedOnce] = useState<string[]>([]);
+
+  const markReady = (ids: string[]) => {
+    ids.forEach((id) => setDocumentStatus(id, 'verified'));
+    const names = ids.map((id) => rows.find((r) => r.doc.id === id)?.doc.nameKey ?? id).map((n) => t(n, n).split('(')[0].trim());
+    pushToast({ message: `${names.join(', ')} — ${t('documents.toast.ready', 'ready')}`, tone: 'success' });
+  };
+
+  const singleScheme = activeSchemes.length === 1 ? activeSchemes[0] : null;
+
+  return (
+    <div className="pb-8">
+      <PageHeader
+        eyebrow={t('shell.nav.papers', 'Papers')}
+        title={t('documents.title', 'Get your papers ready')}
+        description={t('documents.subtitle', 'Most applications are turned back for one missing or blurry paper. Check each one here, at home, before you go.')}
+        actions={
+          <Surface padded="sm" className="w-full md:w-auto flex items-center gap-4 pe-6">
+            <ProgressRing value={total ? (readyCount / total) * 100 : 0} size={72} stroke={7} tone={allReady ? 'patti' : 'haldi'} label={t('documents.readiness', 'Paper readiness')}>
+              <span className="num font-semibold text-lead">
+                {readyCount}/{total}
+              </span>
+            </ProgressRing>
             <div>
-              <h3 className="text-sm font-black text-amber-950 dark:text-amber-200">
-                {t('blurDetected', 'Warning: Text looks blurry or bank seal is obscured.')}
-              </h3>
-              <p className="text-xs text-amber-900 dark:text-amber-300 mt-0.5 leading-relaxed">
-                Our image check detected reflection glare or motion blur on the account number and IFSC code. Documents with illegible numbers are rejected at the treasury stage.
+              <p className="font-semibold">{t('documents.readiness', 'Paper readiness')}</p>
+              <p className="text-small text-ink-2">
+                <span className="num">{readyCount}</span> {t('documents.readyOf', 'of')} <span className="num">{total}</span> {t('documents.readyLabel', 'ready')}
               </p>
             </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5 pt-1">
-            <button
-              type="button"
-              onClick={() => handleRetakeInBrightLight(blurAlertDoc)}
-              className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
-            >
-              <Camera className="w-3.5 h-3.5" />
-              <span>ಬೆಳಕಿನಲ್ಲಿ ಮತ್ತೊಮ್ಮೆ ಫೋಟೋ ತೆಗೆಯಿರಿ (Retake in Good Daylight)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveVisualGuide(true)}
-              className="px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 font-bold text-xs hover:bg-amber-50 transition-colors"
-            >
-              View Passbook Sample Guide
-            </button>
-          </div>
+          </Surface>
+        }
+      />
+
+      {/* Which scheme are we preparing for? */}
+      <div className="-mx-4 px-4 sm:mx-0 sm:px-0 flex lg:flex-wrap gap-2 overflow-x-auto lg:overflow-visible no-scrollbar pb-1 mb-6" role="group" aria-label={t('documents.filterLabel', 'Show papers for')}>
+        <Chip selected={selectedId === 'mine'} onClick={() => setParams({})}>
+          {t('documents.filterMine', 'My schemes')}
+        </Chip>
+        {schemes.map((s) => (
+          <Chip key={s.id} selected={selectedId === s.id} onClick={() => setParams({ scheme: s.id })}>
+            {shortTitle(s, t)}
+          </Chip>
+        ))}
+      </div>
+
+      {/* Two fast paths */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-10">
+        <button
+          type="button"
+          onClick={() => setDlDocs(rows.map((r) => r.doc))}
+          className="group flex items-center gap-4 p-5 rounded-lg bg-neel-tint text-start hover:brightness-[0.98] active:scale-[0.99] transition-[filter,transform]"
+        >
+          <span className="w-12 h-12 rounded-md bg-surface grid place-items-center shrink-0 text-neel-ink">
+            <CloudArrowDown size={26} weight="duotone" />
+          </span>
+          <span className="flex-1 min-w-0">
+            <span className="block font-semibold text-ink">{t('documents.tool.dlTitle', 'Fetch from DigiLocker')}</span>
+            <span className="block text-small text-ink-2">{t('documents.tool.dlBody', 'Already verified by the government. Fastest way.')}</span>
+          </span>
+          <ArrowRight size={20} className="text-ink-2 flip-rtl transition-transform group-hover:translate-x-0.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setGuideKind('passbook')}
+          className="group flex items-center gap-4 p-5 rounded-lg bg-haldi-tint text-start hover:brightness-[0.98] active:scale-[0.99] transition-[filter,transform]"
+        >
+          <span className="w-12 h-12 rounded-md bg-surface grid place-items-center shrink-0 text-haldi-deep">
+            <ImageSquare size={26} weight="duotone" />
+          </span>
+          <span className="flex-1 min-w-0">
+            <span className="block font-semibold text-ink">{t('documents.tool.guideTitle', 'See good and bad photos')}</span>
+            <span className="block text-small text-ink-2">{t('documents.tool.guideBody', 'One look saves a second trip.')}</span>
+          </span>
+          <ArrowRight size={20} className="text-ink-2 flip-rtl transition-transform group-hover:translate-x-0.5" />
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {allReady && (
+          <motion.div
+            initial={{ opacity: 0, y: 12, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={spring.gentle}
+            className="mb-10 rounded-xl bg-hero-patti text-white p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center gap-5"
+          >
+            <Confetti size={44} weight="duotone" className="shrink-0" />
+            <div className="flex-1">
+              <h2 className="text-h3 font-semibold">{t('documents.allReady.title', 'All your papers are ready')}</h2>
+              <p className="text-white/85 mt-1">{t('documents.allReady.body', 'You can apply now — on your own, or at a help centre with your slip.')}</p>
+            </div>
+            <LinkButton to={singleScheme ? `/guidance/${singleScheme.id}` : '/schemes'} iconEnd={<ArrowRight size={20} weight="bold" className="flip-rtl" />}>
+              {t('documents.allReady.cta', 'Apply now')}
+            </LinkButton>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <LayoutGroup>
+        <div className="space-y-10">
+          {GROUPS.map((g) => {
+            const groupRows = rows.filter((r) => stateOf(r.doc) === g.state);
+            if (!groupRows.length) return null;
+            const GroupIcon = g.state === 'ready' ? CheckCircle : g.state === 'attention' ? Warning : Circle;
+            return (
+              <motion.section layout="position" key={g.state} aria-labelledby={`grp-${g.state}`}>
+                <h2 id={`grp-${g.state}`} className="flex items-center gap-2.5 text-h3 font-semibold mb-4">
+                  <GroupIcon size={24} weight={g.state === 'todo' ? 'regular' : 'fill'} className={g.state === 'ready' ? 'text-patti' : g.state === 'attention' ? 'text-sindoor' : 'text-ink-3'} />
+                  {t(g.key, g.fallback)}
+                  <Tag tone={g.tone} dot={false} className="num">
+                    {groupRows.length}
+                  </Tag>
+                </h2>
+                <ul className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <AnimatePresence initial={false}>
+                    {groupRows.map((row) => (
+                      <PaperCard
+                        key={row.doc.id}
+                        row={row}
+                        state={g.state}
+                        onScan={() => setScanRow(row)}
+                        onDigiLocker={() => setDlDocs([row.doc])}
+                        onExample={() => setGuideKind(paperInfo(row.doc.id).sample)}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </ul>
+              </motion.section>
+            );
+          })}
+        </div>
+      </LayoutGroup>
+
+      {singleScheme && !allReady && (
+        <div className="mt-10 flex flex-wrap items-center justify-between gap-4 p-5 rounded-lg bg-sunken">
+          <p className="text-ink-2 max-w-lg">{t('documents.nextHint', 'Missing a paper? A help centre can often get it for you the same day.')}</p>
+          <LinkButton to="/help-centres" variant="secondary" iconEnd={<ArrowRight size={18} weight="bold" className="flip-rtl" />}>
+            {t('shell.nav.helpCentres', 'Help centres')}
+          </LinkButton>
         </div>
       )}
 
-      {/* Document Items List (6 required points on each card) */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-            Required Documents for {scheme.titleKey} ({scheme.documents.length})
-          </h2>
-          <span className="text-xs text-slate-500 dark:text-slate-400">
-            100% Compliance Required for Approval
-          </span>
-        </div>
-
-        {scheme.documents.map((doc) => {
-          const status = documentUploadStatus[doc.id] || doc.status || 'pending';
-          const isVerified = status === 'verified';
-          const isScanning = simulatedScanningDoc === doc.id;
-
-          return (
-            <div
-              key={doc.id}
-              className={`p-4 sm:p-5 rounded-3xl border transition-all ${
-                isVerified
-                  ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800'
-                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-crisp-sm'
-              }`}
-            >
-              {/* Header: Name, Mandatory Pill, Status Badge */}
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                      {doc.nameKey}
-                    </h3>
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                      {doc.isMandatory ? 'Mandatory (ಕಡ್ಡಾಯ)' : 'Optional'}
-                    </span>
-                    {doc.digiLockerSupported && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 flex items-center gap-1">
-                        <Shield className="w-2.5 h-2.5" /> DigiLocker Ready
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                    {doc.descriptionKey}
-                  </p>
-                </div>
-
-                {/* Status Badge */}
-                <div className="self-start sm:self-center flex-shrink-0">
-                  {isVerified ? (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-black">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>✓ Verified (ಪರಿಶೀಲಿಸಲಾಗಿದೆ)</span>
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-300 text-xs font-black">
-                      <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
-                      <span>Upload Required</span>
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Six Mandatory Details Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 py-3.5 text-xs border-b border-slate-100 dark:border-slate-800">
-                {/* 1. Why Needed */}
-                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/80">
-                  <div className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mb-1 text-[11px] uppercase tracking-wide">
-                    <Info className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
-                    <span>Why It Is Needed:</span>
-                  </div>
-                  <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
-                    {getDocRationale(doc.id)}
-                  </p>
-                </div>
-
-                {/* 2. Format & Size Limit */}
-                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/80">
-                  <div className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mb-1 text-[11px] uppercase tracking-wide">
-                    <FileText className="w-3.5 h-3.5 text-purple-600 flex-shrink-0" />
-                    <span>Accepted Format & Size:</span>
-                  </div>
-                  <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
-                    PDF, JPEG, or PNG format. Maximum file size: <strong>{doc.maxSizeMb || 3} MB</strong>.
-                  </p>
-                </div>
-
-                {/* 3. Image Quality Guidance */}
-                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/80">
-                  <div className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mb-1 text-[11px] uppercase tracking-wide">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
-                    <span>Image Quality Guidance:</span>
-                  </div>
-                  <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
-                    Lay document flat on dark background in natural daylight. Ensure all 4 borders are captured without shadows or camera tilt.
-                  </p>
-                </div>
-
-                {/* 4. Common Mistakes */}
-                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/80">
-                  <div className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mb-1 text-[11px] uppercase tracking-wide">
-                    <AlertTriangle className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
-                    <span>Common Mistakes to Avoid:</span>
-                  </div>
-                  <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
-                    {getDocMistakes(doc.id)}
-                  </p>
-                </div>
-              </div>
-
-              {/* Action Buttons: DigiLocker vs Upload Confirmation vs Sample Visualizer */}
-              <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  {!isVerified && doc.digiLockerSupported && (
-                    <button
-                      type="button"
-                      disabled={isScanning}
-                      onClick={() => setActiveDigiLockerModal(true)}
-                      className="px-3.5 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 text-blue-900 dark:text-blue-200 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all min-h-[44px]"
-                    >
-                      <Shield className="w-3.5 h-3.5 text-blue-600" />
-                      <span>{isScanning ? 'Connecting...' : t('digiLockerPull', 'Fetch via DigiLocker')}</span>
-                    </button>
-                  )}
-
-                  {!isVerified ? (
-                    <button
-                      type="button"
-                      disabled={isScanning}
-                      onClick={() => setActiveUploadModalDoc({ id: doc.id, name: doc.nameKey })}
-                      className="px-3.5 py-2 rounded-xl bg-brand-navy-900 dark:bg-slate-800 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all min-h-[44px]"
-                    >
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>{isScanning ? 'Processing...' : 'Upload & Verify'}</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setActiveUploadModalDoc({ id: doc.id, name: doc.nameKey })}
-                      className="px-3 py-1.5 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 text-xs font-medium hover:underline flex items-center gap-1"
-                    >
-                      <span>Replace / Re-verify</span>
-                    </button>
-                  )}
-
-                  {!isVerified && (
-                    <button
-                      type="button"
-                      disabled={isScanning}
-                      onClick={() => handleSimulateCameraCapture(doc.id)}
-                      className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-800 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all min-h-[44px]"
-                    >
-                      <Camera className="w-3.5 h-3.5" />
-                      <span>Quick Camera Scan</span>
-                    </button>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveVisualGuide(true)}
-                  className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1 py-1"
-                >
-                  <HelpCircle className="w-4 h-4" />
-                  <span>Inspect Sample (ಮಾದರಿ ನೋಡಿ)</span>
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* CSC Seva Kendra Token & Assisted Submission Card */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-slate-900 text-white shadow-crisp-md space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-bold uppercase tracking-wider mb-1">
-              <Printer className="w-3.5 h-3.5" />
-              <span>Assisted Service Option</span>
-            </div>
-            <h3 className="text-base sm:text-lg font-bold">
-              Prefer applying at a Grama One / CSC Seva Kendra?
-            </h3>
-            <p className="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
-              Generate an official pre-verified assistance slip with a scannable token QR code and statutory fee cap guarantee. The operator will instantly read your document checklist without re-entering data.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-shrink-0">
-            <Link
-              to={`/csc-slip/KA-${scheme.id.toUpperCase()}-2026-84920?scheme=${scheme.id}`}
-              className="py-3 px-4 rounded-xl bg-white text-slate-900 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 hover:bg-slate-100 active:scale-95 transition-all min-h-[48px]"
-            >
-              <Printer className="w-4 h-4 text-slate-900" />
-              <span>Generate CSC Kendra Slip</span>
-            </Link>
-
-            <Link
-              to={`/guidance/${scheme.id}`}
-              className="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all min-h-[48px]"
-            >
-              <span>{t('prepareDocumentsBtn', 'Proceed to Submit Online')}</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Legal Transparency Footnote */}
-        <div className="pt-3 border-t border-slate-800 text-[11px] text-slate-400 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <span>
-            🔒 <strong>Statutory Transparency:</strong> Government fee is ₹0.00. Grama One / CSC operator convenience charge is strictly capped at ₹30.00 under Sakala.
-          </span>
-          <span className="text-slate-400">
-            Local browser verification only • No biometric data saved
-          </span>
-        </div>
-      </div>
-
-      {/* Visual Do's and Don'ts Modal */}
-      <VisualDosAndDontsModal
-        isOpen={activeVisualGuide}
-        onClose={() => setActiveVisualGuide(false)}
-        docTitle="Official Document Photo Quality Standard"
+      <VisualDosAndDontsModal isOpen={guideKind !== null} onClose={() => setGuideKind(null)} initialKind={guideKind ?? 'passbook'} />
+      <DigiLockerSimulationModal isOpen={dlDocs !== null} onClose={() => setDlDocs(null)} documents={dlDocs ?? []} onCompleteVerification={markReady} />
+      <UploadConfirmationModal
+        isOpen={scanRow !== null}
+        onClose={() => setScanRow(null)}
+        documentId={scanRow?.doc.id ?? ''}
+        documentName={scanRow ? t(scanRow.doc.nameKey, scanRow.doc.nameKey) : ''}
+        sampleKind={scanRow ? paperInfo(scanRow.doc.id).sample : 'certificate'}
+        failFirstAttempt={!!scanRow && scanRow.doc.id === 'bank_passbook' && !failedOnce.includes('bank_passbook')}
+        onQualityFail={(id) => {
+          setFailedOnce((f) => [...f, id]);
+          setDocumentStatus(id, 'rejected');
+        }}
+        onConfirmUpload={(id) => markReady([id])}
       />
-
-      {/* DigiLocker Simulation Modal */}
-      <DigiLockerSimulationModal
-        isOpen={activeDigiLockerModal}
-        onClose={() => setActiveDigiLockerModal(false)}
-        documents={scheme.documents}
-        onCompleteVerification={handleDigiLockerComplete}
-      />
-
-      {/* Privacy and Quality Confirmation Modal before Upload */}
-      {activeUploadModalDoc && (
-        <UploadConfirmationModal
-          isOpen={!!activeUploadModalDoc}
-          onClose={() => setActiveUploadModalDoc(null)}
-          documentId={activeUploadModalDoc.id}
-          documentName={activeUploadModalDoc.name}
-          onConfirmUpload={(docId) => setDocumentStatus(docId, 'verified')}
-        />
-      )}
     </div>
   );
 };
+
+export default DocumentChecklistScreen;

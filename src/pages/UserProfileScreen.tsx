@@ -1,236 +1,214 @@
 import React, { useState } from 'react';
-import { Users, Plus, Cloud, ShieldCheck, LogOut, LogIn } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Plus, PencilSimple, Check, ShieldCheck, TextAa, Translate, Bell, CaretRight, SignIn, SignOut, CloudCheck, ListChecks, Bank, IdentificationCard, LockKey } from '@phosphor-icons/react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
+import { LANGUAGE_META } from '../data/languages';
+import type { UserProfile } from '../types';
+import { Avatar, displayName } from '../components/shell/FamilySwitcher';
+import { MemberFormSheet } from '../components/profile/MemberFormSheet';
+import { haptic } from '../lib/haptics';
+import { PageHeader, SectionHeader, Button, Tag, Reveal, RevealItem, formatINR, cx } from '../ui';
+
+function Fact({ icon, label, ok, t }: { icon: React.ReactNode; label: string; ok: boolean; t: (k: string, f?: string) => string }) {
+  return (
+    <span className={cx('inline-flex items-center gap-1.5 text-micro', ok ? 'text-patti' : 'text-ink-3')}>
+      {icon}
+      {label}: <span className="font-semibold">{ok ? t('tracker.p.yes', 'Yes') : t('tracker.p.no', 'Not yet')}</span>
+    </span>
+  );
+}
+
+function MemberCard({ p, index, active, onSelect, onEdit }: { p: UserProfile; index: number; active: boolean; onSelect: () => void; onEdit: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <motion.article layout className={cx('relative h-full rounded-lg p-5 transition-shadow', active ? 'bg-surface shadow-lift ring-2 ring-neel' : 'bg-surface shadow-hair')}>
+      <div className="flex items-start gap-4">
+        <Avatar profile={p} index={index} size={52} />
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-lead truncate">{displayName(p)}</h3>
+          <p className="text-small text-ink-2">
+            {t(`tracker.p.rel.${p.relation}`)} · <span className="num">{p.age}</span> {t('tracker.p.years', 'years')} · {t(`tracker.p.occ.${p.occupation}`, p.occupation)}
+          </p>
+        </div>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1">
+        <Fact t={t} icon={<Bank size={14} />} label={t('tracker.p.bankLinked', 'Bank linked to Aadhaar')} ok={p.isAadhaarLinkedBank} />
+        <Fact t={t} icon={<IdentificationCard size={14} />} label={t('tracker.p.digilocker', 'DigiLocker connected')} ok={p.isDigiLockerLinked} />
+      </div>
+      <div className="mt-5 flex items-center gap-2">
+        {active ? (
+          <span className="flex-1">
+            <Tag tone="neel" icon={<Check size={12} weight="bold" />}>
+              {t('tracker.p.active', 'Selected')}
+            </Tag>
+          </span>
+        ) : (
+          <Button variant="secondary" size="sm" onClick={onSelect} className="flex-1">
+            {t('tracker.p.select', 'Check for this person')}
+          </Button>
+        )}
+        <Button variant="ghost" size="sm" iconStart={<PencilSimple size={18} />} onClick={onEdit}>
+          {t('tracker.p.edit', 'Edit')}
+        </Button>
+      </div>
+    </motion.article>
+  );
+}
+
+function SettingRow({ icon, title, sub, onClick }: { icon: React.ReactNode; title: string; sub?: string; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="w-full flex items-center gap-4 px-5 py-4 min-h-[64px] text-start hover:bg-sunken/60 transition-colors">
+      <span className="w-10 h-10 rounded-md bg-sunken text-ink-2 grid place-items-center shrink-0">{icon}</span>
+      <span className="flex-1 min-w-0">
+        <span className="block font-semibold">{title}</span>
+        {sub && <span className="block text-small text-ink-2 truncate">{sub}</span>}
+      </span>
+      <CaretRight size={18} className="text-ink-3 flip-rtl" />
+    </button>
+  );
+}
 
 export const UserProfileScreen: React.FC = () => {
-  const { t } = useTranslation();
-  const { 
-    profiles, 
-    activeProfileId, 
-    setActiveProfileId, 
-    addProfile,
-    authUser,
-    openAuthModal,
-    logoutUser 
-  } = useAppStore();
-
-  const [isAddingMember, setIsAddingMember] = useState(false);
-  const [newMemberName, setNewMemberName] = useState('');
-  const [newMemberRelation, setNewMemberRelation] = useState<'self' | 'father' | 'mother' | 'spouse' | 'child' | 'other'>('child');
-  const [newMemberAge] = useState(20);
-  const [newMemberOccupation] = useState('student');
-
-  const activeProfile = profiles.find(p => p.id === activeProfileId) || profiles[0];
-
-  const handleCreateMember = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMemberName.trim()) return;
-
-    addProfile({
-      name: newMemberName,
-      relation: newMemberRelation,
-      age: Number(newMemberAge),
-      gender: newMemberRelation === 'mother' ? 'female' : 'male',
-      occupation: newMemberOccupation,
-      state: 'Karnataka',
-      district: 'Mandya',
-      socialCategory: 'obc',
-      landholdingAcres: 0,
-      annualIncome: 120000,
-      isAadhaarLinkedBank: true,
-      isDigiLockerLinked: true
-    });
-
-    setIsAddingMember(false);
-    setNewMemberName('');
-  };
+  const { t, language } = useTranslation();
+  const { profiles, activeProfileId, setActiveProfileId, addProfile, updateProfile, authUser, openAuthModal, logoutUser, assessmentHistory, setComfortOpen, setLanguageSheetOpen, setNotificationsOpen, pushToast, notifications } = useAppStore();
+  const [form, setForm] = useState<{ open: boolean; editing?: UserProfile }>({ open: false });
+  const unread = notifications.filter((n) => !n.isRead).length;
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto py-2 sm:py-4 animate-fadeIn">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          {t('profileTitle', 'Citizen & Family Profiles')}
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-          Manage profiles for your entire household to check welfare entitlements seamlessly.
-        </p>
+    <div>
+      <PageHeader
+        eyebrow={t('tracker.p.eyebrow', 'Your household')}
+        title={t('tracker.p.title', 'Family')}
+        description={t('tracker.p.subtitle')}
+        actions={
+          <Button variant="solid" iconStart={<Plus size={20} weight="bold" />} onClick={() => setForm({ open: true })}>
+            {t('tracker.p.add', 'Add family member')}
+          </Button>
+        }
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-8 items-start">
+        <div className="min-w-0 space-y-10">
+          <section aria-label={t('tracker.p.title', 'Family')}>
+            <Reveal className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {profiles.map((p, i) => (
+                <RevealItem key={p.id}>
+                  <MemberCard
+                    p={p}
+                    index={i}
+                    active={p.id === activeProfileId}
+                    onSelect={() => {
+                      haptic('select');
+                      setActiveProfileId(p.id);
+                      pushToast({ message: `${t('tracker.p.checkingFor', 'Checking for')} ${displayName(p)}`, tone: 'neutral' });
+                    }}
+                    onEdit={() => setForm({ open: true, editing: p })}
+                  />
+                </RevealItem>
+              ))}
+              <RevealItem>
+                <button type="button" onClick={() => setForm({ open: true })} className="w-full h-full min-h-[180px] rounded-lg border-2 border-dashed border-line-strong text-ink-2 hover:text-ink hover:border-ink-3 hover:bg-surface/60 transition-colors flex flex-col items-center justify-center gap-2 p-5">
+                  <span className="w-12 h-12 rounded-full bg-sunken grid place-items-center">
+                    <Plus size={24} weight="bold" />
+                  </span>
+                  <span className="font-semibold">{t('tracker.p.add', 'Add family member')}</span>
+                  <span className="text-small text-ink-3 text-center">{t('tracker.p.addSub')}</span>
+                </button>
+              </RevealItem>
+            </Reveal>
+          </section>
+
+          <section aria-labelledby="history">
+            <SectionHeader id="history" title={t('tracker.p.history', 'Past eligibility checks')} />
+            {assessmentHistory.length === 0 ? (
+              <p className="p-5 rounded-lg border border-dashed border-line-strong text-ink-2">{t('tracker.p.historyEmpty')}</p>
+            ) : (
+              <ul className="rounded-lg bg-surface shadow-hair divide-y divide-line">
+                {assessmentHistory.map((h) => (
+                  <li key={h.id} className="flex items-center gap-4 p-4">
+                    <span className="w-10 h-10 rounded-md bg-patti-tint text-patti grid place-items-center shrink-0">
+                      <ListChecks size={20} weight="duotone" />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold truncate">{h.profileName ? h.profileName.split('(')[0].trim() : '—'}</p>
+                      <p className="text-micro text-ink-3 num">{h.completedAt}</p>
+                    </div>
+                    <div className="text-end">
+                      <p className="font-semibold num">₹{formatINR(h.totalAnnualBenefitValue)}</p>
+                      <p className="text-micro text-ink-3">
+                        <span className="num">{h.eligibleCount}</span> {t('tracker.p.matched', 'schemes matched')}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+
+        <aside className="space-y-4">
+          {authUser ? (
+            <section className="rounded-lg bg-surface shadow-hair p-5">
+              <Tag tone="patti" icon={<CloudCheck size={14} weight="fill" />}>
+                {t('tracker.p.signedIn', 'Signed in')}
+              </Tag>
+              <p className="mt-3 font-semibold truncate">{authUser.email ?? authUser.phone}</p>
+              <p className="text-small text-ink-2 mt-1">{t('tracker.p.syncBody')}</p>
+              <Button variant="secondary" size="sm" iconStart={<SignOut size={18} />} onClick={logoutUser} className="mt-4">
+                {t('tracker.p.signOut', 'Sign out')}
+              </Button>
+            </section>
+          ) : (
+            <section className="rounded-lg bg-hero-neel text-on-hero p-6">
+              <ShieldCheck size={32} weight="duotone" className="text-haldi" />
+              <h2 className="mt-3 text-h3 font-semibold">{t('tracker.p.guestTitle', 'You are using Sahayak as a guest')}</h2>
+              <p className="mt-1.5 text-small text-on-hero/80">{t('tracker.p.guestBody')}</p>
+              <Button variant="primary" size="sm" iconStart={<SignIn size={18} />} onClick={() => openAuthModal('login')} className="mt-5">
+                {t('tracker.p.signIn', 'Sign in')}
+              </Button>
+            </section>
+          )}
+
+          <section aria-labelledby="settings" className="rounded-lg bg-surface shadow-hair overflow-hidden">
+            <h2 id="settings" className="px-5 pt-4 pb-1 text-small font-semibold text-ink-3">
+              {t('tracker.p.settings', 'Settings')}
+            </h2>
+            <div className="divide-y divide-line">
+              <SettingRow icon={<Translate size={20} />} title={t('tracker.p.language', 'Language')} sub={(LANGUAGE_META[language] || LANGUAGE_META.en).label} onClick={() => setLanguageSheetOpen(true)} />
+              <SettingRow icon={<TextAa size={20} />} title={t('tracker.p.comfort', 'Reading comfort')} sub={t('tracker.p.comfortSub')} onClick={() => setComfortOpen(true)} />
+              <SettingRow icon={<Bell size={20} />} title={t('tracker.p.alerts', 'Alerts')} sub={unread ? `${unread} ${t('tracker.n.unread', 'New')}` : undefined} onClick={() => setNotificationsOpen(true)} />
+            </div>
+          </section>
+
+          <section className="rounded-lg bg-haldi-tint p-5 flex gap-3">
+            <LockKey size={24} weight="duotone" className="text-haldi-deep shrink-0" />
+            <div>
+              <h2 className="font-semibold">{t('tracker.p.privacy', 'Your privacy')}</h2>
+              <p className="text-small text-ink-2 mt-1">{t('tracker.p.privacyBody')}</p>
+            </div>
+          </section>
+        </aside>
       </div>
 
-      {/* Cloud Account & Sovereignty Status Banner */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-crisp-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className={`p-2.5 rounded-2xl ${authUser ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600' : 'bg-amber-50 dark:bg-amber-950/50 text-amber-600'}`}>
-              {authUser ? <Cloud className="w-5 h-5" /> : <ShieldCheck className="w-5 h-5" />}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                  {authUser ? 'Cloud Sync Active (ಮೇಘ ಸಿಂಕ್ ಸಕ್ರಿಯ)' : 'Sovereign Guest Mode (ಅತಿಥಿ ಮೋಡ್)'}
-                </h2>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
-                  authUser ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
-                }`}>
-                  {authUser ? 'PostgreSQL RLS' : 'Local Only'}
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {authUser 
-                  ? `Signed in as ${authUser.email}. Profile, bookmarks, and applications are securely backed up.`
-                  : 'Operating locally without cloud sync. Sign in to access your data across kiosks or mobile devices.'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 self-end sm:self-auto">
-            {authUser ? (
-              <button
-                type="button"
-                onClick={logoutUser}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border border-red-200 dark:border-red-800/50 active:scale-95 transition-all"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Sign Out (ಲಾಗ್ ಔಟ್)</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => openAuthModal('login')}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-brand-navy-900 dark:bg-sky-600 hover:bg-brand-navy-800 dark:hover:bg-sky-500 shadow-crisp-xs active:scale-95 transition-all"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Sign In / Register</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Household Member Selector Switcher */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-crisp-sm">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Users className="w-4 h-4 text-amber-600" />
-            <span>{t('householdMembers', 'Household Members')}</span>
-          </h2>
-          <button
-            type="button"
-            onClick={() => setIsAddingMember(!isAddingMember)}
-            className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1"
-          >
-            <Plus className="w-4 h-4" />
-            <span>{t('addMemberBtn', 'Add Member')}</span>
-          </button>
-        </div>
-
-        {/* Member Avatar Chips */}
-        <div className="w-full max-w-full min-w-0 flex gap-2.5 overflow-x-auto pb-2 no-scrollbar overscroll-x-contain">
-          {profiles.map((p) => {
-            const isActive = p.id === activeProfileId;
-            return (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setActiveProfileId(p.id)}
-                className={`p-3 rounded-2xl border text-left min-w-[140px] flex-shrink-0 transition-all min-h-[48px] ${
-                  isActive
-                    ? 'border-amber-600 bg-amber-50/70 dark:bg-amber-950/40 ring-1 ring-amber-600'
-                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-1 mb-1">
-                  <div className="w-7 h-7 rounded-full bg-brand-navy-900 text-white text-xs font-bold flex items-center justify-center">
-                    {p.name.charAt(0)}
-                  </div>
-                  {isActive && <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-full">Active</span>}
-                </div>
-                <div className="text-xs font-bold text-slate-900 dark:text-white truncate">{p.name}</div>
-                <div className="text-[10px] text-slate-500 capitalize">{p.relation} • {p.occupation}</div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Add Member Form (Inline Collapse) */}
-        {isAddingMember && (
-          <form onSubmit={handleCreateMember} className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
-            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200">Add New Family Member</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input
-                type="text"
-                required
-                placeholder="Full Name (ಹೆಸರು)"
-                value={newMemberName}
-                onChange={(e) => setNewMemberName(e.target.value)}
-                className="px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
-              />
-              <select
-                value={newMemberRelation}
-                onChange={(e) => setNewMemberRelation(e.target.value as any)}
-                className="px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
-              >
-                <option value="child">Child (ಮಗ / ಮಗಳು)</option>
-                <option value="father">Father (ತಂದೆ)</option>
-                <option value="mother">Mother (ತಾಯಿ)</option>
-                <option value="spouse">Spouse (ಪತ್ನಿ / ಪತಿ)</option>
-              </select>
-            </div>
-            <button
-              type="submit"
-              className="py-2 px-4 rounded-xl bg-amber-600 text-white font-bold text-xs"
-            >
-              Save Member Profile
-            </button>
-          </form>
-        )}
-      </section>
-
-      {/* Active Profile Demographics */}
-      <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-crisp-sm space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-          <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">
-              {activeProfile.name}
-            </h2>
-            <div className="text-xs text-slate-500">
-              {activeProfile.district}, {activeProfile.state}
-            </div>
-          </div>
-          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-            Aadhaar Linked ✓
-          </span>
-        </div>
-
-        {/* Attribute Badges */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-            <div className="text-slate-400">Occupation</div>
-            <div className="font-bold text-slate-800 dark:text-slate-200 capitalize mt-0.5">{activeProfile.occupation}</div>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-            <div className="text-slate-400">Landholding</div>
-            <div className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{activeProfile.landholdingAcres} Acres</div>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-            <div className="text-slate-400">Social Category</div>
-            <div className="font-bold text-slate-800 dark:text-slate-200 uppercase mt-0.5">{activeProfile.socialCategory}</div>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-            <div className="text-slate-400">Age & Gender</div>
-            <div className="font-bold text-slate-800 dark:text-slate-200 capitalize mt-0.5">{activeProfile.age} yrs • {activeProfile.gender}</div>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-            <div className="text-slate-400">Annual Income</div>
-            <div className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">₹{activeProfile.annualIncome.toLocaleString('en-IN')}</div>
-          </div>
-          <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800">
-            <div className="text-blue-600 dark:text-blue-400 font-semibold">DigiLocker Sync</div>
-            <div className="font-bold text-blue-900 dark:text-blue-200 mt-0.5">Connected ✓</div>
-          </div>
-        </div>
-      </section>
+      <MemberFormSheet
+        open={form.open}
+        initial={form.editing}
+        onClose={() => setForm((f) => ({ ...f, open: false }))}
+        onSave={(d) => {
+          if (form.editing) {
+            updateProfile(form.editing.id, d);
+            pushToast({ message: t('tracker.p.updated', 'Details updated'), tone: 'success' });
+          } else {
+            addProfile(d);
+            pushToast({ message: t('tracker.p.added', 'Family member added'), tone: 'success' });
+          }
+          haptic('success');
+          setForm((f) => ({ ...f, open: false }));
+        }}
+      />
     </div>
   );
 };
+
+export default UserProfileScreen;

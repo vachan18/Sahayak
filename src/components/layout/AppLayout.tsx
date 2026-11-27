@@ -1,129 +1,105 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
-import { Bot, X } from 'lucide-react';
-import { TopUtilityBar } from '../navigation/TopUtilityBar';
-import { BottomNavBar } from '../navigation/BottomNavBar';
+import { useEffect, useState, lazy, Suspense } from 'react';
+import { MotionConfig } from 'framer-motion';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store/useAppStore';
 import { useTranslation } from '../../hooks/useTranslation';
-import { PageMotion } from '../common/PageMotion';
+import { ensureScriptFont } from '../../lib/fonts';
+import { SideRail } from '../shell/SideRail';
+import { TopBar } from '../shell/TopBar';
+import { BottomDock } from '../shell/BottomDock';
+import { AnimatedOutlet } from '../shell/AnimatedOutlet';
+import { OfflineBanner } from '../shell/OfflineBanner';
+import { RouteProgress } from '../shell/RouteProgress';
+import { Toaster } from '../../ui/Toaster';
 
-// Dynamic lazy-loading for overlay modals to reduce initial JavaScript payload
-const LanguageModal = lazy(() => import('../navigation/LanguageModal').then(m => ({ default: m.LanguageModal })));
-const NotificationsModal = lazy(() => import('../navigation/NotificationsModal').then(m => ({ default: m.NotificationsModal })));
-const AuthModal = lazy(() => import('../auth/AuthModal').then(m => ({ default: m.AuthModal })));
-const AiAssistantDrawer = lazy(() => import('../feedback/AiAssistantDrawer').then(m => ({ default: m.AiAssistantDrawer })));
+// Overlays are code-split; they cost nothing until opened.
+const LanguageSheet = lazy(() => import('../shell/LanguageSheet').then((m) => ({ default: m.LanguageSheet })));
+const ComfortSheet = lazy(() => import('../shell/ComfortSheet').then((m) => ({ default: m.ComfortSheet })));
+const CommandPalette = lazy(() => import('../shell/CommandPalette').then((m) => ({ default: m.CommandPalette })));
+const NotificationsModal = lazy(() => import('../navigation/NotificationsModal').then((m) => ({ default: m.NotificationsModal })));
+const AuthModal = lazy(() => import('../auth/AuthModal').then((m) => ({ default: m.AuthModal })));
+const AiAssistantDrawer = lazy(() => import('../feedback/AiAssistantDrawer').then((m) => ({ default: m.AiAssistantDrawer })));
 
-export const AppLayout: React.FC = () => {
-  const location = useLocation();
-  const [isLangModalOpen, setIsLangModalOpen] = useState(false);
-  const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
-  const { t } = useTranslation();
-  const { 
-    setAiDrawerOpen,
+/**
+ * App shell
+ *  ≥1024px  rail (start) · top bar with search · content column
+ *  <1024px  top bar · content · dock with central Speak button
+ */
+export function AppLayout() {
+  const { t, language } = useTranslation();
+  const {
+    initializeAuth,
+    isLiteMode,
     isAiDrawerOpen,
-    isAiFabDismissed,
-    setAiFabDismissed,
-    compareSchemeIds,
-    isAuthModalOpen, 
-    authModalView, 
+    isAuthModalOpen,
+    authModalView,
     closeAuthModal,
-    initializeAuth 
+    isNotificationsOpen,
+    setNotificationsOpen,
+    isLanguageSheetOpen,
+    isComfortOpen,
   } = useAppStore();
 
   useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
 
-  // Adjust FAB position when comparison tray or SchemeDetail sticky action bar is active
-  const isComparisonActive = compareSchemeIds.length > 0;
-  const isSchemeDetailBarActive = /^\/schemes\/[^/]+/.test(location.pathname);
-  const needsElevatedFab = isComparisonActive || isSchemeDetailBarActive;
+  // PWA shortcut / deep link: /home?speak=1 opens the voice assistant straight away
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('speak') === '1') {
+      useAppStore.getState().setAiDrawerOpen(true);
+      params.delete('speak');
+      navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+    }
+  }, [location.search, location.pathname, navigate]);
+
+  // Lazy overlays stay mounted after first open so their exit animations can play.
+  const [mounted, setMounted] = useState({ lang: false, comfort: false, ai: false, notif: false, auth: false });
+  useEffect(() => {
+    setMounted((m) => ({
+      lang: m.lang || isLanguageSheetOpen,
+      comfort: m.comfort || isComfortOpen,
+      ai: m.ai || isAiDrawerOpen,
+      notif: m.notif || isNotificationsOpen,
+      auth: m.auth || isAuthModalOpen,
+    }));
+  }, [isLanguageSheetOpen, isComfortOpen, isAiDrawerOpen, isNotificationsOpen, isAuthModalOpen]);
+
+  useEffect(() => {
+    ensureScriptFont(language);
+    document.documentElement.lang = language;
+    document.documentElement.dir = language === 'ur' ? 'rtl' : 'ltr';
+  }, [language]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
-      {/* Top Utility Header */}
-      <TopUtilityBar
-        onOpenLanguageModal={() => setIsLangModalOpen(true)}
-        onOpenNotifications={() => setIsNotifModalOpen(true)}
-      />
+    <MotionConfig reducedMotion={isLiteMode ? 'always' : 'user'}>
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:start-3 focus:z-[80] focus:px-4 focus:py-3 focus:rounded-md focus:bg-ink focus:text-paper">
+        {t('shell.nav.skipToContent', 'Skip to main content')}
+      </a>
+      <RouteProgress />
+      <SideRail />
+      <div className="lg:ps-[var(--rail-w)] min-h-[100dvh] flex flex-col">
+        <OfflineBanner />
+        <TopBar />
+        <main id="main" tabIndex={-1} className="flex-1 w-full max-w-[1240px] mx-auto overflow-x-clip px-4 sm:px-6 lg:px-10 pt-2 lg:pt-4 pb-[calc(var(--dock-h)+var(--safe-b)+40px)] lg:pb-16 outline-none">
+          <AnimatedOutlet />
+        </main>
+      </div>
+      <BottomDock />
+      <Toaster />
 
-      {/* Main Viewport Container — Fluid Responsive Desktop Scaling */}
-      <main className="flex-1 layout-container pb-36 sm:pb-32 lg:pb-16 pt-3 sm:pt-6">
-        <PageMotion>
-          <Outlet />
-        </PageMotion>
-      </main>
-
-      {/* Floating Action Button (FAB) for Sahayak Sathi AI Voice Assistant (Desktop only; mobile docks in BottomNavBar) */}
-      {!isAiFabDismissed && !isAiDrawerOpen && (
-        <aside 
-          aria-label={t('aiAssistantTitle', 'Sahayak Sathi')}
-          className={`hidden lg:flex fixed z-30 items-center transition-all duration-300 right-6 md:right-8 ${
-            needsElevatedFab
-              ? 'bottom-24' 
-              : 'bottom-8'
-          }`}
-        >
-          <div className="relative group flex items-center">
-            <button
-              type="button"
-              onClick={() => setAiDrawerOpen(true)}
-              className="flex items-center justify-center w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-crisp-lg active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
-              title={t('openAssistantAria', 'Open Sahayak Sathi voice assistant')}
-              aria-label={t('openAssistantAria', 'Open Sahayak Sathi voice assistant')}
-            >
-              <div className="relative flex-shrink-0">
-                <Bot className="w-6 h-6 text-slate-950" />
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-600 ring-2 ring-amber-500 animate-pulse" />
-              </div>
-            </button>
-
-            {/* Quick Dismiss Trigger to prevent blocking content on touch screens */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setAiFabDismissed(true);
-              }}
-              className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity ml-1.5 p-1 rounded-full bg-slate-800/80 text-white hover:bg-slate-900 shadow-sm min-h-[28px] min-w-[28px] flex items-center justify-center text-xs"
-              title={t('dismissAssistantAria', 'Hide voice assistant button')}
-              aria-label={t('dismissAssistantAria', 'Hide voice assistant button')}
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </aside>
-      )}
-
-      {/* Mobile Persistent Bottom Navigation Dock */}
-      <BottomNavBar />
-
-      {/* Overlays & Modals (Lazy-loaded on demand) */}
       <Suspense fallback={null}>
-        {isLangModalOpen && (
-          <LanguageModal
-            isOpen={isLangModalOpen}
-            onClose={() => setIsLangModalOpen(false)}
-          />
-        )}
-
-        {isNotifModalOpen && (
-          <NotificationsModal
-            isOpen={isNotifModalOpen}
-            onClose={() => setIsNotifModalOpen(false)}
-          />
-        )}
-
-        {isAuthModalOpen && (
-          <AuthModal
-            isOpen={isAuthModalOpen}
-            onClose={closeAuthModal}
-            initialView={authModalView}
-          />
-        )}
-
-        {isAiDrawerOpen && <AiAssistantDrawer />}
+        <CommandPalette />
+        {(mounted.lang || isLanguageSheetOpen) && <LanguageSheet />}
+        {(mounted.comfort || isComfortOpen) && <ComfortSheet />}
+        {(mounted.notif || isNotificationsOpen) && <NotificationsModal isOpen={isNotificationsOpen} onClose={() => setNotificationsOpen(false)} />}
+        {(mounted.auth || isAuthModalOpen) && <AuthModal isOpen={isAuthModalOpen} onClose={closeAuthModal} initialView={authModalView} />}
+        {/* The assistant reads its own open state from the store (isAiDrawerOpen) */}
+        {(mounted.ai || isAiDrawerOpen) && <AiAssistantDrawer />}
       </Suspense>
-    </div>
+    </MotionConfig>
   );
-};
+}

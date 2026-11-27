@@ -1,371 +1,393 @@
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { 
-  ShieldCheck, AlertCircle, CheckCircle2, ChevronLeft, 
-  Clock, AlertTriangle, PhoneCall, Plus, 
-  Check, UserCheck, CreditCard, Printer 
-} from 'lucide-react';
-import { useAppStore } from '../store/useAppStore';
+import { Link, useParams } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowLeft, Check, Copy, ShareNetwork, Warning, Clock, Buildings, UserCircle, HandCoins, NotePencil, FileText, Lock, CheckCircle } from '@phosphor-icons/react';
 import { useTranslation } from '../hooks/useTranslation';
-import { AudioListenButton } from '../components/feedback/AudioListenButton';
+import { useAppStore } from '../store/useAppStore';
+import type { ApplicationRecord } from '../types';
 import { GrievanceGuidanceModal } from '../components/support/GrievanceGuidanceModal';
+import { DeadlineLine, needsAction, isOverdue, isDone, statusSpeech, StageThread } from '../components/tracker/appStatus';
+import { shareText } from '../lib/share';
+import { haptic } from '../lib/haptics';
+import { Tag, ListenButton, LifeGlyph, Button, LinkButton, IconButton, TextArea, Disclosure, EmptyState, formatINR, cx, ease, riseIn, staggerParent } from '../ui';
 
+type T = (k: string, f?: string) => string;
+
+/* ── Timeline that draws itself ─────────────────────────────────────────── */
+function Timeline({ app, t }: { app: ApplicationRecord; t: T }) {
+  const done = isDone(app);
+  const blocked = needsAction(app) || isOverdue(app);
+  const ms = [...app.milestones].sort((a, b) => a.stage - b.stage);
+  const reached = done ? ms.length : app.currentStage;
+  const progress = ms.length > 1 ? (reached - 1) / (ms.length - 1) : 1;
+
+  return (
+    <motion.ol variants={staggerParent(0.09, 0.15)} initial="hidden" animate="show" className="relative">
+      {/* rail */}
+      <span className="absolute start-[19px] top-5 bottom-5 w-[3px] rounded-full bg-sunken" aria-hidden />
+      <motion.span
+        aria-hidden
+        className={cx('absolute start-[19px] top-5 w-[3px] rounded-full origin-top', done ? 'bg-patti' : 'bg-neel')}
+        style={{ height: 'calc(100% - 40px)' }}
+        initial={{ scaleY: 0 }}
+        animate={{ scaleY: progress }}
+        transition={{ duration: 1.1, ease: ease.out, delay: 0.2 }}
+      />
+      {ms.map((m) => {
+        const complete = done || m.isCompleted || m.stage < app.currentStage;
+        const current = !done && m.stage === app.currentStage;
+        return (
+          <motion.li key={m.stage} variants={riseIn} className="relative flex gap-4 pb-7 last:pb-0">
+            <span
+              className={cx(
+                'relative z-10 w-10 h-10 shrink-0 rounded-full grid place-items-center ring-4 ring-surface',
+                complete && (done ? 'bg-patti text-white' : 'bg-neel text-on-neel'),
+                current && (blocked ? 'bg-sindoor text-white' : 'bg-ink text-paper'),
+                !complete && !current && 'bg-sunken text-ink-3'
+              )}
+            >
+              {current && !blocked && <span className="absolute inset-0 rounded-full bg-ink/25 animate-ring-out" aria-hidden />}
+              {complete ? <Check size={18} weight="bold" /> : current && blocked ? <Warning size={18} weight="fill" /> : <span className="num font-semibold">{m.stage}</span>}
+            </span>
+            <div className={cx('flex-1 min-w-0 pt-1.5', current && 'pb-1')}>
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <h3 className={cx('font-semibold', !complete && !current && 'text-ink-3')}>{t(`tracker.stage.${m.stage}`)}</h3>
+                {m.date && (
+                  <span className={cx('text-small num', current && blocked ? 'text-sindoor font-semibold' : 'text-ink-3')}>
+                    {m.date}
+                    {m.timestamp ? ` · ${m.timestamp}` : ''}
+                  </span>
+                )}
+                {!complete && !current && !m.date && <span className="text-small text-ink-3">{t('tracker.detail.pending', 'Waiting')}</span>}
+              </div>
+              <p className={cx('text-small mt-0.5', complete || current ? 'text-ink-2' : 'text-ink-3')}>{t(m.titleKey, m.titleKey)}</p>
+              {(complete || current) && m.handlingOfficer && (
+                <p className="mt-2 flex items-start gap-1.5 text-small text-ink-2">
+                  <UserCircle size={16} className="shrink-0 mt-1" />
+                  <span className="min-w-0">
+                    {t('tracker.detail.handledBy', 'Handled by')}: <span className="font-medium text-ink">{t(m.handlingOfficer, m.handlingOfficer)}</span>
+                  </span>
+                </p>
+              )}
+              {current && m.remarksKey && (
+                <div className={cx('mt-3 p-3 rounded-md text-small', blocked ? 'bg-sindoor-tint' : 'bg-neel-tint')}>
+                  <p className={cx('font-semibold', blocked ? 'text-sindoor' : 'text-neel-ink')}>{t('tracker.detail.officeNote', 'Note from the office')}</p>
+                  <p className="text-ink mt-0.5">{t(m.remarksKey, m.remarksKey)}</p>
+                </div>
+              )}
+              {m.description && (complete || current) && <p className="mt-2 text-micro text-ink-3">{t(m.description, m.description)}</p>}
+            </div>
+          </motion.li>
+        );
+      })}
+    </motion.ol>
+  );
+}
+
+/* ── Screen ─────────────────────────────────────────────────────────────── */
 export const ApplicationTrackerDetailScreen: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
-  const { applications, addCitizenNote, resolveMissingDocument } = useAppStore();
+  const { applications, schemes, addCitizenNote, resolveMissingDocument, pushToast } = useAppStore();
+  const [grievanceOpen, setGrievanceOpen] = useState(false);
+  const [note, setNote] = useState('');
 
-  const [isGrievanceOpen, setIsGrievanceOpen] = useState(false);
-  const [newNoteText, setNewNoteText] = useState('');
-  const [noteSuccess, setNoteSuccess] = useState(false);
-
-  const app = applications.find(a => a.id === id) || applications[0];
-
+  const app = applications.find((a) => a.id === id);
   if (!app) {
     return (
-      <div className="p-8 text-center space-y-3">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Application Not Found</h2>
-        <Link to="/tracker" className="text-amber-600 hover:underline text-sm font-semibold">
-          Return to Tracker
-        </Link>
+      <div className="pt-10">
+        <EmptyState icon={<FileText size={30} weight="duotone" />} title={t('tracker.detail.notFound', 'We could not find this application.')} action={<LinkButton to="/tracker" variant="secondary">{t('tracker.detail.back', 'Back to all applications')}</LinkButton>} />
       </div>
     );
   }
 
-  const handleAddNote = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newNoteText.trim()) return;
-    addCitizenNote(app.id, newNoteText.trim());
-    setNewNoteText('');
-    setNoteSuccess(true);
-    setTimeout(() => setNoteSuccess(false), 2500);
+  const scheme = schemes.find((s) => s.id === app.schemeId);
+  const title = scheme ? t(scheme.titleKey, app.schemeTitle) : app.schemeTitle;
+  const done = isDone(app);
+  const late = isOverdue(app);
+  const action = needsAction(app);
+  const current = app.milestones.find((m) => m.stage === app.currentStage);
+  const nextMilestone = app.milestones.find((m) => m.stage === app.currentStage + 1);
+  const missing = app.missingDocuments ?? [];
+  const money = app.disbursementDetails;
+
+  const copy = async (text: string, msg: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      /* blocked */
+    }
+    haptic('success');
+    pushToast({ message: msg, tone: 'success' });
   };
 
-  return (
-    <div className="space-y-6 max-w-3xl mx-auto py-2 sm:py-4 animate-fadeIn">
-      {/* Top back navigation */}
-      <div>
-        <Link
-          to="/tracker"
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors py-1"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          <span>{t('navBack', 'Back')}</span>
-        </Link>
-      </div>
+  const saveNote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!note.trim()) return;
+    addCitizenNote(app.id, note.trim());
+    setNote('');
+    haptic('success');
+    pushToast({ message: t('tracker.notes.saved', 'Note saved'), tone: 'success' });
+  };
 
-      {/* Header */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-crisp-sm space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800">
-                {app.tokenNumber}
-              </span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                Filed on {app.submittedAt}
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1.5">
-              {app.schemeTitle}
-            </h1>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-              Nodal Office: <strong>{app.handlingOffice}</strong> • Mode: <strong>{app.submittedVia === 'csc_assisted' ? 'Grama One / CSC Assisted' : 'Citizen Self-Filed'}</strong>
-            </p>
-          </div>
+  const share = async () => {
+    const res = await shareText({
+      title: t('tracker.detail.shareText', 'My application status on Sahayak'),
+      text: `${title}\n${t('tracker.token', 'Token')}: ${app.tokenNumber}\n${t('tracker.step', 'Step')} ${app.currentStage}/4 — ${t(`tracker.stage.${app.currentStage}`)}`,
+    });
+    if (res === 'copied') pushToast({ message: t('shell.toast.copied', 'Copied'), tone: 'success' });
+  };
 
-          <div className="self-start sm:self-center flex-shrink-0">
-            <AudioListenButton textToSpeak={app.audioStatusNarrationKey} />
-          </div>
-        </div>
-
-        {/* SLA Status Bar */}
-        <div className={`p-3.5 rounded-2xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
-          app.isDelayed
-            ? 'bg-red-50 dark:bg-red-950/60 border-red-300 dark:border-red-800 text-red-950 dark:text-red-200'
-            : 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200'
-        }`}>
-          <div className="flex items-center gap-2 font-bold">
-            {app.isDelayed ? <AlertCircle className="w-4 h-4 text-red-600" /> : <ShieldCheck className="w-4 h-4 text-emerald-600" />}
-            <span>
-              {app.isDelayed
-                ? `Statutory SLA Overdue (${Math.abs(app.slaDaysRemaining)} days past legal limit)`
-                : `Within Statutory Time Limit (${app.slaDaysRemaining} days remaining)`}
-            </span>
-          </div>
-          <span className="text-[11px] font-medium opacity-90">
-            Citizen Charter Target: {app.slaDeadlineDays} Working Days
-          </span>
-        </div>
-      </div>
-
-      {/* Citizen Self-Tracking Disclosure */}
-      <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 flex items-start gap-2.5 text-xs text-amber-950 dark:text-amber-200">
-        <AlertCircle className="w-4 h-4 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-        <p className="leading-relaxed">
-          <strong>Citizen Self-Tracking Disclosure: </strong>
-          Milestones shown reflect records generated during your application filing or CSC kiosk assistance. Official processing status is determined directly on the designated government department portal.
-        </p>
-      </div>
-
-      {/* Missing Document Notice if any */}
-      {app.missingDocuments && app.missingDocuments.some(d => !d.resolved) && (
-        <div className="p-4 sm:p-5 rounded-3xl bg-amber-50 dark:bg-amber-950/60 border-2 border-amber-400 dark:border-amber-700 space-y-3">
-          <div className="flex items-center gap-2 font-black text-xs sm:text-sm text-amber-950 dark:text-amber-200 uppercase tracking-wide">
-            <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-            <span>Missing Document Requirement</span>
-          </div>
-          {app.missingDocuments.filter(d => !d.resolved).map(doc => (
-            <div key={doc.documentId} className="text-xs text-amber-900 dark:text-amber-300 space-y-1.5">
-              <div>
-                <strong>{doc.documentName}</strong>
-              </div>
-              <p className="text-[11px] leading-relaxed">
-                {doc.reason} Requested by: <strong>{doc.requestedBy}</strong>.
-              </p>
-              <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700 font-medium text-[11px]">
-                <strong>Action Needed:</strong> {doc.actionRequired}
-              </div>
-              <div className="pt-1">
-                <button
-                  type="button"
-                  onClick={() => resolveMissingDocument(app.id, doc.documentId)}
-                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm active:scale-95 transition-all"
-                >
-                  Confirm Document Handover / Upload
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Four-Stage Vertical Milestone Progress Timeline */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-crisp-sm space-y-6">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-          <div>
-            <h2 className="text-base font-black text-slate-900 dark:text-white">
-              Four-Stage Visual Lifecycle
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Timestamps and descriptions reflect verified administrative updates
-            </p>
-          </div>
-          <span className="text-xs font-mono font-bold bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full text-slate-700 dark:text-slate-300">
-            Stage {app.currentStage} of 4
-          </span>
-        </div>
-
-        {/* Vertical Connected Timeline (Optimized for Mobile & Desktop) */}
-        <div className="relative pl-7 space-y-8 before:absolute before:left-3 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
-          {app.milestones.map((m, idx) => {
-            const isCompleted = m.isCompleted;
-            const isCurrent = m.isCurrent;
-
-            return (
-              <div key={idx} className="relative">
-                {/* Milestone Node Bead */}
-                <div className={`absolute -left-7 top-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center font-bold text-[11px] transition-all ${
-                  isCompleted
-                    ? 'bg-emerald-600 border-emerald-600 text-white'
-                    : isCurrent
-                    ? 'bg-amber-600 border-amber-600 text-white ring-4 ring-amber-200 dark:ring-amber-900 animate-pulse'
-                    : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-400'
-                }`}>
-                  {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : m.stage}
-                </div>
-
-                {/* Milestone Content */}
-                <div className="space-y-1.5">
-                  <div className="flex flex-wrap items-center justify-between gap-1.5">
-                    <h3 className="text-sm font-black text-slate-900 dark:text-white leading-snug">
-                      Stage {m.stage}: {m.titleKey}
-                    </h3>
-                    {m.isOfficial && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                        Official Record
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Timestamp ONLY shown when actual info is available */}
-                  {(m.date || m.timestamp) && (
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium">
-                      <Clock className="w-3 h-3 text-slate-400" />
-                      <span>{m.date}{m.timestamp ? `, ${m.timestamp}` : ''}</span>
-                    </div>
-                  )}
-
-                  {/* Handling Officer */}
-                  {m.handlingOfficer && (
-                    <div className="text-xs text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                      <UserCheck className="w-3.5 h-3.5 text-slate-400" />
-                      <span>Action Officer: <strong>{m.handlingOfficer}</strong></span>
-                    </div>
-                  )}
-
-                  {/* Description */}
-                  {m.description && (
-                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed pt-0.5">
-                      {m.description}
+  const missingSection = (hid: string) => (
+            <section aria-labelledby={hid} className="rounded-lg bg-surface shadow-hair overflow-hidden">
+              <h2 id={hid} className="px-5 pt-5 font-semibold flex items-center gap-2">
+                <FileText size={20} weight="duotone" className="text-sindoor" />
+                {t('tracker.missing.title', 'The office needs a paper from you')}
+              </h2>
+              <ul className="p-5 space-y-4">
+                {missing.map((d) => (
+                  <motion.li key={d.documentId} layout className={cx('rounded-md p-4', d.resolved ? 'bg-patti-tint' : 'bg-sindoor-tint')}>
+                    <p className="font-semibold">{t(d.documentName, d.documentName)}</p>
+                    <p className="text-small text-ink-2 mt-1">{t(d.reason, d.reason)}</p>
+                    <p className="text-micro text-ink-3 mt-2">
+                      {t('tracker.missing.requestedBy', 'Asked by')}: {t(d.requestedBy, d.requestedBy)}
                     </p>
-                  )}
+                    {!d.resolved && (
+                      <>
+                        <p className="text-small mt-3">
+                          <span className="font-semibold">{t('tracker.missing.how', 'How to send it')}:</span> {t(d.actionRequired, d.actionRequired)}
+                        </p>
+                        <div className="mt-4 grid grid-cols-1 gap-2">
+                          <Button
+                            variant="primary"
+                            iconStart={<CheckCircle size={20} weight="fill" />}
+                            onClick={() => {
+                              resolveMissingDocument(app.id, d.documentId);
+                              haptic('success');
+                              pushToast({ message: t('tracker.missing.resolved', 'Marked as submitted. The office will now continue.'), tone: 'success' });
+                            }}
+                          >
+                            {t('tracker.missing.done', 'I have submitted it')}
+                          </Button>
+                          <LinkButton to="/documents" variant="ghost" size="sm">
+                            {t('tracker.missing.prepare', 'Prepare this paper')}
+                          </LinkButton>
+                        </div>
+                      </>
+                    )}
+                    {d.resolved && (
+                      <p className="mt-3 inline-flex items-center gap-1.5 text-small font-semibold text-patti">
+                        <Check size={16} weight="bold" /> {t('tracker.missing.submitted', 'Submitted')}
+                      </p>
+                    )}
+                  </motion.li>
+                ))}
+              </ul>
+            </section>
+  );
 
-                  {/* Officer Remarks Box */}
-                  {m.remarksKey && (
-                    <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 space-y-0.5 mt-2">
-                      <div className="font-extrabold uppercase tracking-wider text-[10px] text-amber-800 dark:text-amber-300">
-                        Official Officer Remarks:
-                      </div>
-                      <p>{m.remarksKey}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+  return (
+    <div className="pb-4">
+      <Link to="/tracker" className="hidden lg:inline-flex items-center gap-1.5 h-10 mb-2 text-small font-semibold text-ink-2 hover:text-ink">
+        <ArrowLeft size={16} weight="bold" className="flip-rtl" /> {t('tracker.detail.back', 'Back to all applications')}
+      </Link>
 
-      {/* Benefit Disbursement Details Card if applicable */}
-      {app.disbursementDetails && (
-        <div className="p-5 sm:p-6 rounded-3xl bg-slate-900 text-white shadow-crisp-md space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-emerald-400" />
-              <h3 className="text-sm font-black uppercase tracking-wider text-emerald-300">
-                Benefit Disbursement Ledger
-              </h3>
+      {/* Hero */}
+      <motion.header variants={staggerParent(0.06)} initial="hidden" animate="show" className="pt-2 pb-6">
+        <motion.div variants={riseIn} className="flex items-start gap-4">
+          <LifeGlyph id={scheme?.lifeEventId} size="lg" />
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap gap-2 mb-2">
+              {action ? (
+                <Tag tone="sindoor" icon={<Warning size={14} weight="fill" />}>{t('tracker.actionNeeded', 'Needs your action')}</Tag>
+              ) : late ? (
+                <Tag tone="sindoor">{t('tracker.overdue', 'Late')}</Tag>
+              ) : done ? (
+                <Tag tone="patti">{t('tracker.done', 'Done')}</Tag>
+              ) : (
+                <Tag tone="neel">{t('tracker.onTrack', 'On track')}</Tag>
+              )}
             </div>
-            <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-              app.disbursementDetails.status === 'credited'
-                ? 'bg-emerald-500 text-white'
-                : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-            }`}>
-              {app.disbursementDetails.status === 'credited' ? 'Disbursed / Active' : 'Pending Disbursal Cycle'}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
-            <div className="p-3 rounded-2xl bg-slate-800/80 border border-slate-700">
-              <div className="text-[10px] text-slate-400 uppercase">Sanctioned Amount:</div>
-              <div className="text-base font-black text-white mt-0.5">
-                ₹{app.disbursementDetails.amount.toLocaleString('en-IN')}
-              </div>
-            </div>
-            <div className="p-3 rounded-2xl bg-slate-800/80 border border-slate-700">
-              <div className="text-[10px] text-slate-400 uppercase">Target Credited Account / Card:</div>
-              <div className="text-xs font-mono font-bold text-white mt-0.5">
-                {app.disbursementDetails.accountMasked}
-              </div>
-            </div>
-          </div>
-
-          {app.disbursementDetails.utrNumber && (
-            <div className="text-[11px] font-mono text-slate-400 pt-1">
-              Statutory Transaction Hash / ID: {app.disbursementDetails.utrNumber}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Citizen Notes Section (User-Entered Notes vs Official Records) */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-crisp-sm space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-black text-slate-900 dark:text-white">
-              Citizen Personal Activity Notes
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Record your kiosk visits, officer phone calls, or physical document submissions
-            </p>
-          </div>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-            Private Notes
-          </span>
-        </div>
-
-        {/* Anti-Deception Notice */}
-        <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-xs text-blue-900 dark:text-blue-300">
-          <strong>Important Notice:</strong> Personal notes recorded below are saved to your local device profile. They are <u>not</u> official government departmental communications and are not shared with inspecting officers.
-        </div>
-
-        {/* Existing Notes List */}
-        {app.citizenNotes && app.citizenNotes.length > 0 ? (
-          <div className="space-y-2.5">
-            {app.citizenNotes.map((note) => (
-              <div key={note.id} className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-xs space-y-1">
-                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-                  <span className="font-bold text-slate-700 dark:text-slate-300">{note.author}</span>
-                  <span>{note.createdAt}</span>
-                </div>
-                <p className="text-slate-800 dark:text-slate-200 leading-relaxed">
-                  {note.text}
-                </p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-xs text-slate-400 italic">No citizen personal notes recorded yet.</p>
-        )}
-
-        {/* Add Note Form */}
-        <form onSubmit={handleAddNote} className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-          <label htmlFor="note-input" className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-            Add Personal Note for this Application:
-          </label>
-          <div className="flex gap-2">
-            <input
-              id="note-input"
-              type="text"
-              value={newNoteText}
-              onChange={(e) => setNewNoteText(e.target.value)}
-              placeholder="e.g. Visited Grama One on 18th Nov; operator says verification pending with RI..."
-              className="flex-1 py-2.5 px-3.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/50 outline-none"
-            />
-            <button
-              type="submit"
-              disabled={!newNoteText.trim()}
-              className="px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs flex items-center gap-1.5 hover:bg-slate-800 active:scale-95 transition-all disabled:opacity-50"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Note</span>
+            <h1 className="text-h1 font-semibold">{title}</h1>
+            <button type="button" onClick={() => copy(app.tokenNumber, t('shell.toast.copied', 'Copied'))} className="mt-2 inline-flex items-center gap-2 h-9 px-3 -ms-3 rounded-sm text-small text-ink-2 hover:bg-sunken" aria-label={t('tracker.detail.copyToken', 'Copy token number')}>
+              {t('tracker.token', 'Token')} <span className="num font-semibold text-ink">{app.tokenNumber}</span>
+              <Copy size={16} />
             </button>
           </div>
-          {noteSuccess && (
-            <div className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
-              <Check className="w-3 h-3" /> Note saved to your local profile.
+        </motion.div>
+        <motion.div variants={riseIn} className="mt-4 flex flex-wrap gap-2">
+          <ListenButton text={`${statusSpeech(app, t, title)} ${t(app.audioStatusNarrationKey, '')}`} />
+          <Button variant="secondary" size="sm" iconStart={<ShareNetwork size={18} />} onClick={share} className="!rounded-full">
+            {t('tracker.detail.share', 'Share status')}
+          </Button>
+        </motion.div>
+      </motion.header>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-6 lg:gap-8 items-start">
+        <div className="min-w-0 space-y-6">
+          {/* Where it is now */}
+          <section aria-labelledby="now" className={cx('rounded-xl p-6 md:p-7', done ? 'bg-hero-patti text-white' : 'bg-surface shadow-hair')}>
+            <p id="now" className={cx('text-small font-semibold', done ? 'text-white/80' : 'text-ink-3')}>
+              {t('tracker.detail.whereNow', 'Where it is now')}
+            </p>
+            <p className="mt-1 text-h2 font-semibold">
+              {done ? t('tracker.completed', 'Completed') : t(`tracker.stage.${app.currentStage}`)}
+              {!done && <span className="ms-2 text-lead font-medium text-ink-3 num">{app.currentStage}/4</span>}
+            </p>
+            {!done && <StageThread app={app} t={t} className="mt-5" />}
+            <div className={cx('mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4 pt-5 border-t', done ? 'border-white/20' : 'border-line')}>
+              <div>
+                <p className={cx('text-small font-semibold flex items-center gap-1.5', done ? 'text-white/80' : 'text-ink-3')}>
+                  <Clock size={16} /> {t('tracker.detail.whatNext', 'What happens next')}
+                </p>
+                <p className="mt-1">{t(`tracker.next.${done ? 4 : app.currentStage}`)}</p>
+                {!done && nextMilestone?.date && (
+                  <p className="mt-1 text-small text-ink-2">
+                    {t('tracker.detail.expected', 'Expected')}: <span className="num">{nextMilestone.date.replace(/^Expected by\s*/i, '')}</span>
+                  </p>
+                )}
+              </div>
+              <div>
+                <p className={cx('text-small font-semibold flex items-center gap-1.5', done ? 'text-white/80' : 'text-ink-3')}>
+                  <Buildings size={16} /> {t('tracker.detail.office', 'Office')}
+                </p>
+                <p className="mt-1">{t(app.handlingOffice, app.handlingOffice)}</p>
+                {current?.handlingOfficer && !done && <p className="mt-1 text-small text-ink-2">{t(current.handlingOfficer, current.handlingOfficer)}</p>}
+              </div>
             </div>
+            {!done && (
+              <div className="mt-5 pt-5 border-t border-line flex flex-wrap items-center justify-between gap-3">
+                <DeadlineLine app={app} t={t} />
+                <span className="text-small text-ink-3">
+                  {t('tracker.detail.timeLimit', 'Official time limit')}: <span className="num">{app.slaDeadlineDays}</span> {t('tracker.detail.days', 'days')}
+                </span>
+              </div>
+            )}
+          </section>
+
+          {missing.length > 0 && <div className="lg:hidden">{missingSection('missing-m')}</div>}
+
+          {late && (
+            <section aria-labelledby="late" className="rounded-lg bg-sindoor-tint p-5 md:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+              <Warning size={32} weight="duotone" className="text-sindoor shrink-0" />
+              <div className="flex-1 min-w-0">
+                <h2 id="late" className="font-semibold text-sindoor">
+                  {t('tracker.detail.lateTitle', 'This application is late')}
+                </h2>
+                <p className="text-small text-ink mt-0.5">{t('tracker.detail.lateBody')}</p>
+              </div>
+              <Button variant="danger" onClick={() => setGrievanceOpen(true)}>
+                {t('tracker.complain', 'Raise a complaint')}
+              </Button>
+            </section>
           )}
-        </form>
+
+          <section aria-labelledby="timeline" className="rounded-xl bg-surface shadow-hair p-6 md:p-7">
+            <h2 id="timeline" className="text-h3 font-semibold mb-6">
+              {t('tracker.detail.timeline', 'Step by step')}
+            </h2>
+            <Timeline app={app} t={t} />
+          </section>
+
+          {/* Notes journal */}
+          <section aria-labelledby="notes" className="rounded-xl bg-surface shadow-hair p-6 md:p-7">
+            <div className="flex items-start gap-3">
+              <NotePencil size={26} weight="duotone" className="text-neel shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <h2 id="notes" className="text-h3 font-semibold">
+                  {t('tracker.notes.title', 'My notes')}
+                </h2>
+                <p className="text-small text-ink-2">{t('tracker.notes.subtitle')}</p>
+              </div>
+            </div>
+            <form onSubmit={saveNote} className="mt-5 space-y-3">
+              <TextArea label={t('tracker.notes.label', 'Add a note')} value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('tracker.notes.placeholder')} className="min-h-[96px]" hint={t('tracker.notes.private', 'Only you can see these notes.')} />
+              <Button type="submit" variant="solid" size="sm" disabled={!note.trim()}>
+                {t('tracker.notes.add', 'Save note')}
+              </Button>
+            </form>
+            <ol className="mt-6 space-y-3">
+              <AnimatePresence initial={false}>
+                {(app.citizenNotes ?? []).map((n) => (
+                  <motion.li key={n.id} layout initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="ps-4 border-s-2 border-line-strong">
+                    <p className="text-micro text-ink-3 num">{n.createdAt}</p>
+                    <p className="text-small mt-0.5">{n.text}</p>
+                  </motion.li>
+                ))}
+              </AnimatePresence>
+              {(app.citizenNotes ?? []).length === 0 && <li className="text-small text-ink-3">{t('tracker.notes.empty', 'No notes yet.')}</li>}
+            </ol>
+          </section>
+        </div>
+
+        <aside className="space-y-4 lg:sticky lg:top-[calc(var(--topbar-h)+16px)]">
+          {missing.length > 0 && <div className="hidden lg:block">{missingSection('missing-d')}</div>}
+
+          {money && (
+            <section aria-labelledby="money" className="rounded-lg bg-surface shadow-hair p-5">
+              <div className="flex items-center justify-between gap-3">
+                <h2 id="money" className="font-semibold flex items-center gap-2">
+                  <HandCoins size={20} weight="duotone" className="text-patti" />
+                  {t('tracker.money.title', 'Money and benefit')}
+                </h2>
+                <Tag tone={money.status === 'credited' ? 'patti' : 'neutral'}>{money.status === 'credited' ? t('tracker.money.credited', 'Credited') : t('tracker.money.pending', 'Not sent yet')}</Tag>
+              </div>
+              <p className={cx('mt-4 text-[2.5rem] leading-none font-semibold num-display', money.status === 'credited' ? 'text-patti' : 'text-ink')}>₹{formatINR(money.amount)}</p>
+              <dl className="mt-4 space-y-2 text-small">
+                <div className="flex justify-between gap-3">
+                  <dt className="text-ink-3">{t('tracker.money.account', 'Paid to')}</dt>
+                  <dd className="font-medium num text-end min-w-0 break-words">{money.accountMasked}</dd>
+                </div>
+                {money.disbursedDate && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-ink-3">{t('tracker.money.date', 'Date')}</dt>
+                    <dd className="font-medium num">{money.disbursedDate}</dd>
+                  </div>
+                )}
+                {money.utrNumber && (
+                  <div className="flex items-center justify-between gap-3">
+                    <dt className="text-ink-3">{t('tracker.money.ref', 'Payment reference')}</dt>
+                    <dd className="flex items-center gap-1 min-w-0">
+                      <span className="font-medium num truncate">{money.utrNumber}</span>
+                      <IconButton size="sm" label={t('tracker.money.ref', 'Payment reference')} onClick={() => copy(money.utrNumber!, t('tracker.money.copied', 'Reference copied'))}>
+                        <Copy size={18} />
+                      </IconButton>
+                    </dd>
+                  </div>
+                )}
+              </dl>
+              {money.status !== 'credited' && <p className="mt-3 text-micro text-ink-3">{t('tracker.money.pendingBody')}</p>}
+            </section>
+          )}
+
+          {(app.pendingActions ?? []).length > 0 && (
+            <Disclosure summary={t('tracker.detail.todo', 'Things to keep in mind')} defaultOpen={!action}>
+              <ul className="space-y-2 text-small">
+                {app.pendingActions!.map((p) => (
+                  <li key={p} className="flex gap-2">
+                    <Check size={16} weight="bold" className="text-patti shrink-0 mt-1" />
+                    <span>{p}</span>
+                  </li>
+                ))}
+              </ul>
+            </Disclosure>
+          )}
+
+          {!late && (
+            <button type="button" onClick={() => setGrievanceOpen(true)} className="w-full flex items-center gap-3 p-4 rounded-lg bg-haldi-tint text-start hover:brightness-[0.98]">
+              <Lock size={22} weight="duotone" className="text-haldi-deep shrink-0" />
+              <span className="flex-1 min-w-0">
+                <span className="block font-semibold">{t('tracker.help.title', 'Something wrong?')}</span>
+                <span className="block text-small text-ink-2">{t('tracker.complain', 'Raise a complaint')}</span>
+              </span>
+            </button>
+          )}
+        </aside>
       </div>
 
-      {/* Action Footer */}
-      <div className="flex flex-col sm:flex-row items-center gap-3">
-        <button
-          type="button"
-          onClick={() => setIsGrievanceOpen(true)}
-          className="w-full sm:flex-1 py-3.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm min-h-[48px]"
-        >
-          <PhoneCall className="w-4 h-4 flex-shrink-0" />
-          <span>File Grievance / CPGRAMS Guide</span>
-        </button>
-
-        <Link
-          to={`/csc-slip/${app.tokenNumber}?scheme=${app.schemeId}`}
-          className="w-full sm:flex-1 py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 text-center active:scale-95 transition-all min-h-[48px]"
-        >
-          <Printer className="w-4 h-4 flex-shrink-0" />
-          <span>Print Kiosk Slip (ಮುದ್ರಿಸಿ)</span>
-        </Link>
-      </div>
-
-      {/* Grievance Modal */}
-      <GrievanceGuidanceModal
-        isOpen={isGrievanceOpen}
-        onClose={() => setIsGrievanceOpen(false)}
-        application={app}
-      />
+      <GrievanceGuidanceModal isOpen={grievanceOpen} onClose={() => setGrievanceOpen(false)} application={app} initialPath={late ? 'late' : undefined} />
     </div>
   );
 };
+
+export default ApplicationTrackerDetailScreen;

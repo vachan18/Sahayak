@@ -1,200 +1,207 @@
-import React from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import { 
-  Printer, ArrowRight, ShieldCheck, 
-  PhoneCall, CheckCircle2, FileText, 
-  ChevronLeft, Clock 
-} from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Printer, WhatsappLogo, Copy, Check, ChatCircleDots, MapPin, ArrowRight, Phone, Info } from '@phosphor-icons/react';
 import { useAppStore } from '../store/useAppStore';
-import { QrCodeSvg } from '../components/common/QrCodeSvg';
 import { useTranslation } from '../hooks/useTranslation';
+import { QrCodeSvg } from '../components/common/QrCodeSvg';
+import { SahayakLogo } from '../components/common/SahayakLogo';
+import { openWhatsApp } from '../lib/share';
+import { PageHeader, Button, Surface, ListenButton, LifeGlyph, cx, ease } from '../ui';
 
-export const CscSlipScreen: React.FC = () => {
+export const CscSlipScreen = () => {
   const { tokenId } = useParams<{ tokenId: string }>();
   const [searchParams] = useSearchParams();
-  const schemeParam = searchParams.get('scheme');
-  const { schemes, documentUploadStatus } = useAppStore();
   const { t } = useTranslation();
+  const { schemes, documentUploadStatus, applications, pushToast } = useAppStore();
 
-  // Resolve current scheme
-  const scheme = schemes.find(s => s.id === schemeParam) || schemes[0];
+  const app = tokenId ? applications.find((a) => a.tokenNumber === tokenId) : undefined;
+  const schemeId = searchParams.get('scheme') ?? app?.schemeId;
+  const scheme = schemes.find((s) => s.id === schemeId) || schemes[0];
+  const token = tokenId || `KA-${scheme.id.toUpperCase()}-2026-84920`;
+  const verifyUrl = `https://sahayak.gov.in/verify?token=${token}&scheme=${scheme.id}`;
+  const schemeName = t(scheme.titleKey, scheme.titleKey);
+  const shortName = schemeName.split('(')[0].trim();
+  const date = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
-  const resolvedToken = tokenId || `KA-${scheme.id.toUpperCase()}-2026-84920`;
-  const verificationUrl = `https://sahayak.gov.in/verify?token=${resolvedToken}&scheme=${scheme.id}&auth=preverified_sha256`;
-  const generatedDate = new Date().toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  });
+  const script = [
+    t('documents.slip.say1', 'Hello. I would like to apply for'),
+    `${shortName}.`,
+    t('documents.slip.say2', 'Here is my Sahayak slip and my papers.'),
+    t('documents.slip.say3', 'The government fee is zero, and I will pay at most thirty rupees for your help.'),
+    t('documents.slip.say4', 'Please give me the acknowledgement receipt.'),
+  ].join(' ');
 
-  const handlePrint = () => {
-    window.print();
+  const share = () => {
+    openWhatsApp(`${t('documents.slip.shareText', 'My Sahayak help-centre slip')} — ${shortName}\n${t('documents.slip.token', 'Token')}: ${token}\n${t('documents.fee.govShort', 'Government fee')}: ₹0 · ${t('documents.fee.cscMax', 'Most a centre can charge')}: ₹30\n${verifyUrl}`);
+  };
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(token);
+      pushToast({ message: t('shell.toast.copied', 'Copied'), tone: 'success' });
+    } catch {
+      /* clipboard blocked */
+    }
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-2 sm:py-4 animate-fadeIn">
-      {/* Top back navigation (hidden on print) */}
-      <div className="no-print flex items-center justify-between mb-4">
-        <Link
-          to={`/documents?scheme=${scheme.id}`}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+    <div className="pb-8">
+      <PageHeader
+        eyebrow={t('documents.slip.eyebrow', 'Your slip is ready')}
+        title={t('documents.slip.title', 'Take this to the help centre')}
+        description={t('documents.slip.subtitle', 'Show it on your phone or print it. The operator scans the QR code and your details are filled in.')}
+        actions={
+          <>
+            <Button onClick={() => window.print()} iconStart={<Printer size={20} weight="fill" />}>
+              {t('documents.slip.print', 'Print or save PDF')}
+            </Button>
+            <Button variant="secondary" onClick={share} iconStart={<WhatsappLogo size={20} weight="fill" className="text-[#1C8D4E]" />}>
+              WhatsApp
+            </Button>
+          </>
+        }
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,560px)_minmax(0,1fr)] gap-8 items-start">
+        {/* ── The slip ── */}
+        <motion.article
+          initial={{ opacity: 0, y: 24, rotate: -0.6 }}
+          animate={{ opacity: 1, y: 0, rotate: 0 }}
+          transition={{ duration: 0.5, ease: ease.out }}
+          aria-label={t('documents.slip.aria', 'Help-centre slip')}
+          className={cx(
+            'print-sheet relative w-full max-w-[560px] rounded-xl bg-surface shadow-lift overflow-hidden',
+            'print:max-w-[148mm] print:mx-auto print:rounded-none print:bg-white',
+            'print:[&_*]:!text-black print:[&_*]:!shadow-none print:[&_*]:!bg-transparent'
+          )}
         >
-          <ChevronLeft className="w-4 h-4" />
-          <span>Back to Document Checklist</span>
-        </Link>
-        <span className="text-[11px] font-mono text-slate-400">
-          Citizen Assistance Slip
-        </span>
-      </div>
-
-      {/* Official Treasury / Citizen Service Slip Card */}
-      <div className="bg-white border-2 border-slate-900 rounded-3xl p-5 sm:p-7 shadow-crisp-lg text-slate-900 relative print:border-none print:shadow-none print:p-0 print:m-0">
-        {/* Slip Header & Dignified Civic Typography (No fake seals) */}
-        <div className="text-center pb-4 border-b-2 border-slate-200">
-          <div className="inline-block px-3 py-1 rounded-full bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest mb-1.5">
-            SAHAYAK • CITIZEN WELFARE PORTAL
-          </div>
-          <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-700">
-            Grama One / CSC Seva Kendra Assisted Token Slip
-          </h2>
-          <h1 className="text-lg sm:text-xl font-black tracking-tight text-slate-900 mt-1">
-            {scheme.titleKey}
-          </h1>
-          <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-            Department: {scheme.ministryKey}
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-3 text-[11px] font-mono font-bold">
-            <span className="bg-slate-100 px-3 py-1 rounded-full border border-slate-300">
-              TOKEN: {resolvedToken}
-            </span>
-            <span className="bg-slate-100 px-3 py-1 rounded-full border border-slate-300">
-              DATE: {generatedDate}
-            </span>
-          </div>
-        </div>
-
-        {/* Real QR Code Centerpiece */}
-        <div className="my-5 text-center">
-          <div className="inline-block p-3 rounded-2xl bg-white border-2 border-slate-900 shadow-sm">
-            <QrCodeSvg
-              value={verificationUrl}
-              size={180}
-              ariaLabel={`Official token QR code for ${resolvedToken}`}
-            />
-          </div>
-          <div className="mt-2 text-xs font-bold text-slate-900">
-            Show this QR Code to the Village Level Entrepreneur (VLE) Operator
-          </div>
-          <p className="text-[11px] text-slate-500 max-w-sm mx-auto mt-0.5">
-            The counter operator will scan this to ingest your pre-verified document package directly into the portal.
-          </p>
-        </div>
-
-        {/* Statutory Service Fee Transparency Box (Mandatory Citizen Protection) */}
-        <div className="p-4 rounded-2xl bg-amber-50 border-2 border-amber-500/80 text-amber-950 mb-5 space-y-2">
-          <div className="flex items-center justify-between text-xs font-black uppercase tracking-wider border-b border-amber-200 pb-1.5">
-            <span className="flex items-center gap-1.5 text-amber-900">
-              <ShieldCheck className="w-4 h-4 text-emerald-700" />
-              <span>{t('statutoryFreeFee', 'STATUTORY FEE GUARANTEE')}</span>
-            </span>
-            <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">
-              Sakala Guarantee
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 text-xs pt-1">
-            <div className="p-2 rounded-xl bg-white/70 border border-amber-200">
-              <div className="text-[10px] text-slate-500 uppercase font-semibold">Government Fee:</div>
-              <div className="text-sm font-black text-emerald-700">₹0.00 (Statutory Free)</div>
+          {/* stub */}
+          <div className="px-6 sm:px-8 pt-6 pb-5">
+            <div className="flex items-center gap-3">
+              <SahayakLogo className="h-10 w-auto" />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold leading-tight">Sahayak</p>
+                <p className="text-micro text-ink-3">{t('documents.slip.kind', 'Help-centre slip · Seva Kendra')}</p>
+              </div>
+              <p className="text-micro text-ink-3 num text-end">{date}</p>
             </div>
-            <div className="p-2 rounded-xl bg-white/70 border border-amber-200">
-              <div className="text-[10px] text-slate-500 uppercase font-semibold">Max CSC VLE Service Charge:</div>
-              <div className="text-sm font-black text-slate-900">₹30.00 Maximum</div>
+
+            <div className="mt-6">
+              <p className="text-small text-ink-3">{t('documents.slip.token', 'Token')}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-[1.5rem] xs:text-[1.75rem] sm:text-[2rem] leading-tight font-semibold num tracking-tight min-w-0" dir="ltr">{token}</p>
+                <button type="button" onClick={copy} aria-label={t('documents.slip.copy', 'Copy token')} className="no-print w-10 h-10 shrink-0 grid place-items-center rounded-sm text-ink-3 hover:bg-sunken hover:text-ink">
+                  <Copy size={20} />
+                </button>
+              </div>
+              <div className="mt-3 flex items-center gap-2.5 min-w-0">
+                <LifeGlyph id={scheme.lifeEventId} size="sm" className="print:hidden" />
+                <p className="font-semibold min-w-0">{schemeName}</p>
+              </div>
             </div>
           </div>
 
-          <div className="text-[11px] text-amber-900 pt-1 leading-snug">
-            <strong>Citizen Protection Notice:</strong> Charging more than ₹30.00 is a punishable offense under the Karnataka Sakala Services Act 2011. You are legally entitled to a printed receipt for any fee paid.
-          </div>
-        </div>
-
-        {/* Pre-verified Document Checklist Table */}
-        <div className="border border-slate-200 rounded-2xl p-3.5 space-y-2.5 mb-5 bg-slate-50/50">
-          <div className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center justify-between">
-            <span>Pre-Verified Document Checklist</span>
-            <span className="text-[10px] text-slate-500 font-normal">
-              Status for {scheme.titleKey}
-            </span>
+          {/* perforation */}
+          <div className="relative h-6" aria-hidden>
+            <span className="absolute top-1/2 -start-3 w-6 h-6 -translate-y-1/2 rounded-full bg-paper print:hidden" />
+            <span className="absolute top-1/2 -end-3 w-6 h-6 -translate-y-1/2 rounded-full bg-paper print:hidden" />
+            <span className="absolute top-1/2 inset-x-5 border-t-2 border-dashed border-line-strong print:border-black" />
           </div>
 
-          <div className="space-y-1.5 text-xs">
-            {scheme.documents.map((doc) => {
-              const isVerified = documentUploadStatus[doc.id] === 'verified' || doc.status === 'verified';
-              return (
-                <div 
-                  key={doc.id}
-                  className="flex items-center justify-between py-1.5 px-2 rounded-lg bg-white border border-slate-200/80"
-                >
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                    <span className="font-semibold text-slate-800">{doc.nameKey}</span>
+          <div className="px-6 sm:px-8 pt-4 pb-7 space-y-6">
+            <div className="grid grid-cols-1 xs:grid-cols-[auto_minmax(0,1fr)] gap-5 items-center">
+              <QrCodeSvg value={verifyUrl} size={156} ariaLabel={`${t('documents.slip.qr', 'QR code for token')} ${token}`} className="shadow-hair mx-auto xs:mx-0 print:!bg-white" />
+              <div className="min-w-0">
+                <p className="font-semibold">{t('documents.slip.showOperator', 'Show this to the operator')}</p>
+                <p className="mt-1 text-small text-ink-2">{t('documents.slip.showOperatorBody', 'They scan it to open your application with your details already filled in.')}</p>
+                <dl className="mt-3 text-micro text-ink-3 space-y-0.5">
+                  <div>
+                    <dt className="inline">{t('documents.slip.office', 'Office')}: </dt>
+                    <dd className="inline text-ink-2">{t(scheme.handlingAuthorityKey, scheme.handlingAuthorityKey)}</dd>
                   </div>
-                  {isVerified ? (
-                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Pre-Verified
-                    </span>
-                  ) : (
-                    <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded">
-                      Physical Copy Needed
-                    </span>
-                  )}
+                </dl>
+              </div>
+            </div>
+
+            <div>
+              <p className="font-semibold mb-2">{t('documents.slip.papers', 'Papers to carry (originals too)')}</p>
+              <ul className="space-y-1.5">
+                {scheme.documents.map((d) => {
+                  const s = documentUploadStatus[d.id] ?? d.status;
+                  const ready = s === 'verified' || s === 'uploaded';
+                  return (
+                    <li key={d.id} className="flex items-center gap-3 min-h-[32px]">
+                      <span className={cx('w-6 h-6 rounded-xs grid place-items-center shrink-0 border-2', ready ? 'bg-patti border-patti text-white' : 'border-line-strong', 'print:border-black')}>
+                        {ready && <Check size={14} weight="bold" />}
+                      </span>
+                      <span className="text-small min-w-0">{t(d.nameKey, d.nameKey)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+
+            <div className="rounded-md bg-haldi-tint p-4 print:border-2 print:border-black">
+              <dl className="grid grid-cols-2 gap-3">
+                <div>
+                  <dt className="text-micro text-ink-2">{t('documents.fee.govShort', 'Government fee')}</dt>
+                  <dd className="text-h2 font-semibold num-display text-patti">₹0</dd>
                 </div>
-              );
-            })}
-          </div>
-        </div>
+                <div>
+                  <dt className="text-micro text-ink-2">{t('documents.fee.cscMax', 'Most a centre can charge')}</dt>
+                  <dd className="text-h2 font-semibold num-display">₹30</dd>
+                </div>
+              </dl>
+              <p className="mt-2 text-small text-ink-2">{t('documents.slip.feeNote', 'Charging more is not allowed. Always ask for a receipt.')}</p>
+            </div>
 
-        {/* Service Guarantee & Anti-Extortion Helplines */}
-        <div className="border-t border-slate-200 pt-3 text-[11px] text-slate-600 space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1 font-bold text-slate-800">
-              <Clock className="w-3 h-3 text-slate-500" /> Expected Processing SLA:
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-micro text-ink-3">
+              <span className="inline-flex items-center gap-1.5">
+                <Phone size={14} className="print:hidden" />
+                {t('documents.guidance.helpline', 'Helpline')}: <span className="num" dir="ltr">{scheme.helplinePhone}</span>
+              </span>
+              <span>{t('documents.slip.free', 'Sahayak is a free service')}</span>
+            </div>
+          </div>
+        </motion.article>
+
+        {/* ── Coaching panel (screen only) ── */}
+        <div className="no-print space-y-4 min-w-0">
+          <Surface padded="lg">
+            <div className="flex items-start gap-3">
+              <span className="w-11 h-11 rounded-md bg-neel-tint text-neel-ink grid place-items-center shrink-0">
+                <ChatCircleDots size={24} weight="duotone" />
+              </span>
+              <div className="min-w-0">
+                <h2 className="text-h3 font-semibold">{t('documents.slip.sayTitle', 'What to say at the counter')}</h2>
+                <p className="text-small text-ink-2 mt-0.5">{t('documents.slip.sayHint', 'Read it, or play it out loud for the operator.')}</p>
+              </div>
+            </div>
+            <blockquote className="mt-4 ps-4 border-s-4 border-haldi text-lead leading-body">{script}</blockquote>
+            <div className="mt-5">
+              <ListenButton text={script} label={t('documents.slip.playScript', 'Play out loud')} />
+            </div>
+          </Surface>
+
+          <Link to="/help-centres" className="group flex items-center gap-4 rounded-lg bg-surface shadow-hair p-5 hover:shadow-lift transition-shadow">
+            <span className="w-12 h-12 rounded-md bg-ghar-tint text-ghar grid place-items-center shrink-0">
+              <MapPin size={26} weight="duotone" />
             </span>
-            <span className="font-bold text-slate-900">{scheme.processingSlaDays || 15} Working Days</span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1 font-bold text-slate-800">
-              <PhoneCall className="w-3 h-3 text-slate-500" /> Sakala Anti-Extortion Helpline:
+            <span className="flex-1 min-w-0">
+              <span className="block font-semibold">{t('documents.slip.findCentre', 'Find a centre that is open now')}</span>
+              <span className="block text-small text-ink-2">{t('documents.slip.findCentreBody', 'With distance, timings and directions')}</span>
             </span>
-            <span className="font-bold text-blue-700">1902 / 080-44554455</span>
-          </div>
+            <ArrowRight size={20} className="text-ink-3 flip-rtl transition-transform group-hover:translate-x-0.5" />
+          </Link>
 
-          <div className="text-[10px] text-slate-500 text-center pt-2">
-            This token is issued for citizen facilitation by SAHAYAK. Validity: 30 days from generation.
-          </div>
+          <p className="flex gap-2 text-small text-ink-2 px-1">
+            <Info size={18} className="shrink-0 mt-0.5" />
+            {t('documents.slip.pdfTip', 'Tip: in the print window choose “Save as PDF” to keep a copy on your phone.')}
+          </p>
         </div>
-      </div>
-
-      {/* Action Buttons (no-print) */}
-      <div className="no-print mt-5 flex flex-col sm:flex-row items-center gap-3">
-        <button
-          type="button"
-          onClick={handlePrint}
-          className="w-full sm:flex-1 py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 active:scale-95 transition-all min-h-[48px] shadow-sm"
-        >
-          <Printer className="w-4 h-4 flex-shrink-0" />
-          <span>ಮುದ್ರಿಸಿ / Print Token Slip</span>
-        </button>
-
-        <Link
-          to="/tracker"
-          className="w-full sm:flex-1 py-3.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 text-center active:scale-95 transition-all min-h-[48px] shadow-sm"
-        >
-          <span>ಅರ್ಜಿ ಸ್ಥಿತಿ ನೋಡಿ (Tracker)</span>
-          <ArrowRight className="w-4 h-4 flex-shrink-0" />
-        </Link>
       </div>
     </div>
   );
 };
+
+export default CscSlipScreen;

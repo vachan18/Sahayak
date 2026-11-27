@@ -1,41 +1,49 @@
 import React from 'react';
+import { cx } from '../../ui/cx';
 
 interface SahayakLogoProps {
   className?: string;
+  /** 'light' = for light surfaces (navy shield) · 'dark' = for navy/dark surfaces (white shield) · 'auto' follows theme */
+  tone?: 'auto' | 'light' | 'dark';
+  /** Kept for backwards compatibility — ignored */
+  bare?: boolean;
 }
 
-export const SahayakLogo: React.FC<SahayakLogoProps> = ({ className = 'w-10 h-10' }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="3 1 58 62"
-    fill="none"
-    className={className}
-    role="img"
-    aria-label="SAHAYAK Logo"
-  >
+/**
+ * Sahayak emblem — a shield (protection, the State's guarantee) holding a speech bubble
+ * (voice, your language) with two people celebrating (the family that receives).
+ * Navy = trust · Teal = conversation & help · Orange = people & warmth.
+ */
+export const SahayakLogo: React.FC<SahayakLogoProps> = ({ className = 'w-10 h-10', tone = 'auto' }) => (
+  <svg viewBox="0 0 100 114" className={cx(className, 'shrink-0')} role="img" aria-label="Sahayak" xmlns="http://www.w3.org/2000/svg">
     <path
-      d="M32 4L56 13.5V30.5C56 44.8 45.8 55.6 32 60C18.2 55.6 8 44.8 8 30.5V13.5L32 4Z"
-      fill="#FFFFFF"
-      stroke="#0F172A"
-      strokeWidth="4.2"
+      d="M50.5 3.5C38 10.5 22 16 4.5 19 3.5 46 6.5 71 19.5 88.5M27.5 96.5C34.5 102.5 42 106.5 50.5 110.5 61 106 72 100 81 89 95 72 98 46 96.5 19 79 16 63 10.5 50.5 3.5"
+      fill="none"
+      strokeWidth="5.5"
       strokeLinejoin="round"
-    />
-    <path
-      d="M32 14C22 14 14 21.8 14 31.5C14 35.2 15.2 38.7 17.3 41.5L14.9 47.6L21.7 45.4C24.7 47.6 28.2 48.9 32 48.9C42 48.9 50 41.1 50 31.5C50 21.8 42 14 32 14Z"
-      stroke="#10B981"
-      strokeWidth="3.8"
       strokeLinecap="round"
-      strokeLinejoin="round"
+      className={tone === 'dark' ? 'stroke-white' : tone === 'light' ? 'stroke-[#111E33]' : 'stroke-[#111E33] dark:stroke-white'}
     />
-    <circle cx="25.8" cy="26.2" r="3" fill="#F97316" />
-    <path
-      d="M19 27.3C21.5 30.4 23.4 32.8 24.2 35.6V43.8H28.8V35.3C29.4 31.8 30.2 28.4 30.8 25C29.3 28.1 28 30.2 26.7 31.6C24.9 31.6 22.2 29.7 19 27.3Z"
-      fill="#F97316"
-    />
-    <circle cx="38.6" cy="27.2" r="3" fill="#F97316" />
-    <path
-      d="M33.1 29.4C34.4 32 35.2 34.1 35.6 36.4V44.4H40.2V36.4C41 33.5 42.8 31.1 45.3 28.1C42.2 30.5 39.7 32 37.9 32C36.4 32 34.8 31 33.1 29.4Z"
-      fill="#F97316"
-    />
+    <g fill="none" stroke="#1DAF8F" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.5 42A35 35 0 0 1 83.5 42" />
+      <path d="M15.6 58A35 35 0 0 0 26 79L19 92.5 35.5 87.5Q45 91 54.5 89.5" />
+      <path d="M73.5 82A35 35 0 0 0 85.4 58" />
+    </g>
+    <g fill="#FC7C24">
+      <circle cx="35.5" cy="46.5" r="5.6" />
+      <circle cx="66.5" cy="47.5" r="5.6" />
+      <path d="M13.5 43.5C20 51 27 55.5 33 56.5 36.5 57 40 56.5 42.5 54.5 47 50.5 49.5 43 50.5 32.5 53 41 52.5 50 49 58 47 63 47.5 70 49 77 50 81 49 84 47 86L36 86C37.5 80 37.5 74 35 68 33 64.5 29.5 62 26 60 21 57 16.5 51.5 13.5 43.5Z" />
+      <path d="M87.5 44.5C82 52 76 56.5 70.5 57.5 67 58 63.5 57.5 60.5 55.5 57.5 53 56 48.5 55 42 53.5 48 53 55 55 60.5 57 65.5 57.5 70 57 75 56.5 79.5 57 83.5 59 87.5L66.5 85.5C67 80 68 74 71 69 73.5 65 77 62.5 80 60 84 56.5 86.5 51 87.5 44.5Z" />
+    </g>
   </svg>
 );
+
+/** Emblem + wordmark lock-up, matching the brand sheet ("SAHAYAK" in heavy geometric caps). */
+export const SahayakWordmark: React.FC<{ className?: string; label?: string; tone?: 'auto' | 'light' | 'dark' }> = ({ className, label = 'SAHAYAK', tone = 'auto' }) => (
+  <span className={cx('inline-flex items-center gap-2.5', className)}>
+    <SahayakLogo className="h-9 w-auto" tone={tone} />
+    <span className={cx('font-display font-extrabold tracking-[0.02em] text-[1.3rem] leading-none', tone === 'dark' ? 'text-white' : 'text-ink')}>{label}</span>
+  </span>
+);
+
+export default SahayakLogo;

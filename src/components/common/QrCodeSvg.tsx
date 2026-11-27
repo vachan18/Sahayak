@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { generateQrMatrix } from '../../utils/qrGenerator';
+import { cx } from '../../ui/cx';
 
 interface QrCodeSvgProps {
   value: string;
@@ -8,21 +9,15 @@ interface QrCodeSvgProps {
   ariaLabel?: string;
 }
 
-export const QrCodeSvg: React.FC<QrCodeSvgProps> = ({
-  value,
-  size = 180,
-  className = '',
-  ariaLabel = 'Official Service Token QR Code'
-}) => {
+/** Real, scannable QR code drawn as one SVG path. Always black on white so every scanner reads it. */
+export const QrCodeSvg = ({ value, size = 180, className, ariaLabel = 'QR code' }: QrCodeSvgProps) => {
   const { matrixSize, pathData } = useMemo(() => {
     try {
       const { size: mSize, modules } = generateQrMatrix(value);
       let d = '';
       for (let r = 0; r < mSize; r++) {
         for (let c = 0; c < mSize; c++) {
-          if (modules[r][c]) {
-            d += `M${c},${r}h1v1h-1z `;
-          }
+          if (modules[r][c]) d += `M${c},${r}h1v1h-1z`;
         }
       }
       return { matrixSize: mSize, pathData: d };
@@ -33,22 +28,13 @@ export const QrCodeSvg: React.FC<QrCodeSvgProps> = ({
   }, [value]);
 
   return (
-    <div 
-      className={`inline-block p-2 bg-white rounded-xl shadow-inner ${className}`}
-      style={{ width: size, height: size }}
-      role="img"
-      aria-label={ariaLabel}
-    >
-      <svg
-        viewBox={`-2 -2 ${matrixSize + 4} ${matrixSize + 4}`}
-        className="w-full h-full"
-        shapeRendering="crispEdges"
-      >
-        {/* Background */}
+    <div className={cx('inline-block p-2.5 bg-white rounded-md', className)} style={{ width: size, height: size }} role="img" aria-label={ariaLabel}>
+      <svg viewBox={`-2 -2 ${matrixSize + 4} ${matrixSize + 4}`} className="w-full h-full" shapeRendering="crispEdges" aria-hidden>
         <rect x="-2" y="-2" width={matrixSize + 4} height={matrixSize + 4} fill="#ffffff" />
-        {/* QR Modules */}
-        <path d={pathData} fill="#0f172a" />
+        <path d={pathData} fill="#111111" />
       </svg>
     </div>
   );
 };
+
+export default QrCodeSvg;

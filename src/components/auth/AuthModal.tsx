@@ -1,290 +1,211 @@
-import React, { useState } from 'react';
-import { X, Lock, Mail, User, ArrowRight, ShieldCheck, AlertCircle, CheckCircle2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { DeviceMobile, Eye, EyeSlash, CheckCircle, WarningCircle, ArrowLeft, LockKey } from '@phosphor-icons/react';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useAppStore } from '../../store/useAppStore';
 import { loginUser, registerUser, requestPasswordReset } from '../../services/authService';
+import { Sheet } from '../../ui/Sheet';
+import { Button } from '../../ui/Button';
+import { Segmented } from '../../ui/Chip';
+import { TextField } from '../../ui/Field';
+import { cx } from '../../ui/cx';
+import { haptic } from '../../lib/haptics';
+import type { SupportedLanguage } from '../../types';
+
+type View = 'login' | 'register' | 'forgot_password';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialView?: 'login' | 'register' | 'forgot_password';
+  initialView?: View;
 }
 
-export const AuthModal: React.FC<AuthModalProps> = ({
-  isOpen,
-  onClose,
-  initialView = 'login'
-}) => {
+function Notice({ tone, children }: { tone: 'success' | 'error' | 'info'; children: React.ReactNode }) {
+  const Icon = tone === 'success' ? CheckCircle : WarningCircle;
+  return (
+    <motion.div
+      role={tone === 'error' ? 'alert' : 'status'}
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      className="overflow-hidden"
+    >
+      <div className={cx('flex items-start gap-3 rounded-md px-4 py-3 text-small font-medium', tone === 'success' ? 'bg-patti-tint text-patti' : tone === 'error' ? 'bg-sindoor-tint text-sindoor' : 'bg-kesar-tint text-kesar')}>
+        <Icon size={20} weight="fill" className="shrink-0 mt-0.5" />
+        <span>{children}</span>
+      </div>
+    </motion.div>
+  );
+}
+
+/**
+ * Sign-in is optional by design. Shared phones and CSC kiosks are the norm, so the
+ * guest path is presented first and explained plainly; an account only adds sync.
+ */
+export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialView = 'login' }) => {
   const { t, language } = useTranslation();
   const { setAuthUser } = useAppStore();
-
-  const [view, setView] = useState<'login' | 'register' | 'forgot_password'>(initialView);
+  const [view, setView] = useState<View>(initialView);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showPw, setShowPw] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState<{ tone: 'success' | 'error' | 'info'; text: string } | null>(null);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen) setView(initialView);
+  }, [isOpen, initialView]);
 
-  const resetFormState = () => {
-    setErrorMessage(null);
-    setSuccessMessage(null);
-    setEmail('');
+  const switchView = (v: View) => {
+    setNotice(null);
     setPassword('');
-    setFullName('');
+    setView(v);
   };
 
-  const handleTabSwitch = (newView: 'login' | 'register' | 'forgot_password') => {
-    resetFormState();
-    setView(newView);
+  const finish = (text: string) => {
+    haptic('success');
+    setNotice({ tone: 'success', text });
+    setTimeout(() => {
+      onClose();
+      setNotice(null);
+      setEmail('');
+      setPassword('');
+      setFullName('');
+    }, 800);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage(null);
-    setSuccessMessage(null);
-    setIsLoading(true);
-
+    setNotice(null);
+    setLoading(true);
     try {
       if (view === 'login') {
         const res = await loginUser(email, password);
         if (res.success && res.user) {
           setAuthUser(res.user);
-          setSuccessMessage("Signed in successfully!");
-          setTimeout(() => {
-            onClose();
-            resetFormState();
-          }, 600);
+          finish(t('entry.auth.signedIn', 'Signed in. Welcome back.'));
         } else if (res.isGuest) {
-          setErrorMessage(res.error || "Operating in Guest Mode. Connect Supabase to sync.");
+          setNotice({ tone: 'info', text: t('entry.auth.guestMode') });
         } else {
-          setErrorMessage(res.error || "Failed to sign in. Please verify your credentials.");
+          haptic('error');
+          setNotice({ tone: 'error', text: res.error || t('entry.auth.failed') });
         }
       } else if (view === 'register') {
         const res = await registerUser({
           email,
           password,
           fullName: fullName.trim() || 'Citizen Beneficiary',
-          preferredLanguage: (language as any) || 'kn'
-        });
-
+          preferredLanguage: language as SupportedLanguage,
+        } as Parameters<typeof registerUser>[0]);
         if (res.success && res.user) {
           setAuthUser(res.user);
-          setSuccessMessage("Account created successfully!");
-          setTimeout(() => {
-            onClose();
-            resetFormState();
-          }, 800);
+          finish(t('entry.auth.created', 'Account created. Your progress is now saved.'));
         } else if (res.isGuest) {
-          setErrorMessage(res.error || "Operating in Guest Mode. Connect Supabase to sync.");
+          setNotice({ tone: 'info', text: t('entry.auth.guestMode') });
         } else {
-          setErrorMessage(res.error || "Failed to create account.");
+          haptic('error');
+          setNotice({ tone: 'error', text: res.error || t('entry.auth.failedCreate') });
         }
-      } else if (view === 'forgot_password') {
+      } else {
         const res = await requestPasswordReset(email);
-        if (res.success) {
-          setSuccessMessage("Password reset email sent! Check your inbox.");
-        } else {
-          setErrorMessage(res.error || "Failed to send reset link.");
-        }
+        if (res.success) setNotice({ tone: 'success', text: t('entry.auth.linkSent', 'Reset link sent. Check your email.') });
+        else setNotice({ tone: 'error', text: res.error || t('entry.voice.err.unknown') });
       }
-    } catch (err: any) {
-      setErrorMessage(err.message || "An unexpected error occurred.");
+    } catch (err) {
+      setNotice({ tone: 'error', text: (err as Error)?.message || t('entry.voice.err.unknown') });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
+  const forgot = view === 'forgot_password';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fadeIn">
-      <div 
-        className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-crisp-xl relative overflow-hidden"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="auth-modal-title"
-      >
-        {/* Close Button */}
-        <button
-          type="button"
-          onClick={() => {
-            resetFormState();
-            onClose();
-          }}
-          className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          aria-label="Close dialog"
-        >
-          <X className="w-5 h-5" />
+    <Sheet open={isOpen} onClose={onClose} title={forgot ? t('entry.auth.forgotTitle', 'Reset your password') : t('entry.auth.title', 'Keep your progress safe')} description={forgot ? t('entry.auth.forgotBody') : undefined} size="sm" closeLabel={t('navClose', 'Close')}>
+      {!forgot && (
+        <div className="rounded-lg bg-neel-tint text-neel-ink p-4 flex gap-3">
+          <DeviceMobile size={26} weight="duotone" className="shrink-0" />
+          <div className="min-w-0">
+            <p className="font-semibold">{t('entry.auth.guestTitle', 'You do not need an account')}</p>
+            <p className="text-small mt-1 text-ink-2">{t('entry.auth.guestBody')}</p>
+            <button type="button" onClick={onClose} className="mt-2 h-10 -ms-1 px-1 text-small font-semibold underline underline-offset-4">
+              {t('entry.auth.continueGuest', 'Continue without an account')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {forgot ? (
+        <button type="button" onClick={() => switchView('login')} className="inline-flex items-center gap-1.5 h-10 text-small font-semibold text-neel-ink">
+          <ArrowLeft size={16} weight="bold" className="flip-rtl" /> {t('entry.auth.backToSignIn', 'Back to sign in')}
         </button>
+      ) : (
+        <Segmented
+          className="w-full mt-5"
+          layoutKey="auth"
+          label={t('entry.auth.title', 'Keep your progress safe')}
+          value={view}
+          onChange={(v) => switchView(v)}
+          options={[
+            { value: 'login' as View, label: t('entry.auth.signIn', 'Sign in') },
+            { value: 'register' as View, label: t('entry.auth.register', 'Create account') },
+          ]}
+        />
+      )}
 
-        {/* Brand Header */}
-        <div className="flex items-center gap-2.5 mb-5">
-          <div className="w-8 h-8 rounded-xl bg-brand-navy-900 dark:bg-sky-500 text-white font-extrabold flex items-center justify-center text-sm shadow-sm">
-            {language === 'kn' ? 'ಸ' : 'S'}
-          </div>
-          <div>
-            <div className="text-sm font-extrabold text-slate-900 dark:text-white leading-tight">
-              {t('appName', 'SAHAYAK')} Account
-            </div>
-            <div className="text-[11px] text-amber-700 dark:text-amber-400 font-semibold">
-              {language === 'kn' ? 'ನಾಗರಿಕ ಲಾಗಿನ್ ಮತ್ತು ಖಾತೆ' : 'Citizen Access & Cloud Sync'}
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs: Sign In vs Register */}
-        <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-800 p-1 mb-5">
-          <button
-            type="button"
-            onClick={() => handleTabSwitch('login')}
-            className={`flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all ${
-              view === 'login'
-                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-            }`}
-          >
-            {language === 'kn' ? 'ಲಾಗಿನ್' : 'Sign In'}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleTabSwitch('register')}
-            className={`flex-1 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all ${
-              view === 'register'
-                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-            }`}
-          >
-            {language === 'kn' ? 'ನೋಂದಣಿ' : 'Create Account'}
-          </button>
-        </div>
-
-        {/* Feedback Alerts */}
-        {errorMessage && (
-          <div className="mb-4 p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 flex items-start gap-2.5 text-xs text-rose-800 dark:text-rose-300">
-            <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-            <span className="leading-relaxed">{errorMessage}</span>
-          </div>
-        )}
-
-        {successMessage && (
-          <div className="mb-4 p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900/60 flex items-start gap-2.5 text-xs text-emerald-800 dark:text-emerald-300">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-            <span className="leading-relaxed">{successMessage}</span>
-          </div>
-        )}
-
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={submit} className="mt-5 space-y-4" noValidate>
+        <AnimatePresence initial={false}>
           {view === 'register' && (
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                {language === 'kn' ? 'ಪೂರ್ಣ ಹೆಸರು' : 'Full Name'}
-              </label>
-              <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                <input
-                  type="text"
-                  required
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. Rameshwar Yadav"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
-              </div>
-            </div>
+            <motion.div key="name" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+              <TextField label={t('entry.auth.name', 'Your name')} placeholder={t('entry.auth.namePlaceholder')} value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" />
+            </motion.div>
           )}
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              {language === 'kn' ? 'ಇಮೇಲ್ ವಿಳಾಸ' : 'Email Address'}
-            </label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
-            </div>
+        </AnimatePresence>
+        <TextField label={t('entry.auth.email', 'Email address')} type="email" inputMode="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        {!forgot && (
+          <div className="relative">
+            <TextField
+              label={t('entry.auth.password', 'Password')}
+              hint={view === 'register' ? t('entry.auth.passwordHint') : undefined}
+              type={showPw ? 'text' : 'password'}
+              autoComplete={view === 'register' ? 'new-password' : 'current-password'}
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="pe-14"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw((s) => !s)}
+              aria-label={showPw ? t('entry.auth.hide', 'Hide password') : t('entry.auth.show', 'Show password')}
+              className="absolute end-1 top-[30px] w-12 h-12 grid place-items-center rounded-md text-ink-3 hover:text-ink"
+            >
+              {showPw ? <EyeSlash size={20} /> : <Eye size={20} />}
+            </button>
           </div>
+        )}
 
-          {view !== 'forgot_password' && (
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  {language === 'kn' ? 'ಪಾಸ್‌ವರ್ಡ್' : 'Password'}
-                </label>
-                {view === 'login' && (
-                  <button
-                    type="button"
-                    onClick={() => handleTabSwitch('forgot_password')}
-                    className="text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:underline"
-                  >
-                    Forgot password?
-                  </button>
-                )}
-              </div>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                <input
-                  type="password"
-                  required
-                  minLength={6}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 6 characters"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
-              </div>
-            </div>
-          )}
+        <AnimatePresence>{notice && <Notice tone={notice.tone}>{notice.text}</Notice>}</AnimatePresence>
 
-          {/* Submit CTA */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
-          >
-            {isLoading ? (
-              <span>Processing...</span>
-            ) : view === 'login' ? (
-              <>
-                <span>{language === 'kn' ? 'ಲಾಗಿನ್ ಮಾಡಿ' : 'Sign In to Account'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            ) : view === 'register' ? (
-              <>
-                <span>{language === 'kn' ? 'ಖಾತೆ ತೆರೆಯಿರಿ' : 'Create Sovereign Account'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            ) : (
-              <span>Send Password Reset Email</span>
-            )}
+        <Button type="submit" size="lg" block loading={loading} variant={view === 'login' ? 'solid' : 'primary'}>
+          {view === 'login' ? t('entry.auth.signIn', 'Sign in') : view === 'register' ? t('entry.auth.register', 'Create account') : t('entry.auth.sendLink', 'Send reset link')}
+        </Button>
+
+        {view === 'login' && (
+          <button type="button" onClick={() => switchView('forgot_password')} className="w-full h-11 text-small font-semibold text-neel-ink hover:underline underline-offset-4">
+            {t('entry.auth.forgot', 'Forgot password?')}
           </button>
-        </form>
+        )}
+      </form>
 
-        {/* Guest Mode Indicator & Disclaimer */}
-        <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
-          <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>Zero Forced Authentication • Sovereign Guest Mode Supported</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              resetFormState();
-              onClose();
-            }}
-            className="text-xs font-bold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:underline"
-          >
-            {language === 'kn' ? 'ಅತಿಥಿಯಾಗಿ ಮುಂದುವರಿಯಿರಿ' : 'Continue as Guest without signing in'}
-          </button>
-        </div>
-      </div>
-    </div>
+      <p className="mt-5 flex items-center justify-center gap-2 text-micro text-ink-3">
+        <LockKey size={16} weight="duotone" />
+        {t('entry.auth.privacy', 'We never ask for your Aadhaar number or bank PIN.')}
+      </p>
+    </Sheet>
   );
 };
+
+export default AuthModal;

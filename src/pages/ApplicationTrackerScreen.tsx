@@ -1,428 +1,204 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { 
-  Clock, AlertCircle, CheckCircle2, 
-  ChevronRight, AlertTriangle, 
-  PhoneCall, Check, Copy, FileText, ArrowRight 
-} from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, Warning, Path, HandCoins, Clock, Storefront, UserCircle } from '@phosphor-icons/react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
-import { AudioListenButton } from '../components/feedback/AudioListenButton';
-import { GrievanceGuidanceModal } from '../components/support/GrievanceGuidanceModal';
-import { ApplicationRecord } from '../types';
+import type { ApplicationRecord } from '../types';
+import { GrievanceGuidanceModal, GrievancePath } from '../components/support/GrievanceGuidanceModal';
+import { StageThread, DeadlineLine, matchesFilter, priority, needsAction, isOverdue, isDone, appTone, statusSpeech, AppFilter } from '../components/tracker/appStatus';
+import { PageHeader, Segmented, Tag, ListenButton, LifeGlyph, EmptyState, LinkButton, Button, cx, ease } from '../ui';
+
+function AppCard({ app, onComplain, index }: { app: ApplicationRecord; onComplain: (a: ApplicationRecord) => void; index: number }) {
+  const { t } = useTranslation();
+  const { schemes } = useAppStore();
+  const scheme = schemes.find((s) => s.id === app.schemeId);
+  const title = scheme ? t(scheme.titleKey, app.schemeTitle) : app.schemeTitle;
+  const action = needsAction(app);
+  const late = isOverdue(app);
+  const done = isDone(app);
+  const tone = appTone(app);
+  const openDoc = (app.missingDocuments ?? []).find((d) => !d.resolved);
+
+  return (
+    <motion.article
+      layout
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0, transition: { duration: 0.32, ease: ease.out, delay: index * 0.05 } }}
+      exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.14 } }}
+      className="relative rounded-lg bg-surface shadow-hair overflow-hidden"
+    >
+      {(action || late) && <span className={cx('absolute inset-y-0 start-0 w-1', tone === 'sindoor' ? 'bg-sindoor' : 'bg-kesar')} aria-hidden />}
+      <div className="p-5 md:p-6">
+        <div className="flex items-start gap-4">
+          <LifeGlyph id={scheme?.lifeEventId} size="md" />
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              {action ? (
+                <Tag tone="sindoor" icon={<Warning size={14} weight="fill" />}>{t('tracker.actionNeeded', 'Needs your action')}</Tag>
+              ) : late ? (
+                <Tag tone="sindoor">{t('tracker.overdue', 'Late')}</Tag>
+              ) : done ? (
+                <Tag tone="patti">{t('tracker.done', 'Done')}</Tag>
+              ) : (
+                <Tag tone="neel">{t('tracker.onTrack', 'On track')}</Tag>
+              )}
+            </div>
+            <h2 className="text-h3 font-semibold leading-snug">
+              <Link to={`/tracker/${app.id}`} className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none">
+                {title}
+              </Link>
+            </h2>
+            <p className="mt-1 text-small text-ink-3 flex flex-wrap gap-x-3 gap-y-0.5">
+              <span>
+                {t('tracker.token', 'Token')} <span className="num text-ink-2">{app.tokenNumber}</span>
+              </span>
+              <span className="inline-flex items-center gap-1">
+                {app.submittedVia === 'csc_assisted' ? <Storefront size={14} /> : <UserCircle size={14} />}
+                {t('tracker.submittedOn', 'Submitted')} {app.submittedAt} · {app.submittedVia === 'csc_assisted' ? t('tracker.via.csc', 'at a help centre') : t('tracker.via.self', 'on your own')}
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <StageThread app={app} t={t} className="mt-6" />
+
+        {openDoc && (
+          <div className="mt-5 p-4 rounded-md bg-sindoor-tint">
+            <p className="text-small font-semibold text-sindoor">{t('tracker.missing.title', 'The office needs a paper from you')}</p>
+            <p className="text-small text-ink mt-0.5">{t(openDoc.documentName, openDoc.documentName)}</p>
+          </div>
+        )}
+
+        <div className="mt-5 pt-4 border-t border-line flex flex-wrap items-center gap-3">
+          <DeadlineLine app={app} t={t} className="flex-1 min-w-[12rem]" />
+          <div className="relative z-10 flex items-center gap-2 ms-auto">
+            <ListenButton variant="icon" text={statusSpeech(app, t, title)} />
+            {late && (
+              <Button variant="secondary" size="sm" onClick={() => onComplain(app)}>
+                {t('tracker.complain', 'Raise a complaint')}
+              </Button>
+            )}
+            <LinkButton to={`/tracker/${app.id}`} variant={action ? 'primary' : 'quiet'} size="sm" iconEnd={<ArrowRight size={16} weight="bold" className="flip-rtl" />}>
+              {t('tracker.open', 'Open')}
+            </LinkButton>
+          </div>
+        </div>
+      </div>
+    </motion.article>
+  );
+}
 
 export const ApplicationTrackerScreen: React.FC = () => {
   const { t } = useTranslation();
-  const { applications, resolveMissingDocument } = useAppStore();
+  const { applications } = useAppStore();
+  const [params, setParams] = useSearchParams();
+  const [filter, setFilter] = useState<AppFilter>('all');
+  const [grievance, setGrievance] = useState<{ open: boolean; app?: ApplicationRecord; path?: GrievancePath }>({ open: false });
 
-  const [activeGrievanceApp, setActiveGrievanceApp] = useState<ApplicationRecord | null>(null);
-  const [isGrievanceModalOpen, setIsGrievanceModalOpen] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<'all' | 'in_progress' | 'action_needed' | 'completed'>('all');
-  const [copiedToken, setCopiedToken] = useState<string | null>(null);
-
-  const handleCopy = async (token: string) => {
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(token);
-      }
-    } catch {
-      // Clipboard API may be restricted in non-HTTPS or embedded contexts
+  // Deep link from Home: /tracker?report=fee opens straight onto the overcharge path
+  useEffect(() => {
+    const report = params.get('report');
+    if (report === 'fee' || report === 'late') {
+      setGrievance({ open: true, path: report });
     }
-    setCopiedToken(token);
-    setTimeout(() => setCopiedToken(null), 2000);
+  }, [params]);
+
+  const closeGrievance = () => {
+    setGrievance((g) => ({ ...g, open: false }));
+    if (params.get('report')) {
+      const next = new URLSearchParams(params);
+      next.delete('report');
+      setParams(next, { replace: true });
+    }
   };
 
-  const handleOpenGrievance = (app?: ApplicationRecord) => {
-    setActiveGrievanceApp(app || applications[0]);
-    setIsGrievanceModalOpen(true);
+  const sorted = useMemo(() => [...applications].sort((a, b) => priority(a) - priority(b)), [applications]);
+  const visible = sorted.filter((a) => matchesFilter(a, filter));
+  const counts: Record<AppFilter, number> = {
+    all: applications.length,
+    action: applications.filter((a) => matchesFilter(a, 'action')).length,
+    progress: applications.filter((a) => matchesFilter(a, 'progress')).length,
+    done: applications.filter((a) => matchesFilter(a, 'done')).length,
   };
 
-  const filteredApplications = applications.filter(app => {
-    if (filterStatus === 'all') return true;
-    if (filterStatus === 'in_progress') return app.statusBadge === 'under_review' || app.statusBadge === 'submitted';
-    if (filterStatus === 'action_needed') return app.statusBadge === 'action_needed' || app.isDelayed;
-    if (filterStatus === 'completed') return app.statusBadge === 'sanctioned' || app.statusBadge === 'disbursed';
-    return true;
-  });
+  const filterLabel = (k: AppFilter, fallback: string) => (
+    <span className="inline-flex items-center gap-1.5">
+      {t(`tracker.filter.${k}`, fallback)}
+      {counts[k] > 0 && <span className={cx('num text-micro', k === 'action' ? 'text-sindoor font-semibold' : 'text-ink-3')}>{counts[k]}</span>}
+    </span>
+  );
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-5xl mx-auto py-2 sm:py-4 animate-fadeIn">
-      {/* Header & Quick Support Trigger */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">
-            <Clock className="w-3.5 h-3.5 text-amber-600" />
-            <span>Statutory Lifecycle & Citizen Charter</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            {t('trackerTitle', 'Application Lifecycle Tracker')}
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
-            Track real-time progress across 4 statutory lifecycle stages, view officer remarks, and escalate delayed applications.
-          </p>
-        </div>
+    <div>
+      <PageHeader eyebrow={t('tracker.eyebrow', 'Your applications')} title={t('tracker.title', 'Where is my application?')} description={t('tracker.subtitle')} />
 
-        {/* Grievance Guidance Button */}
-        <button
-          type="button"
-          onClick={() => handleOpenGrievance()}
-          className="self-start sm:self-center px-4 py-2.5 rounded-2xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 font-bold text-xs flex items-center gap-2 hover:bg-red-100/70 transition-all active:scale-95 shadow-sm min-h-[44px]"
-        >
-          <PhoneCall className="w-4 h-4 text-red-600" />
-          <span>Grievance & CPGRAMS Guide</span>
-        </button>
-      </div>
-
-      {/* Citizen Self-Tracking Statutory Notice Banner */}
-      <div className="p-4 sm:p-5 rounded-3xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 flex items-start gap-3 shadow-crisp-sm">
-        <AlertCircle className="w-5 h-5 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-        <div className="text-xs text-amber-950 dark:text-amber-200 leading-relaxed space-y-1">
-          <div>
-            <strong>Citizen Self-Tracking Disclosure: </strong>
-            The progress records and milestone timestamps displayed here reflect verified updates from respective nodal ministries or CSC kiosk filings. Official benefit disbursements are governed by statutory service rules.
-          </div>
-          <div className="text-[11px] text-amber-800 dark:text-amber-300 font-medium">
-            🔒 <strong>Anti-Fabrication Guarantee:</strong> Timestamps and officer remarks are shown only when verified government update logs are present. No artificial countdowns are displayed.
-          </div>
-        </div>
-      </div>
-
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-        <button
-          type="button"
-          onClick={() => setFilterStatus('all')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-            filterStatus === 'all'
-              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-          }`}
-        >
-          All Applications ({applications.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setFilterStatus('in_progress')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-            filterStatus === 'in_progress'
-              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-          }`}
-        >
-          In Progress
-        </button>
-        <button
-          type="button"
-          onClick={() => setFilterStatus('action_needed')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-            filterStatus === 'action_needed'
-              ? 'bg-amber-600 text-white shadow-sm'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-          }`}
-        >
-          Action Needed / Delayed
-        </button>
-        <button
-          type="button"
-          onClick={() => setFilterStatus('completed')}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-            filterStatus === 'completed'
-              ? 'bg-emerald-700 text-white shadow-sm'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-          }`}
-        >
-          Completed / Disbursed
-        </button>
-      </div>
-
-      {/* Applications List */}
-      {filteredApplications.length > 0 ? (
-        <div className="space-y-5">
-          {filteredApplications.map((app) => {
-            const hasMissingDocs = (app.missingDocuments || []).some(d => !d.resolved);
-            return (
-              <article
-                key={app.id}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-crisp-sm hover:shadow-crisp-md transition-all space-y-5"
-              >
-                {/* Header: Token, Scheme Title, Status Badge */}
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/70 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">
-                        {app.tokenNumber}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleCopy(app.tokenNumber)}
-                        className="text-slate-400 hover:text-slate-600 text-[11px] flex items-center gap-1"
-                        aria-label="Copy application token"
-                      >
-                        {copiedToken === app.tokenNumber ? (
-                          <span className="text-emerald-600 font-bold flex items-center gap-0.5">
-                            <Check className="w-3 h-3" /> Copied
-                          </span>
-                        ) : (
-                          <Copy className="w-3 h-3" />
-                        )}
-                      </button>
-                    </div>
-
-                    <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-1 leading-snug">
-                      {app.schemeTitle}
-                    </h2>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex flex-wrap items-center gap-2">
-                      <span>Submitted: <strong>{app.submittedAt}</strong></span>
-                      <span>•</span>
-                      <span>Mode: <strong>{app.submittedVia === 'csc_assisted' ? 'Grama One / CSC' : 'Online Self-Filed'}</strong></span>
-                    </div>
-                  </div>
-
-                  {/* Status Badges & Listen */}
-                  <div className="flex items-center gap-2 flex-shrink-0 self-start sm:self-center">
-                    {app.isDelayed ? (
-                      <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 flex items-center gap-1.5 animate-pulse border border-red-300 dark:border-red-800">
-                        <AlertCircle className="w-3.5 h-3.5 text-red-600" />
-                        <span>SLA Overdue ({Math.abs(app.slaDaysRemaining)}d)</span>
-                      </span>
-                    ) : app.statusBadge === 'action_needed' ? (
-                      <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 flex items-center gap-1.5 border border-amber-300 dark:border-amber-800">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-                        <span>Action Required</span>
-                      </span>
-                    ) : app.statusBadge === 'disbursed' ? (
-                      <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 flex items-center gap-1.5 border border-emerald-300 dark:border-emerald-800">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Disbursed & Active</span>
-                      </span>
-                    ) : (
-                      <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 flex items-center gap-1.5 border border-blue-300 dark:border-blue-800">
-                        <Clock className="w-3.5 h-3.5 text-blue-600" />
-                        <span>Under Verification</span>
-                      </span>
-                    )}
-
-                    <AudioListenButton textToSpeak={app.audioStatusNarrationKey} size="sm" />
-                  </div>
-                </div>
-
-                {/* 1. Four-Stage Visual Progress Lifecycle */}
-                <div className="py-2">
-                  <div className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 flex items-center justify-between">
-                    <span>Four-Stage Statutory Lifecycle</span>
-                    <span className="text-slate-700 dark:text-slate-300">Stage {app.currentStage} of 4</span>
-                  </div>
-
-                  {/* Desktop Connected Horizontal Stepper */}
-                  <div className="hidden sm:grid grid-cols-4 gap-3 relative">
-                    {[
-                      { num: 1, label: '1. Submitted', subtitle: 'Packet Acknowledged' },
-                      { num: 2, label: '2. Verification', subtitle: 'Field & Document Check' },
-                      { num: 3, label: '3. Decision', subtitle: 'Sanction / Action Order' },
-                      { num: 4, label: '4. Disbursed', subtitle: 'DBT Credit / Benefit' }
-                    ].map((step) => {
-                      const isCompleted = app.currentStage > step.num || (app.currentStage === step.num && app.statusBadge === 'disbursed');
-                      const isCurrent = app.currentStage === step.num && app.statusBadge !== 'disbursed';
-
-                      return (
-                        <div key={step.num} className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 flex flex-col items-center text-center relative">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs mb-2 transition-all ${
-                            isCompleted
-                              ? 'bg-emerald-600 text-white'
-                              : isCurrent
-                              ? app.statusBadge === 'action_needed' || app.isDelayed
-                                ? 'bg-amber-600 text-white ring-4 ring-amber-200 dark:ring-amber-900 animate-pulse'
-                                : 'bg-blue-600 text-white ring-4 ring-blue-200 dark:ring-blue-900 animate-pulse'
-                              : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
-                          }`}>
-                            {isCompleted ? <CheckCircle2 className="w-5 h-5" /> : step.num}
-                          </div>
-                          <span className="text-xs font-bold text-slate-900 dark:text-white">
-                            {step.label}
-                          </span>
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                            {step.subtitle}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Mobile Compact Progress Bar with Accessible Stage Description */}
-                  <div className="sm:hidden space-y-2">
-                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden flex">
-                      {[1, 2, 3, 4].map((step) => {
-                        const isDone = app.currentStage >= step;
-                        return (
-                          <div
-                            key={step}
-                            className={`flex-1 h-full border-r border-white dark:border-slate-900 last:border-0 ${
-                              isDone ? (app.statusBadge === 'disbursed' ? 'bg-emerald-600' : 'bg-amber-500') : 'bg-slate-200 dark:bg-slate-700'
-                            }`}
-                          />
-                        );
-                      })}
-                    </div>
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
-                      <span>Current: Stage {app.currentStage} ({app.currentStage === 1 ? 'Submitted' : app.currentStage === 2 ? 'Verification' : app.currentStage === 3 ? 'Decision' : 'Disbursement'})</span>
-                      <span className="text-[11px] text-slate-500">{Math.round((app.currentStage / 4) * 100)}%</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Missing Document Alert Box if present */}
-                {hasMissingDocs && (
-                  <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border-2 border-amber-400 dark:border-amber-700 space-y-2">
-                    <div className="flex items-center gap-2 font-bold text-xs text-amber-950 dark:text-amber-200">
-                      <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                      <span>Missing Document Notice</span>
-                    </div>
-                    {app.missingDocuments?.filter(d => !d.resolved).map(doc => (
-                      <div key={doc.documentId} className="text-xs text-amber-900 dark:text-amber-300 space-y-1">
-                        <div>
-                          <strong>{doc.documentName}:</strong> {doc.reason}
-                        </div>
-                        <div className="text-[11px] text-amber-800 dark:text-amber-400">
-                          Requested by: {doc.requestedBy} • Action: {doc.actionRequired}
-                        </div>
-                        <div className="pt-1.5 flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => resolveMissingDocument(app.id, doc.documentId)}
-                            className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs active:scale-95 transition-all shadow-sm"
-                          >
-                            Mark as Uploaded / Verified
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* 3. Pending Actions Callout if present */}
-                {app.pendingActions && app.pendingActions.length > 0 && (
-                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 text-xs space-y-1.5">
-                    <div className="font-extrabold uppercase tracking-wider text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                      <Clock className="w-3 h-3 text-amber-600" />
-                      <span>Pending Citizen Actions:</span>
-                    </div>
-                    <ul className="space-y-1 text-slate-700 dark:text-slate-300 pl-4 list-disc">
-                      {app.pendingActions.map((action, i) => (
-                        <li key={i}>{action}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* 4. SLA & Handling Office Info Box */}
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div>
-                    <span className="text-slate-500 dark:text-slate-400">Handling Office: </span>
-                    <strong className="text-slate-800 dark:text-slate-200">{app.handlingOffice}</strong>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 font-semibold">
-                    <Clock className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
-                    {app.isDelayed ? (
-                      <span className="text-red-700 dark:text-red-400 font-bold">
-                        SLA Overdue by {Math.abs(app.slaDaysRemaining)} Days
-                      </span>
-                    ) : app.slaDaysRemaining > 0 ? (
-                      <span className="text-amber-800 dark:text-amber-300">
-                        {app.slaDaysRemaining} Days remaining in statutory SLA ({app.slaDeadlineDays}d total)
-                      </span>
-                    ) : (
-                      <span className="text-emerald-700 dark:text-emerald-400 font-bold">
-                        Processed within SLA ({app.slaDeadlineDays}d)
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* 5. Citizen Personal Notes Preview (Clearly Distinguished from Official Records) */}
-                {app.citizenNotes && app.citizenNotes.length > 0 && (
-                  <div className="p-3 rounded-2xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/60 text-xs space-y-1">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-extrabold text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>Citizen Personal Record ({app.citizenNotes.length})</span>
-                      </span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 font-semibold">
-                        Not official government communication
-                      </span>
-                    </div>
-                    <p className="text-slate-700 dark:text-slate-300 text-[11px] italic">
-                      "{app.citizenNotes[0].text}" — {app.citizenNotes[0].createdAt}
-                    </p>
-                  </div>
-                )}
-
-                {/* Action Buttons */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {app.isDelayed && (
-                      <button
-                        type="button"
-                        onClick={() => handleOpenGrievance(app)}
-                        className="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all min-h-[44px]"
-                      >
-                        <AlertCircle className="w-4 h-4" />
-                        <span>File CPGRAMS Grievance</span>
-                      </button>
-                    )}
-
-                    <Link
-                      to={`/csc-slip/${app.tokenNumber}?scheme=${app.schemeId}`}
-                      className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-800 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all min-h-[44px]"
-                    >
-                      <FileText className="w-3.5 h-3.5 text-slate-600" />
-                      <span>Print Kiosk Slip</span>
-                    </Link>
-                  </div>
-
-                  <Link
-                    to={`/tracker/${app.id}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-navy-900 dark:text-sky-400 hover:underline min-h-[44px] py-1"
-                  >
-                    <span>{t('viewDetailsBtn', 'View Details')}</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </Link>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+      {applications.length === 0 ? (
+        <EmptyState icon={<Path size={30} weight="duotone" />} title={t('tracker.empty.title', 'No applications yet')} body={t('tracker.empty.body')} action={<LinkButton to="/schemes">{t('tracker.empty.cta', 'Find a scheme')}</LinkButton>} />
       ) : (
-        <div className="p-8 sm:p-12 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center space-y-4 max-w-lg mx-auto shadow-crisp-sm">
-          <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
-            <Clock className="w-7 h-7" />
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 lg:gap-8 items-start">
+          <div className="min-w-0">
+            <div className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto no-scrollbar mb-5">
+              <Segmented
+                value={filter}
+                onChange={setFilter}
+                label={t('tracker.filter.label', 'Show applications')}
+                layoutKey="tracker-filter"
+                className="min-w-max sm:min-w-0"
+                options={[
+                  { value: 'all', label: filterLabel('all', 'All') },
+                  { value: 'action', label: filterLabel('action', 'Needs action') },
+                  { value: 'progress', label: filterLabel('progress', 'In progress') },
+                  { value: 'done', label: filterLabel('done', 'Done') },
+                ]}
+              />
+            </div>
+
+            <motion.div layout className="grid grid-cols-1 gap-4">
+              <AnimatePresence initial={false}>
+                {visible.map((a, i) => (
+                  <AppCard key={a.id} app={a} index={i} onComplain={(app) => setGrievance({ open: true, app, path: 'late' })} />
+                ))}
+              </AnimatePresence>
+              {visible.length === 0 && <p className="py-10 text-center text-ink-2 rounded-lg border border-dashed border-line-strong">{t('tracker.filterEmpty', 'Nothing here right now.')}</p>}
+            </motion.div>
           </div>
-          <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              {t('noActiveApps', 'No matching applications found')}
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto leading-relaxed">
-              Check your eligibility or submit an application to track live progress and officer actions here.
-            </p>
-          </div>
-          <div className="pt-2">
-            <Link
-              to="/schemes"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-brand-navy-900 text-white font-bold text-xs shadow-sm hover:bg-slate-800 transition-colors"
-            >
-              <span>Explore Schemes</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+
+          <aside className="space-y-4 lg:sticky lg:top-[calc(var(--topbar-h)+16px)]">
+            <div className="rounded-lg bg-surface shadow-hair p-5 grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-[2.25rem] leading-none font-semibold num-display">{applications.length}</p>
+                <p className="mt-1 text-small text-ink-2">{t('tracker.summary.count', 'applications')}</p>
+              </div>
+              <div>
+                <p className={cx('text-[2.25rem] leading-none font-semibold num-display', counts.action ? 'text-sindoor' : 'text-patti')}>{counts.action}</p>
+                <p className="mt-1 text-small text-ink-2">{t('tracker.summary.actions', 'need your action')}</p>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-haldi-tint p-5">
+              <h2 className="text-h3 font-semibold">{t('tracker.help.title', 'Something wrong?')}</h2>
+              <p className="mt-1.5 text-small text-ink-2">{t('tracker.help.body')}</p>
+              <div className="mt-4 grid grid-cols-1 gap-2">
+                {[
+                  { icon: <Clock size={22} weight="duotone" />, label: t('tracker.g.pathLate', 'My application is late'), run: () => setGrievance({ open: true, path: 'late', app: sorted.find(isOverdue) }) },
+                  { icon: <HandCoins size={22} weight="duotone" />, label: t('tracker.reportFee', 'Someone asked me for money'), run: () => setGrievance({ open: true, path: 'fee' }) },
+                ].map((b) => (
+                  <motion.button key={b.label} type="button" whileTap={{ scale: 0.98 }} onClick={b.run} className="flex items-center gap-3 min-h-[52px] px-4 py-3 rounded-md bg-surface shadow-hair hover:shadow-lift transition-shadow text-start font-semibold">
+                    <span className="text-haldi-deep shrink-0">{b.icon}</span>
+                    <span className="flex-1 min-w-0">{b.label}</span>
+                    <ArrowRight size={16} weight="bold" className="text-ink-3 flip-rtl shrink-0" />
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          </aside>
         </div>
       )}
 
-      {/* Official Grievance Guidance Modal */}
-      <GrievanceGuidanceModal
-        isOpen={isGrievanceModalOpen}
-        onClose={() => setIsGrievanceModalOpen(false)}
-        application={activeGrievanceApp || undefined}
-      />
+      <GrievanceGuidanceModal isOpen={grievance.open} onClose={closeGrievance} application={grievance.app} initialPath={grievance.path} />
     </div>
   );
 };
+
+export default ApplicationTrackerScreen;

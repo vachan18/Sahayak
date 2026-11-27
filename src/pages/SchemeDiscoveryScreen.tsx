@@ -1,427 +1,299 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { 
-  Search, SlidersHorizontal, AlertCircle, X, ShieldCheck, 
-  RotateCcw, Filter, 
-  Wheat, HeartPulse, Users, GraduationCap, Store, Home, Landmark 
-} from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { MagnifyingGlass, Microphone, X, SlidersHorizontal, SquaresFour } from '@phosphor-icons/react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
 import { SchemeCard } from '../components/schemes/SchemeCard';
 import { SchemeComparisonTray } from '../components/schemes/SchemeComparisonTray';
+import { useCatalog } from '../components/schemes/catalog';
+import { lifeEventsData } from '../data/lifeEvents';
+import type { BenefitType, LifeEventId, Scheme } from '../types';
+import { PageHeader, Chip, Segmented, Sheet, Button, EmptyState, LIFE_EVENT, cx, ease } from '../ui';
+import { haptic } from '../lib/haptics';
+
+type SortKey = 'suggested' | 'money' | 'fast';
+type WhoKey = 'farmer' | 'women' | 'student' | 'vendor' | 'elderly';
+
+const WHO: { id: WhoKey; key: string; fallback: string; test: (s: Scheme) => boolean }[] = [
+  { id: 'farmer', key: 'schemes.list.who.farmer', fallback: 'Farmers', test: (s) => (s.eligibilityCriteria.occupations ?? []).includes('farmer') || !!s.eligibilityCriteria.requiresLandTitle },
+  { id: 'women', key: 'schemes.list.who.women', fallback: 'Women & girls', test: (s) => (s.eligibilityCriteria.genderAllowed ?? []).includes('female') || !!s.eligibilityCriteria.requiresMaternityStatus },
+  { id: 'student', key: 'schemes.list.who.student', fallback: 'Students', test: (s) => !!s.eligibilityCriteria.requiresStudentEnrollment || s.benefitType === 'scholarship' },
+  { id: 'vendor', key: 'schemes.list.who.vendor', fallback: 'Small business', test: (s) => s.lifeEventId === 'business_artisan' },
+  { id: 'elderly', key: 'schemes.list.who.elderly', fallback: 'Elderly & poor families', test: (s) => !!s.eligibilityCriteria.requiresSeccOrBplRationCard || s.lifeEventId === 'health_elder' },
+];
+
+const KINDS: { id: BenefitType; key: string; fallback: string }[] = [
+  { id: 'dbt_cash', key: 'schemes.kind.dbt', fallback: 'Money sent to your bank' },
+  { id: 'health_insurance', key: 'schemes.kind.health', fallback: 'Free hospital treatment' },
+  { id: 'credit_loan', key: 'schemes.kind.loan', fallback: 'Low-interest loan' },
+  { id: 'scholarship', key: 'schemes.kind.scholarship', fallback: 'Scholarship for studies' },
+];
+
+function matchesQuery(s: Scheme, q: string, t: (k: string, f?: string) => string) {
+  if (!q) return true;
+  const hay = [s.id, s.titleKey, t(s.titleKey, s.titleKey), s.shortDescKey, s.ministryKey, t(LIFE_EVENT[s.lifeEventId]?.titleKey ?? ''), ...s.whoIsEligibleListKeys].join(' ').toLowerCase();
+  return q
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((word) => hay.includes(word));
+}
 
 export const SchemeDiscoveryScreen: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
-  const { schemes } = useAppStore();
+  const [params, setParams] = useSearchParams();
+  const { setAiDrawerOpen, compareSchemeIds } = useAppStore();
+  const catalog = useCatalog();
 
-  const selectedCategory = searchParams.get('category') || 'all';
-  const urlQuery = searchParams.get('q') || '';
+  const category = (params.get('category') || 'all') as LifeEventId | 'all';
+  const urlQuery = params.get('q') || '';
+  const [query, setQuery] = useState(urlQuery);
+  const [sort, setSort] = useState<SortKey>('suggested');
+  const [who, setWho] = useState<WhoKey[]>([]);
+  const [kinds, setKinds] = useState<BenefitType[]>([]);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const [searchKeyword, setSearchKeyword] = useState(urlQuery);
-  const [selectedJurisdiction, setSelectedJurisdiction] = useState<string>('all');
-  const [selectedBeneficiary, setSelectedBeneficiary] = useState<string>('all');
-  const [selectedBenefitType, setSelectedBenefitType] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'benefit_high' | 'sla_fast' | 'default'>('default');
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  useEffect(() => setQuery(urlQuery), [urlQuery]);
 
-  // Sync state with URL search param if it changes externally
+  // Keep ?q= in the URL (debounced) so a search can be shared or survives Back
   useEffect(() => {
-    setSearchKeyword(urlQuery);
-  }, [urlQuery]);
+    const id = window.setTimeout(() => {
+      const next = new URLSearchParams(params);
+      if (query.trim()) next.set('q', query.trim());
+      else next.delete('q');
+      if (next.toString() !== params.toString()) setParams(next, { replace: true });
+    }, 300);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
 
-  // Simulate smooth skeleton initial load
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 180);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const categories: { id: string; labelKey: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'all', labelKey: 'filterAll', icon: Landmark },
-    { id: 'farming', labelKey: 'lifeEvent_farming', icon: Wheat },
-    { id: 'health_elder', labelKey: 'lifeEvent_health_elder', icon: HeartPulse },
-    { id: 'women_child', labelKey: 'lifeEvent_women_child', icon: Users },
-    { id: 'education_youth', labelKey: 'lifeEvent_education_youth', icon: GraduationCap },
-    { id: 'business_artisan', labelKey: 'lifeEvent_business_artisan', icon: Store },
-    { id: 'housing_utilities', labelKey: 'lifeEvent_housing_utilities', icon: Home }
-  ];
-
-  const filteredSchemes = useMemo(() => {
-    return schemes.filter((s) => {
-      // Category / Life Event Filter
-      if (selectedCategory !== 'all' && s.lifeEventId !== selectedCategory) {
-        return false;
-      }
-
-      // Jurisdiction Filter (Central vs State)
-      if (selectedJurisdiction === 'central') {
-        const isCentral = s.ministryKey.toLowerCase().includes('ministry') || 
-                          s.ministryKey.toLowerCase().includes('national') || 
-                          s.ministryKey.toLowerCase().includes('nabard');
-        if (!isCentral) return false;
-      } else if (selectedJurisdiction === 'state') {
-        const isState = s.ministryKey.toLowerCase().includes('karnataka') || 
-                        s.ministryKey.toLowerCase().includes('state');
-        if (!isState && s.id !== 'pm-kisan') return false; // pm-kisan has joint state revenue linkage
-      }
-
-      // Beneficiary Type Filter
-      if (selectedBeneficiary !== 'all') {
-        const occ = s.eligibilityCriteria.occupations || [];
-        const gender = s.eligibilityCriteria.genderAllowed || [];
-
-        switch (selectedBeneficiary) {
-          case 'farmer':
-            if (!occ.includes('farmer') && !s.eligibilityCriteria.requiresLandTitle) return false;
-            break;
-          case 'women':
-            if (!gender.includes('female') && !s.eligibilityCriteria.requiresMaternityStatus) return false;
-            break;
-          case 'student':
-            if (!s.eligibilityCriteria.requiresStudentEnrollment) return false;
-            break;
-          case 'vendor':
-            if (!occ.includes('street_vendor') && !s.eligibilityCriteria.requiresStreetVendorCertificate) return false;
-            break;
-          case 'bpl_senior':
-            if (!s.eligibilityCriteria.requiresSeccOrBplRationCard && s.lifeEventId !== 'health_elder') return false;
-            break;
-          default:
-            break;
-        }
-      }
-
-      // Benefit Type Filter
-      if (selectedBenefitType !== 'all' && s.benefitType !== selectedBenefitType) {
-        return false;
-      }
-
-      // Text Search Query
-      if (searchKeyword.trim()) {
-        const q = searchKeyword.toLowerCase();
-        const title = s.titleKey.toLowerCase();
-        const desc = s.shortDescKey.toLowerCase();
-        const ministry = s.ministryKey.toLowerCase();
-        const criteria = s.whoIsEligibleListKeys.join(' ').toLowerCase();
-        return title.includes(q) || desc.includes(q) || ministry.includes(q) || criteria.includes(q);
-      }
-
-      return true;
-    }).sort((a, b) => {
-      if (sortBy === 'benefit_high') {
-        return b.financialBenefit.amount - a.financialBenefit.amount;
-      }
-      if (sortBy === 'sla_fast') {
-        return a.processingSlaDays - b.processingSlaDays;
-      }
-      return 0;
-    });
-  }, [schemes, selectedCategory, selectedJurisdiction, selectedBeneficiary, selectedBenefitType, searchKeyword, sortBy]);
-
-  const handleCategorySelect = (catId: string) => {
-    const nextParams = new URLSearchParams(searchParams);
-    if (catId === 'all') {
-      nextParams.delete('category');
-    } else {
-      nextParams.set('category', catId);
-    }
-    setSearchParams(nextParams);
+  const setCategory = (id: LifeEventId | 'all') => {
+    const next = new URLSearchParams(params);
+    if (id === 'all') next.delete('category');
+    else next.set('category', id);
+    setParams(next, { replace: true });
   };
 
-  const handleClearAllFilters = () => {
-    setSearchKeyword('');
-    setSelectedJurisdiction('all');
-    setSelectedBeneficiary('all');
-    setSelectedBenefitType('all');
-    setSortBy('default');
-    setSearchParams({});
-  };
+  const base = useMemo(() => catalog.filter((s) => matchesQuery(s, query.trim(), t)), [catalog, query, t]);
 
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (selectedCategory !== 'all') count++;
-    if (selectedJurisdiction !== 'all') count++;
-    if (selectedBeneficiary !== 'all') count++;
-    if (selectedBenefitType !== 'all') count++;
-    if (searchKeyword.trim()) count++;
-    if (sortBy !== 'default') count++;
-    return count;
-  }, [selectedCategory, selectedJurisdiction, selectedBeneficiary, selectedBenefitType, searchKeyword, sortBy]);
+  const results = useMemo(() => {
+    const list = base.filter(
+      (s) =>
+        (category === 'all' || s.lifeEventId === category) &&
+        (who.length === 0 || who.some((w) => WHO.find((x) => x.id === w)!.test(s))) &&
+        (kinds.length === 0 || kinds.includes(s.benefitType))
+    );
+    if (sort === 'money') return [...list].sort((a, b) => b.financialBenefit.amount - a.financialBenefit.amount);
+    if (sort === 'fast') return [...list].sort((a, b) => a.processingSlaDays - b.processingSlaDays);
+    return list;
+  }, [base, category, who, kinds, sort]);
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { all: base.length };
+    base.forEach((s) => (c[s.lifeEventId] = (c[s.lifeEventId] ?? 0) + 1));
+    return c;
+  }, [base]);
+
+  const activeFilterCount = who.length + kinds.length;
+  const clearAll = () => {
+    setQuery('');
+    setWho([]);
+    setKinds([]);
+    setSort('suggested');
+    setParams({}, { replace: true });
+  };
+  const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fadeIn pb-12">
-      {/* Directory Title & Sovereign Trust Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-brand-navy-900/10 dark:bg-sky-950/60 text-brand-navy-900 dark:text-sky-300 border border-brand-navy-900/20 dark:border-sky-700/40 mb-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>GAZETTE VERIFIED WELFARE DIRECTORY</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-            {t('catalogTitle', 'Government Schemes Directory')}
-          </h1>
-          <p className="text-xs sm:text-sm lg:text-base text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
-            Explore verified citizen welfare entitlements across Agriculture, Healthcare, Maternity, Education, and Credit with statutory ₹0 government application fees.
-          </p>
-        </div>
+    <div className={cx(compareSchemeIds.length > 0 && 'pb-24')}>
+      <PageHeader
+        eyebrow={
+          <span>
+            <span className="num">{catalog.length}</span> {t('schemes.list.schemes', 'schemes')} · {t('schemes.list.eyebrow', 'Central and state schemes')}
+          </span>
+        }
+        title={t('schemes.list.title', 'Find help for every part of life')}
+        description={t('schemes.list.subtitle')}
+      />
 
-        {/* Quick Stats Pill Strip */}
-        <div className="flex items-center gap-2 flex-wrap text-xs font-bold">
-          <div className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-            <span className="text-brand-navy-900 dark:text-sky-400 font-black">{filteredSchemes.length}</span> of {schemes.length} Schemes
-          </div>
-          <div className="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-            ₹0 Statutory Govt Fee
-          </div>
-        </div>
-      </div>
-
-      {/* Search Bar & Primary Sort Strip */}
-      <div className="flex flex-col sm:flex-row items-center gap-3">
-        {/* Search Input Box */}
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-          <input
-            type="text"
-            value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            placeholder="Search by scheme name, keyword (e.g. Kisan, Hospital, Loan, Scholarship)..."
-            className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm sm:text-base text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/30 shadow-crisp-sm min-h-[48px]"
-          />
-          {searchKeyword && (
-            <button
-              type="button"
-              onClick={() => setSearchKeyword('')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg min-w-[32px] min-h-[32px] flex items-center justify-center"
-              aria-label="Clear search input"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-
-        {/* Sort Select Control (>= 48px touch target) */}
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="relative w-full sm:w-auto">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="w-full sm:w-auto pl-4 pr-10 py-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-4 focus:ring-amber-500/30 shadow-crisp-sm min-h-[48px] appearance-none cursor-pointer"
-            >
-              <option value="default">Sort: Recommended</option>
-              <option value="benefit_high">Highest Benefit Amount</option>
-              <option value="sla_fast">Fastest Approval (SLA)</option>
-            </select>
-            <SlidersHorizontal className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-          </div>
-        </div>
-      </div>
-
-      {/* Horizontal Life-Event Category Chips Rail */}
-      <div>
-        <div className="w-full max-w-full min-w-0 flex items-center gap-2 sm:gap-2.5 overflow-x-auto pb-2 no-scrollbar overscroll-x-contain">
-          {categories.map((cat) => {
-            const isSelected = selectedCategory === cat.id;
-            const CatIcon = cat.icon;
-            return (
-              <button
-                key={cat.id}
+      {/* Search + filters. Sticky under the top bar on desktop, where lists get long. */}
+      <div className="lg:sticky lg:top-[var(--topbar-h)] z-20 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10 py-3 bg-paper/95 lg:backdrop-blur-xl">
+        <form role="search" onSubmit={(e) => e.preventDefault()} className="flex items-center gap-2">
+          <label className="relative flex-1 min-w-0">
+            <span className="sr-only">{t('schemes.list.searchLabel', 'Search schemes')}</span>
+            <MagnifyingGlass size={20} className="absolute start-4 top-1/2 -translate-y-1/2 text-ink-3 pointer-events-none" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t('schemes.list.searchPlaceholder', 'Try “farmer”, “house”, “daughter”…')}
+              className="w-full h-14 ps-12 pe-[6.5rem] rounded-md bg-surface shadow-hair text-body placeholder:text-ink-3 focus:outline-none focus:shadow-[0_0_0_2px_rgb(var(--c-neel))] [&::-webkit-search-cancel-button]:hidden"
+            />
+            <span className="absolute end-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <AnimatePresence>
+                {query && (
+                  <motion.button
+                    type="button"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    onClick={() => setQuery('')}
+                    aria-label={t('schemes.list.clearSearch', 'Clear search')}
+                    className="w-10 h-10 rounded-full grid place-items-center text-ink-3 hover:bg-sunken"
+                  >
+                    <X size={18} weight="bold" />
+                  </motion.button>
+                )}
+              </AnimatePresence>
+              <motion.button
                 type="button"
-                onClick={() => handleCategorySelect(cat.id)}
-                className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all active:scale-95 flex-shrink-0 min-h-[48px] flex items-center gap-2 ${
-                  isSelected
-                    ? 'bg-brand-navy-900 dark:bg-sky-600 text-white shadow-crisp-sm ring-2 ring-brand-navy-900/30 dark:ring-sky-400/40'
-                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
-                }`}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => {
+                  haptic('select');
+                  setAiDrawerOpen(true);
+                }}
+                aria-label={t('schemes.list.speak', 'Speak to search')}
+                title={t('schemes.list.speak', 'Speak to search')}
+                className="w-11 h-11 rounded-sm bg-haldi text-[#111E33] grid place-items-center"
               >
-                <CatIcon className={`w-4 h-4 flex-shrink-0 ${isSelected ? 'text-amber-400' : 'text-slate-400'}`} />
-                <span>{t(cat.labelKey)}</span>
-              </button>
+                <Microphone size={22} weight="fill" />
+              </motion.button>
+            </span>
+          </label>
+          <button
+            type="button"
+            onClick={() => setFiltersOpen(true)}
+            aria-label={`${t('schemes.list.filters', 'Filters')}${activeFilterCount ? ` (${activeFilterCount})` : ''}`}
+            className={cx('relative h-14 w-14 sm:w-auto sm:px-4 shrink-0 rounded-md flex items-center justify-center gap-2 font-semibold transition-colors', activeFilterCount ? 'bg-ink text-paper' : 'bg-surface shadow-hair hover:bg-sunken')}
+          >
+            <SlidersHorizontal size={22} />
+            <span className="hidden sm:inline">{t('schemes.list.filters', 'Filters')}</span>
+            {activeFilterCount > 0 && <span className="num text-micro w-5 h-5 rounded-full bg-haldi text-[#111E33] grid place-items-center">{activeFilterCount}</span>}
+          </button>
+        </form>
+
+        {/* Life-event rail — scrolls sideways on phones, wraps on desktop */}
+        <div className="mt-3 -mx-4 px-4 sm:mx-0 sm:px-0 flex gap-2 overflow-x-auto no-scrollbar sm:flex-wrap" role="group" aria-label={t('home.needs.title', 'Browse by what is happening in your life')}>
+          <Chip selected={category === 'all'} onClick={() => setCategory('all')} icon={<SquaresFour size={18} />} count={counts.all ?? 0}>
+            {t('schemes.list.all', 'All')}
+          </Chip>
+          {lifeEventsData.map((ev) => {
+            const meta = LIFE_EVENT[ev.id as LifeEventId];
+            const Icon = meta.icon;
+            return (
+              <Chip key={ev.id} selected={category === ev.id} onClick={() => setCategory(ev.id as LifeEventId)} icon={<Icon size={18} weight={category === ev.id ? 'fill' : 'duotone'} />} count={counts[ev.id] ?? 0}>
+                {t(meta.titleKey)}
+              </Chip>
             );
           })}
         </div>
       </div>
 
-      {/* Secondary Multi-Dimensional Filter Bar (State, Beneficiary, Benefit Type) */}
-      <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 text-xs font-black uppercase text-slate-500 dark:text-slate-400 mr-1">
-            <Filter className="w-3.5 h-3.5" />
-            <span>Filters:</span>
-          </div>
-
-          {/* Jurisdiction / State Filter */}
-          <select
-            value={selectedJurisdiction}
-            onChange={(e) => setSelectedJurisdiction(e.target.value)}
-            className="px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/40 min-h-[40px] cursor-pointer"
-          >
-            <option value="all">Jurisdiction: All (Central & State)</option>
-            <option value="central">Central Sector / National (GoI)</option>
-            <option value="state">State (Karnataka & State Portals)</option>
-          </select>
-
-          {/* Beneficiary Type Filter */}
-          <select
-            value={selectedBeneficiary}
-            onChange={(e) => setSelectedBeneficiary(e.target.value)}
-            className="px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/40 min-h-[40px] cursor-pointer"
-          >
-            <option value="all">Beneficiary: All Types</option>
-            <option value="farmer">Farmers & Cultivators</option>
-            <option value="women">Women & Mothers</option>
-            <option value="student">Students & Youth</option>
-            <option value="vendor">Street Vendors & Artisans</option>
-            <option value="bpl_senior">Low-Income / Senior Citizens</option>
-          </select>
-
-          {/* Benefit Type Filter */}
-          <select
-            value={selectedBenefitType}
-            onChange={(e) => setSelectedBenefitType(e.target.value)}
-            className="px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/40 min-h-[40px] cursor-pointer"
-          >
-            <option value="all">Benefit: All Types</option>
-            <option value="dbt_cash">Direct Bank Transfer (DBT Cash)</option>
-            <option value="health_insurance">Health Hospital Cover</option>
-            <option value="credit_loan">Subsidized Working Capital</option>
-            <option value="scholarship">Educational Scholarship</option>
-          </select>
-        </div>
-
-        {/* Clear All Filters Button */}
-        {activeFilterCount > 0 && (
-          <button
-            type="button"
-            onClick={handleClearAllFilters}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800 transition-colors min-h-[40px]"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset All ({activeFilterCount})</span>
-          </button>
-        )}
+      <div className="mt-4 mb-5 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-ink-2" aria-live="polite">
+          {t('schemes.list.showing', 'Showing')} <span className="num font-semibold text-ink">{results.length}</span>{' '}
+          {results.length === 1 ? t('schemes.list.scheme', 'scheme') : t('schemes.list.schemes', 'schemes')}
+        </p>
+        <Segmented
+          size="sm"
+          value={sort}
+          onChange={setSort}
+          label={t('schemes.list.sortLabel', 'Sort schemes')}
+          layoutKey="scheme-sort"
+          options={[
+            { value: 'suggested', label: t('schemes.list.sortSuggested', 'Suggested') },
+            { value: 'money', label: t('schemes.list.sortMoney', 'Most money') },
+            { value: 'fast', label: t('schemes.list.sortFast', 'Fastest') },
+          ]}
+        />
       </div>
 
-      {/* Active Filter Tags Strip */}
-      {activeFilterCount > 0 && (
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="text-slate-500 font-medium">Applied:</span>
-
-          {selectedCategory !== 'all' && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold">
-              <span>Category: {t(categories.find(c => c.id === selectedCategory)?.labelKey || '')}</span>
-              <X className="w-3 h-3 cursor-pointer hover:text-red-500" onClick={() => handleCategorySelect('all')} />
-            </span>
-          )}
-
-          {selectedJurisdiction !== 'all' && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold">
-              <span>Jurisdiction: {selectedJurisdiction === 'central' ? 'Central GoI' : 'State Karnataka'}</span>
-              <X className="w-3 h-3 cursor-pointer hover:text-red-500" onClick={() => setSelectedJurisdiction('all')} />
-            </span>
-          )}
-
-          {selectedBeneficiary !== 'all' && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold">
-              <span>Beneficiary: {selectedBeneficiary}</span>
-              <X className="w-3 h-3 cursor-pointer hover:text-red-500" onClick={() => setSelectedBeneficiary('all')} />
-            </span>
-          )}
-
-          {selectedBenefitType !== 'all' && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold">
-              <span>Benefit: {selectedBenefitType}</span>
-              <X className="w-3 h-3 cursor-pointer hover:text-red-500" onClick={() => setSelectedBenefitType('all')} />
-            </span>
-          )}
-
-          {searchKeyword.trim() && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-900 dark:text-amber-200 font-semibold">
-              <span>Search: "{searchKeyword}"</span>
-              <X className="w-3 h-3 cursor-pointer hover:text-red-500" onClick={() => setSearchKeyword('')} />
-            </span>
-          )}
-        </div>
+      {results.length === 0 ? (
+        <EmptyState
+          icon={<Microphone size={30} weight="duotone" />}
+          title={t('schemes.list.emptyTitle', 'Nothing matched that')}
+          body={t('schemes.list.emptyBody')}
+          action={
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button onClick={() => setAiDrawerOpen(true)} iconStart={<Microphone size={20} weight="fill" />}>
+                {t('schemes.list.speak', 'Speak to search')}
+              </Button>
+              <Button variant="secondary" onClick={clearAll}>
+                {t('schemes.list.clearAll', 'Clear all filters')}
+              </Button>
+            </div>
+          }
+        />
+      ) : (
+        <motion.ul layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
+          <AnimatePresence mode="popLayout" initial={false}>
+            {results.map((s, i) => (
+              <motion.li
+                key={s.id}
+                layout
+                className="min-w-0"
+                initial={{ opacity: 0, y: 16, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1, transition: { duration: 0.32, ease: ease.out, delay: Math.min(i, 8) * 0.03 } }}
+                exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.15, ease: ease.in } }}
+                transition={{ layout: { type: 'spring', stiffness: 380, damping: 36 } }}
+              >
+                <SchemeCard scheme={s} />
+              </motion.li>
+            ))}
+          </AnimatePresence>
+        </motion.ul>
       )}
 
-      {/* Skeleton Loading State or Scheme Cards Grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {[1, 2, 3, 4, 5, 6].map((sk) => (
-            <div key={sk} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-4 animate-pulse">
-              <div className="flex items-center justify-between">
-                <div className="h-5 w-28 bg-slate-200 dark:bg-slate-800 rounded-lg" />
-                <div className="h-8 w-8 bg-slate-200 dark:bg-slate-800 rounded-lg" />
-              </div>
-              <div className="h-6 w-3/4 bg-slate-200 dark:bg-slate-800 rounded-lg" />
-              <div className="h-20 w-full bg-slate-100 dark:bg-slate-800/60 rounded-2xl" />
-              <div className="h-4 w-full bg-slate-200 dark:bg-slate-800 rounded" />
-              <div className="h-4 w-2/3 bg-slate-200 dark:bg-slate-800 rounded" />
-              <div className="pt-4 flex gap-3">
-                <div className="h-12 flex-1 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
-                <div className="h-12 w-24 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : filteredSchemes.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {filteredSchemes.map((scheme) => (
-            <SchemeCard key={scheme.id} scheme={scheme} />
-          ))}
-        </div>
-      ) : (
-        /* Empty State with Helpful Suggested Keywords & Reset Action */
-        <div className="p-8 sm:p-12 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center space-y-4 max-w-lg mx-auto shadow-crisp-sm">
-          <div className="w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center mx-auto border border-amber-200 dark:border-amber-800">
-            <AlertCircle className="w-8 h-8" />
+      <Sheet
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        title={t('schemes.list.filtersTitle', 'Narrow down')}
+        closeLabel={t('navClose', 'Close')}
+        size="sm"
+        desktop="side"
+        footer={
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setWho([]);
+                setKinds([]);
+              }}
+            >
+              {t('schemes.list.reset', 'Reset')}
+            </Button>
+            <Button variant="solid" block onClick={() => setFiltersOpen(false)}>
+              {t('schemes.list.showResults', 'Show results')} (<span className="num">{results.length}</span>)
+            </Button>
           </div>
-          <div>
-            <h3 className="text-lg font-black text-slate-900 dark:text-white">
-              {t('noSchemesFound', 'No schemes match your exact filter combination')}
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-              Try adjusting or resetting your filters, or explore these popular government welfare programs:
-            </p>
-          </div>
-
-          {/* Suggested Keyword Pills */}
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-            {['Kisan', 'Ayushman', 'Maternity', 'Scholarship', 'Street Vendor'].map((term) => (
-              <button
-                key={term}
-                type="button"
-                onClick={() => {
-                  setSearchKeyword(term);
-                  handleCategorySelect('all');
-                  setSelectedJurisdiction('all');
-                  setSelectedBeneficiary('all');
-                  setSelectedBenefitType('all');
-                }}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950 transition-colors"
-              >
-                + "{term}"
-              </button>
+        }
+      >
+        <fieldset className="pt-2">
+          <legend className="font-semibold mb-3">{t('schemes.list.whoFor', 'Who is it for?')}</legend>
+          <div className="flex flex-wrap gap-2">
+            {WHO.map((w) => (
+              <Chip key={w.id} checkable selected={who.includes(w.id)} onClick={() => setWho((l) => toggle(l, w.id))}>
+                {t(w.key, w.fallback)}
+              </Chip>
             ))}
           </div>
-
-          <div className="pt-3">
-            <button
-              type="button"
-              onClick={handleClearAllFilters}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-brand-navy-900 dark:bg-sky-600 text-white font-black text-xs sm:text-sm shadow-crisp-sm hover:shadow-crisp-md transition-all min-h-[48px]"
-            >
-              <RotateCcw className="w-4 h-4" />
-              <span>Reset All Filters & View All Schemes</span>
-            </button>
+        </fieldset>
+        <fieldset className="pt-6">
+          <legend className="font-semibold mb-3">{t('schemes.list.whatKind', 'What kind of help?')}</legend>
+          <div className="flex flex-wrap gap-2">
+            {KINDS.map((k) => (
+              <Chip key={k.id} checkable selected={kinds.includes(k.id)} onClick={() => setKinds((l) => toggle(l, k.id))}>
+                {t(k.key, k.fallback)}
+              </Chip>
+            ))}
           </div>
-        </div>
-      )}
+        </fieldset>
+      </Sheet>
 
-      {/* Floating Scheme Comparison Tray */}
       <SchemeComparisonTray />
     </div>
   );
 };
+
+export default SchemeDiscoveryScreen;

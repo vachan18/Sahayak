@@ -1,11 +1,12 @@
 import { SupportedLanguage } from '../types';
 import { eligibilityEn } from './eligibilityTranslations';
+import { uxEn } from './ux';
 
 export const translations: Record<SupportedLanguage, Record<string, string>> = {
   en: {
     ...eligibilityEn,
     // Brand & App
-    appName: "SAHAYAK",
+    appName: "Sahayak",
     tagline: "Government Schemes in Your Language",
     statutoryBadge: "Public Welfare Information Platform • Demonstration Prototype",
     sovereignMotto: "Sovereign Welfare Information Portal • Official Public Guide",
@@ -267,6 +268,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     statutoryFeeNotice: "Statutory fee schedules",
     assistedCscNotice: "Assisted CSC slip generation",
     homeAssessmentIntro: "Answer 4 plain-language questions. Sahayak provides preliminary guidance on cash transfers, subsidies, and free health covers under verified Union & Karnataka state scheme rules.",
+    // Aangan redesign strings (namespaced, e.g. 'home.*')
+    ...uxEn,
   },
 
   kn: {},
@@ -279,4 +282,6 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
   gu: {},
   or: {},
   pa: {},
+  ur: {},
+  as: {},
 };

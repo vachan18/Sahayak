@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Globe, Bell, Sun, Moon, Volume2, User, ChevronLeft, LogIn, SunMedium, Bot } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useTranslation } from '../../hooks/useTranslation';
+import { LANGUAGE_META } from '../../data/languages';
 
 interface TopUtilityBarProps {
   onOpenLanguageModal: () => void;
@@ -34,23 +35,9 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
   const unreadCount = notifications.filter(n => !n.isRead).length;
   const isRootScreen = ['/', '/home', '/schemes', '/eligibility', '/documents', '/tracker'].includes(location.pathname);
 
-  const getLanguageLabel = () => {
-    switch (language) {
-      case 'kn': return 'ಕನ್ನಡ';
-      case 'hi': return 'हिन्दी';
-      case 'bn': return 'বাংলা';
-      default: return 'English';
-    }
-  };
+  const getLanguageLabel = () => (LANGUAGE_META[language] || LANGUAGE_META.en).label;
 
-  const getLanguageShortCode = () => {
-    switch (language) {
-      case 'kn': return 'ಕ';
-      case 'hi': return 'हि';
-      case 'bn': return 'বা';
-      default: return 'EN';
-    }
-  };
+  const getLanguageShortCode = () => (LANGUAGE_META[language] || LANGUAGE_META.en).shortCode;
 
   const desktopNavItems = [
     { to: '/home', label: t('navHome', 'Home'), shortLabel: t('navHome', 'Home') },
@@ -86,7 +73,7 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
                   {t('appName', 'SAHAYAK')}
                 </span>
                 <span className="hidden xl:inline text-[10px] text-amber-700 dark:text-amber-400 font-bold tracking-wider uppercase truncate">
-                  {language === 'kn' ? 'ಸಹಾಯಕ • ಭಾರತ' : language === 'hi' ? 'सहायक • भारत' : language === 'bn' ? 'সহায়ক • ভারত' : 'Bharat Welfare'}
+                  {(LANGUAGE_META[language] || LANGUAGE_META.en).brandSubtitle}
                 </span>
               </div>
             </Link>
@@ -224,10 +211,10 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
                 type="button"
                 onClick={() => openAuthModal('login')}
                 className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-brand-navy-900 dark:bg-sky-600 hover:bg-brand-navy-800 dark:hover:bg-sky-500 shadow-crisp-xs active:scale-95 transition-all min-h-[38px]"
-                aria-label={language === 'kn' ? 'ಲಾಗಿನ್' : language === 'hi' ? 'लॉग इन' : language === 'bn' ? 'লগইন' : 'Sign In'}
+                aria-label={(LANGUAGE_META[language] || LANGUAGE_META.en).signInLabel}
               >
                 <LogIn className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>{language === 'kn' ? 'ಲಾಗಿನ್' : language === 'hi' ? 'लॉग इन' : language === 'bn' ? 'লগইন' : 'Sign In'}</span>
+                <span>{(LANGUAGE_META[language] || LANGUAGE_META.en).signInLabel}</span>
               </button>
               <Link
                 to="/profile"

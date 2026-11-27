@@ -5,42 +5,18 @@ import { SupportedLanguage } from '../types';
 import { useAppStore } from '../store/useAppStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { speakVernacularText } from '../utils/audioSpeech';
+import { LANGUAGE_LIST, LANGUAGE_META } from '../data/languages';
 
 export const LanguageSelectionScreen: React.FC = () => {
   const navigate = useNavigate();
   const { language, setLanguage, dialect, setDialect } = useAppStore();
   const { t } = useTranslation();
 
-  const languageList: { code: SupportedLanguage; label: string; sublabel: string; greeting: string }[] = [
-    {
-      code: 'kn',
-      label: 'ಕನ್ನಡ',
-      sublabel: 'Kannada (Karnataka)',
-      greeting: 'ನಮಸ್ಕಾರ! ಸರ್ಕಾರದ ಯೋಜನೆಗಳನ್ನು ತಿಳಿಯಲು ಇದು ನಿಮ್ಮ ಸಹಾಯಕ.'
-    },
-    {
-      code: 'hi',
-      label: 'हिन्दी',
-      sublabel: 'Hindi (National / Central)',
-      greeting: 'नमस्ते! मैं आपकी सरकारी योजनाओं में सहायता करूँगा.'
-    },
-    {
-      code: 'bn',
-      label: 'বাংলা',
-      sublabel: 'Bengali (West Bengal / Pan-India)',
-      greeting: 'নমস্কার! সরকারি প্রকল্প জানতে এটি আপনার সহায়ক।'
-    },
-    {
-      code: 'en',
-      label: 'English',
-      sublabel: 'English (Pan-India)',
-      greeting: 'Welcome! I am your official welfare guide.'
-    }
-  ];
+  const languageList = LANGUAGE_LIST;
 
   const handleSelectLanguage = (code: SupportedLanguage) => {
     setLanguage(code);
-    speakVernacularText(languageList.find(l => l.code === code)?.greeting || '', code);
+    speakVernacularText(LANGUAGE_META[code].greeting, code);
   };
 
   return (

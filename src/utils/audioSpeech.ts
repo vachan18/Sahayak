@@ -1,4 +1,5 @@
 import { SupportedLanguage } from '../types';
+import { LANGUAGE_META } from '../data/languages';
 
 export const speakVernacularText = (
   text: string,
@@ -16,25 +17,9 @@ export const speakVernacularText = (
   window.speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text);
-  
-  // Set accurate Bhashini language tags
-  switch (language) {
-    case 'kn':
-      utterance.lang = 'kn-IN';
-      utterance.rate = 0.9; // Slightly slower, measured cadence for elderly rural citizens
-      break;
-    case 'hi':
-      utterance.lang = 'hi-IN';
-      utterance.rate = 0.95;
-      break;
-    case 'bn':
-      utterance.lang = 'bn-IN';
-      utterance.rate = 0.95;
-      break;
-    default:
-      utterance.lang = 'en-IN';
-      utterance.rate = 1.0;
-  }
+  const meta = LANGUAGE_META[language] || LANGUAGE_META.en;
+  utterance.lang = meta.speechLang;
+  utterance.rate = meta.speechRate;
 
   // Prefer a matching installed voice if available
   const voices = typeof window.speechSynthesis.getVoices === 'function'

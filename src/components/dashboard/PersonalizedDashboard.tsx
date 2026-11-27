@@ -8,6 +8,7 @@ import {
 import { useTranslation } from '../../hooks/useTranslation';
 import { useAppStore } from '../../store/useAppStore';
 import { Scheme } from '../../types';
+import { LANGUAGE_META } from '../../data/languages';
 import { assessEligibility } from '../../services/eligibilityEngine';
 import { SchemeCard } from '../schemes/SchemeCard';
 
@@ -122,16 +123,10 @@ export const PersonalizedDashboard: React.FC = () => {
             </span>
           </div>
           <h2 id="personalized-dashboard-heading" className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
-            {language === 'kn' ? 'ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ಕಲ್ಯಾಣ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್' : language === 'hi' ? 'आपका व्यक्तिगत कल्याण डैशबोर्ड' : language === 'bn' ? 'আপনার ব্যক্তিগত কল্যাণ ড্যাশবোর্ড' : 'Your Personalized Welfare Hub'}
+            {t('profileTitle', 'Your Personalized Welfare Hub')}
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            {language === 'kn'
-              ? 'ಶಿಫಾರಸುಗಳು, ಉಳಿಸಿದ ಯೋಜನೆಗಳು ಮತ್ತು ಅರ್ಜಿಗಳ ಸ್ಥಿತಿಯನ್ನು ಇಲ್ಲಿ ನಿರ್ವಹಿಸಿ'
-              : language === 'hi'
-              ? 'अपने लिए उपयुक्त योजनाएं, सहेजे गए बुकमार्क और आवेदन की स्थिति यहाँ देखें'
-              : language === 'bn'
-              ? 'আপনার জন্য উপযুক্ত প্রকল্প, সংরক্ষিত তালিকা এবং আবেদনের অবস্থা এখানে দেখুন'
-              : 'Track customized entitlements, saved bookmarks, and real statutory progress'}
+            {(LANGUAGE_META[language] || LANGUAGE_META.en).dashboardSubtitle}
           </p>
         </div>
 

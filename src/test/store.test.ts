@@ -27,6 +27,14 @@ describe('Global App State (Zustand Store)', () => {
     expect(useAppStore.getState().language).toBe('hi');
     expect(document.documentElement.lang).toBe('hi');
 
+    useAppStore.getState().setLanguage('ta');
+    expect(useAppStore.getState().language).toBe('ta');
+    expect(document.documentElement.lang).toBe('ta');
+
+    useAppStore.getState().setLanguage('pa');
+    expect(useAppStore.getState().language).toBe('pa');
+    expect(document.documentElement.lang).toBe('pa');
+
     useAppStore.getState().setLanguage('en');
     expect(useAppStore.getState().language).toBe('en');
     expect(document.documentElement.lang).toBe('en');

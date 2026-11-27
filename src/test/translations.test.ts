@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { translations } from '../data/translations';
-import { SupportedLanguage } from '../types';
+import { SUPPORTED_LANGUAGES } from '../data/languages';
 
 describe('Localization & Translation System', () => {
-  const languages: SupportedLanguage[] = ['en', 'kn', 'hi', 'bn'];
+  const languages = SUPPORTED_LANGUAGES;
 
-  it('supports all required official languages (English, Kannada, Hindi, Bengali)', () => {
+  it('supports all required official languages (11 Indian languages)', () => {
     languages.forEach(lang => {
       expect(translations[lang]).toBeDefined();
       expect(typeof translations[lang]).toBe('object');
@@ -40,19 +40,13 @@ describe('Localization & Translation System', () => {
     });
   });
 
-  it('verifies translation key parity between English and Indic languages', () => {
+  it('verifies translation key parity between English and all regional languages', () => {
     const enKeys = Object.keys(translations.en);
-    const knKeys = new Set(Object.keys(translations.kn));
-    const hiKeys = new Set(Object.keys(translations.hi));
-    const bnKeys = new Set(Object.keys(translations.bn));
-
-    const missingInKn = enKeys.filter(k => !knKeys.has(k));
-    const missingInHi = enKeys.filter(k => !hiKeys.has(k));
-    const missingInBn = enKeys.filter(k => !bnKeys.has(k));
-
-    expect(missingInKn, `Kannada missing keys: ${missingInKn.join(', ')}`).toEqual([]);
-    expect(missingInHi, `Hindi missing keys: ${missingInHi.join(', ')}`).toEqual([]);
-    expect(missingInBn, `Bengali missing keys: ${missingInBn.join(', ')}`).toEqual([]);
+    languages.filter((l) => l !== 'en').forEach((lang) => {
+      const langKeys = new Set(Object.keys(translations[lang]));
+      const missing = enKeys.filter((k) => !langKeys.has(k));
+      expect(missing, `${lang} missing keys: ${missing.join(', ')}`).toEqual([]);
+    });
   });
 
   it('verifies no empty string values in translations', () => {

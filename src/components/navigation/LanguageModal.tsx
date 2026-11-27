@@ -4,6 +4,7 @@ import { SupportedLanguage } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
 import { useTranslation } from '../../hooks/useTranslation';
 import { speakVernacularText } from '../../utils/audioSpeech';
+import { LANGUAGE_LIST, LANGUAGE_META } from '../../data/languages';
 
 interface LanguageModalProps {
   isOpen: boolean;
@@ -16,36 +17,11 @@ export const LanguageModal: React.FC<LanguageModalProps> = ({ isOpen, onClose })
 
   if (!isOpen) return null;
 
-  const languages: { code: SupportedLanguage; label: string; sublabel: string; greeting: string }[] = [
-    {
-      code: 'kn',
-      label: 'ಕನ್ನಡ',
-      sublabel: 'Kannada (Karnataka)',
-      greeting: 'ನಮಸ್ಕಾರ! ಸರ್ಕಾರದ ಯೋಜನೆಗಳನ್ನು ತಿಳಿಯಲು ಇದು ನಿಮ್ಮ ಸಹಾಯಕ.'
-    },
-    {
-      code: 'hi',
-      label: 'हिन्दी',
-      sublabel: 'Hindi (National / Central)',
-      greeting: 'नमस्ते! मैं आपकी सरकारी योजनाओं में सहायता करूँगा.'
-    },
-    {
-      code: 'bn',
-      label: 'বাংলা',
-      sublabel: 'Bengali (West Bengal / Pan-India)',
-      greeting: 'নমস্কার! সরকারি প্রকল্প জানতে এটি আপনার সহায়ক।'
-    },
-    {
-      code: 'en',
-      label: 'English',
-      sublabel: 'English (Pan-India)',
-      greeting: 'Welcome! I am your official welfare guide.'
-    }
-  ];
+  const languages = LANGUAGE_LIST;
 
   const handleSelectLang = (code: SupportedLanguage) => {
     setLanguage(code);
-    speakVernacularText(languages.find(l => l.code === code)?.greeting || '', code);
+    speakVernacularText(LANGUAGE_META[code].greeting, code);
   };
 
   return (
@@ -94,7 +70,7 @@ export const LanguageModal: React.FC<LanguageModalProps> = ({ isOpen, onClose })
                     <span>{item.label}</span>
                     {isSelected && (
                       <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded-full">
-                        {language === 'kn' ? 'ಸಕ್ರಿಯ' : language === 'hi' ? 'सक्रिय' : language === 'bn' ? 'সক্রিয়' : 'Active'}
+                        {LANGUAGE_META[language]?.activeBadge || 'Active'}
                       </span>
                     )}
                   </div>

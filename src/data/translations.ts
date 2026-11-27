@@ -1,4 +1,6 @@
 import { SupportedLanguage } from '../types';
+import { southTranslations } from './translationsSouth';
+import { westEastTranslations } from './translationsWestEast';
 
 export const translations: Record<SupportedLanguage, Record<string, string>> = {
   en: {
@@ -1039,5 +1041,7 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     "statutoryFeeNotice": "সংবিধিবদ্ধ ফি কাঠামো",
     "assistedCscNotice": "সহায়তাপ্রাপ্ত সিএসসি রসিদ প্রস্তুত",
     "homeAssessmentIntro": "৪টি সহজ প্রশ্নের উত্তর দিন। সহায়ক কেন্দ্র ও রাজ্য সরকারি নিয়মানুযায়ী নগদ অর্থ, ভর্তুকি এবং বিনামূল্যে স্বাস্থ্য সুরক্ষার প্রাথমিক নির্দেশনা প্রদান করে।",
-}
+},
+  ...southTranslations,
+  ...westEastTranslations,
 };

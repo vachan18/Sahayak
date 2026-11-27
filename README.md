@@ -1,249 +1,197 @@
-# SAHAYAK (ಸಹಾಯಕ / सहायक)
-### Government Schemes in Your Language • ನಿಮ್ಮ ಭಾಷೆಯಲ್ಲಿ ಸರ್ಕಾರದ ಯೋಜನೆಗಳು
-#### Project: PIXEL THEORY | Pixelcraft 2026 UI/UX Competition | Track: DS-02
+# SAHAYAK (ಸಹಾಯಕ / सहायक / সহায়ক)
 
-[![Pixelcraft 2026](https://img.shields.io/badge/Pixelcraft_2026-Track_DS--02-B45309?style=for-the-badge)](https://github.com/vachan18/Sahayak)
-[![Tests Passing](https://img.shields.io/badge/Vitest-97%20Passed%20(100%25)-065F46?style=for-the-badge&logo=vitest)](https://vitest.dev/)
-[![React 18](https://img.shields.io/badge/React_18-TypeScript-0B2545?style=for-the-badge&logo=react)](https://reactjs.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%20%26%20RLS-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38BDF8?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-[![Accessibility](https://img.shields.io/badge/Accessibility-WCAG_2.2_AA_%26_GIGW_3.0-065F46?style=for-the-badge)](https://www.w3.org/WAI/standards-guidelines/wcag/)
+### Sovereign Digital Welfare Discovery, Voice-Guided Eligibility & Anti-Middleman Guidance for Bharat
 
----
+**Project: PIXEL THEORY** | **PixelCraft 2026 UI/UX Competition** | **Track DS-02: Public Good & Digital Inclusion**
 
-## 🏛 Executive Overview
-
-**SAHAYAK** is India's sovereign, dignified, and intelligent digital welfare discovery platform. Designed from the ground up for Bharat, it empowers over **800+ million Indian citizens** navigating public services outside the English-first internet to discover legitimate government entitlements, verify eligibility in under 3 minutes, prepare bulletproof documentation, and track applications with absolute transparency and zero reliance on exploitative middlemen (*dalals*).
-
-In India, over **₹4.5 lakh crore** is disbursed annually via Direct Benefit Transfer (DBT). Yet, up to **40% of intended beneficiaries** are left out or overcharged due to legalistic jargon, eligibility ambiguity, unreadable document rejections, and administrative silos. SAHAYAK completely re-engineers this experience around human life events rather than administrative department divisions.
+[![PixelCraft 2026](https://img.shields.io/badge/PixelCraft_2026-Track_DS--02-F97316?style=for-the-badge)](https://github.com/vachan18/Sahayak)
+[![Tests Passing](https://img.shields.io/badge/Vitest-119%20Passed%20(8%20Suites)-065F46?style=for-the-badge&logo=vitest)](https://vitest.dev/)
+[![Lighthouse](https://img.shields.io/badge/Lighthouse-100%20A11y%20%7C%20100%20SEO%20%7C%2092%2B%20Perf-0B2545?style=for-the-badge&logo=lighthouse)](https://developer.chrome.com/docs/lighthouse)
+[![Languages](https://img.shields.io/badge/Indic_Parity-4_Languages_(413_Keys)-B45309?style=for-the-badge)](https://github.com/vachan18/Sahayak)
+[![React 18](https://img.shields.io/badge/React_18-TypeScript_5.6-0B2545?style=for-the-badge&logo=react)](https://reactjs.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL_%26_RLS-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
+[![CI](https://img.shields.io/badge/CI-GitHub_Actions_%2B_Vercel-0F172A?style=for-the-badge&logo=vercel)](https://github.com/vachan18/Sahayak/actions)
 
 ---
 
-## ✨ Key Pillars & Core Innovations
+## 🎯 Judge's Quick-View (TL;DR)
 
-### 1. 🗣 Multilingual Sovereign Voice Parity (ಕನ್ನಡ • हिन्दी • English)
-- **Zero Second-Class Citizens**: Native Kannada-first interface with full Hindi and English parity. Copy is natural, respectful, and culturally anchored rather than machine-translated gibberish.
-- **Audio Read-Aloud Engine**: Integrated Web Speech synthesis tuned for `kn-IN`, `hi-IN`, and `en-IN` delivers spoken summaries of statutory rules, benefits, and status updates.
-- **Indic Typography Architecture**: Generous 1.75x line-height prevents vertical clipping of Kannada complex conjuncts (*vattugalu*) and Hindi vowel markers (*matras*).
+| Dimension | What SAHAYAK Delivers |
+| :--- | :--- |
+| **The Problem** | Over **₹4.5 lakh crore** flows through Direct Benefit Transfer (DBT) annually, yet up to **40% of eligible citizens** face exclusion, document rejections, or *dalal* (middleman) overcharging due to English-first jargon and department silos. |
+| **The Solution** | A **multilingual, voice-assisted, life-event-first** welfare platform that lets citizens discover schemes, run a deterministic 5-state eligibility check, pre-validate documents, print a fee-capped CSC token slip, and track applications end-to-end. |
+| **UI/UX Craft** | **4-language parity** (`en`, `kn`, `hi`, `bn` — 413 keys each), **Bright-Sunlight High-Contrast Mode**, `1.75x` Indic line-height, `prefers-reduced-motion` Framer Motion transitions, and non-overlapping safe-area assistant docking. |
+| **Engineering Proof** | **119/119** Vitest tests passing (8 suites), **0** TypeScript errors (`tsc -b`), **168 kB** initial JS chunk (`React.lazy`), **100/100** Lighthouse Accessibility, Best Practices & SEO, **92+** Desktop Performance. |
+| **Kiosk & Cloud Ready** | **Zero-trust Supabase** (PostgreSQL + RLS + SHA-256 idempotency) with automatic **Sovereign Guest / Offline Mode** for rural Gram One & CSC kiosks. |
 
-### 2. 🌱 "Jeevan Ke Padav" — Life-Event Mental Model
-Replaces cold department dropdowns with 6 universal life milestones:
-- 🌾 **Farming & Agriculture** (ಕೃಷಿ & ಬೆಳೆ)
-- 🤱 **Motherhood & Child Care** (ತಾಯಿ ಮತ್ತು ಮಗು)
-- 🩺 **Health & Elder Dignity** (ಆರೋಗ್ಯ & ವೃದ್ಧಾಪ್ಯ)
-- 🎓 **Education & Youth** (ಶಿಕ್ಷಣ & ಯುವಜನತೆ)
-- 🛠 **Small Business & Artisans** (ಸಣ್ಣ ವ್ಯಾಪಾರ & ಕುಶಲಕರ್ಮಿ)
-- 🏠 **Housing & Basic Utilities** (ವಸತಿ & ಮೂಲಸೌಕರ್ಯ)
+> **Submission Links:** [GitHub Repository](https://github.com/vachan18/Sahayak) • [Project Board](https://github.com/users/vachan18/projects/4) • [Project Map & Issue Matrix](documentation/SAHAYAK_PROJECT_MAP.md)
 
-### 3. ⚡ "Bolo Aur Jano" — Hardened 5-State Eligibility Engine
-- **Conversational 5-Question Assessment**: Evaluates occupation, landholding, gender, age, income, and social category without intimidating legal forms.
-- **Strict 5-State Mathematical Logic**: Never makes premature claims. Enforces precise statutory states:
-  `not_assessed` ➔ `in_progress` ➔ `potentially_eligible` | `additional_verification_required` | `not_established`.
-- **Categorized Benefit Breakdown**: Directly segregates cash transfers (DBT) from health insurance coverage and concessional credit limits to prevent misleading financial totals.
-- **Statutory Preliminary Guidance Disclaimer**: Explicitly informs citizens that results represent preliminary eligibility guidance based on self-reported inputs, pending official department verification.
+---
 
-### 4. 🗄 Zero-Trust Supabase Cloud Backend & Sovereign Guest Mode
-- **PostgreSQL 15+ Relational Architecture**: 6 tables (`profiles`, `schemes`, `assessments`, `assessment_results`, `saved_schemes`, `applications`) with UUID primary keys and composite search indexes.
-- **Ironclad Row Level Security (RLS)**: Zero-trust database policies enforce strict citizen-level isolation (`auth.uid() = user_id`). Public service-role keys are strictly banned from frontend code.
-- **Private Document Vault**: Isolated storage bucket (`user-documents`) with 5MB file cap, MIME whitelisting, and 300-second ephemeral signed URLs.
-- **Sovereign Guest Mode Guarantee**: 100% kiosk-ready. Citizens at rural Gram One / CSC centers can discover schemes, test eligibility, and inspect checklists without mandatory account creation or phone number barriers.
+## 🧭 End-to-End Citizen Experience Flow
 
-### 5. 📄 Visual Document Readiness & Pre-Flight Inspection
-- **Side-by-Side Visual Do's & Don'ts**: Demonstrates acceptable document scans (e.g. Bank Passbook front page with visible IFSC/stamp vs blurry transaction history).
-- **On-Device Optical Pre-Check**: Simulated camera scanner with blur detection alerts citizens before submission to prevent application rejections.
-- **DigiLocker Integration**: 1-tap sovereign credential import.
+```mermaid
+flowchart LR
+    A["1. Welcome & Dialect Gate<br/>(kn / hi / bn / en + Voice)"] --> B["2. Jeevan Ke Padav<br/>(6 Life-Event Milestones)"]
+    B --> C["3. Bolo Aur Jano<br/>(Voice-Guided 5-State Engine)"]
+    C --> D["4. Document Pre-Flight<br/>(Passbook Do's/Don'ts + DigiLocker)"]
+    D --> E["5. Seva Kendra Slip<br/>(QR Token + ₹30 Fee Cap Banner)"]
+    E --> F["6. 4-Stage Lifecycle Tracker<br/>(SLA Countdown + CPGRAMS)"]
+```
 
-### 6. 🛡 "Seva Kendra Slip" — Anti-Middleman Statutory Fee Protection
-- **Treasury-Grade CSC Slip**: Generates a standardized token slip with QR code for physical kiosk operators.
-- **Mandatory Statutory Fee Banner**:
+---
+
+## ✨ Key UX Innovations & Architectural Pillars
+
+### 1. 🗣 4-Language Sovereign Parity & Voice Integrity (`ಕನ್ನಡ • हिन्दी • বাংলা • English`)
+- **100% Translation Key Parity**: **413 verified keys** across English (`en`), Kannada (`kn`), Hindi (`hi`), and Bengali (`bn`) with zero hardcoded UI strings.
+- **Voice-First with Transcript Confirmation**: *Bolo Aur Jano* uses the Web Speech API (`kn-IN`, `hi-IN`, `en-IN`) with explicit manual transcript confirmation so misheard speech never silently corrupts eligibility inputs.
+- **Indic Typography System**: `1.75x` line-height prevents vertical clipping of Kannada *vattugalu* (conjuncts) and Devanagari/Bengali *matras*.
+
+### 2. ☀️ Outdoor & Accessibility-First Design System (WCAG 2.2 AA & GIGW 3.0)
+- **Bright-Sunlight High-Contrast Mode**: Dedicated high-contrast theme engineered for outdoor mobile usage in rural sunlit conditions.
+- **Sovereign Color Identity**: Anchored in Sovereign Navy (`#0F172A`) and Warm Saffron (`#F97316`) with semantic status tokens.
+- **Motion & Docking Safeguards**: Smooth Framer Motion page transitions respecting `prefers-reduced-motion`, plus safe-area docking so the floating AI/Voice assistant never obscures primary CTAs or bottom navigation.
+
+### 3. 🌱 "Jeevan Ke Padav" — Life-Event Mental Model
+Replaces bureaucratic ministry trees with **6 human life milestones**:
+- 🌾 **Farming & Agriculture** • 🤱 **Motherhood & Child Care** • 🩺 **Health & Elder Dignity**
+- 🎓 **Education & Youth** • 🛠 **Small Business & Artisans** • 🏠 **Housing & Basic Utilities**
+
+### 4. ⚡ "Bolo Aur Jano" — Hardened 5-State Statutory Eligibility Engine
+- **Deterministic 5-State Logic**: Enforces strict statutory outcomes instead of misleading "100% guaranteed" claims:
+  `not_assessed` ➔ `in_progress` ➔ `potentially_eligible` | `additional_verification_required` | `not_established`
+- **Categorized Benefit Breakdown**: Separates **DBT Cash Transfers**, **Health Insurance Cover**, and **Concessional Credit Limits** so totals are never conflated.
+- **Statutory Preliminary Guidance Disclaimer**: Clearly states that outputs are preliminary guidance pending official department verification.
+
+### 5. 📄 Visual Document Pre-Flight & Anti-Middleman "Seva Kendra Slip"
+- **Passbook Visual Do's & Don'ts**: Side-by-side guidance showing valid front-page scans (IFSC + bank stamp visible) vs. common rejection triggers.
+- **DigiLocker Simulation & Optical Pre-Check**: Simulated camera blur check before submission.
+- **Treasury-Grade CSC Slip (`/csc-slip`)**: Printable token slip with authentic QR code and mandatory fee protection:
   > *"STATUTORY FEE GUARANTEE: Government Fee is ₹0.00. The maximum authorized convenience fee at an authorized CSC is ₹30.00 only. Do not pay any extra commission."*
 
-### 7. ⏱ 4-Stage Transparent Application Lifecycle Tracker
-- **Audit-Traceable Milestones**: Replaces vague "Under Review" statuses with a 4-stage visual timeline (*Submitted ➔ Field Verification ➔ Sanction Order ➔ DBT Credit*).
-- **SLA Countdown & Accountability**: Displays handling officer titles (*e.g., Tahsildar, Revenue Inspector*), statutory Citizen Charter SLA countdowns, and direct 1-tap CPGRAMS grievance escalation.
+### 6. ⏱ 4-Stage Application Lifecycle Tracker & Grievance Redressal
+- **Audit-Traceable Stages**: *Submitted ➔ Field Verification ➔ Sanction Order ➔ DBT Credit* with handling officer roles (*e.g., Tahsildar, Revenue Inspector*) and Citizen Charter SLA countdowns.
+- **Scheme Comparison & 1-Tap Escalation**: Side-by-side scheme comparison tray and direct CPGRAMS / Sakala grievance guidance.
+
+### 7. 🗄 Zero-Trust Supabase Backend + Sovereign Guest Mode
+- **PostgreSQL Relational Schema**: Normalized tables (`profiles`, `schemes`, `assessments`, `assessment_results`, `saved_schemes`, `applications`, household members) with UUID keys and RLS (`auth.uid() = user_id`).
+- **SHA-256 Idempotency Hashing**: Tamper-evident assessment audit pipeline (`20261122000006_assessment_idempotency_rpc.sql`).
+- **Sovereign Guest Mode**: Automatic offline/guest fallback so citizens at shared rural kiosks can explore schemes and run checks without mandatory sign-up.
 
 ---
 
-## 🏛 Verified Showcase Schemes (Primary Statutory Sources)
+## 🏛 Verified Statutory Scheme Registry (12 Schemes)
 
-All scheme rules, exclusions, and financial numbers are strictly aligned with published Government of India Gazette notifications and operational guidelines:
+All eligibility rules, exclusions, and benefit figures are validated against Zod schemas and Government of India / State guidelines:
 
-| Scheme Code | Scheme Name | Nodal Authority | Benefit Type | Core Statutory Criteria |
-| :--- | :--- | :--- | :--- | :--- |
-| `pm-kisan` | **PM-KISAN Samman Nidhi** | MoA&FW | ₹6,000 / year (3x ₹2,000 DBT) | Cultivable land record in state revenue database; excludes regular govt employees and income-tax payees. |
-| `pm-jay` | **Ayushman Bharat PM-JAY** | National Health Authority (NHA) | ₹5,00,000 / family / year hospital cover | Identified via SECC 2011 / NFSA BPL ration cards; universal ₹5 Lakh cover for seniors aged 70+ (Vay Vandana). |
-| `pmmvy` | **Pradhan Mantri Matru Vandana Yojana** | MWCD | ₹5,000 (1st child) / ₹6,000 (2nd girl child) | Institutional registration, ANC checkups; excludes regular govt/PSU employees with paid maternity leave. |
-| `pm-svanidhi` | **PM SVANidhi Micro-Credit** | MoHUA | ₹10,000 - ₹50,000 working capital loan | Urban street vendors holding Certificate of Vending (CoV) or Urban Local Body LoR; 7% interest subsidy. |
-| `post-matric-scholarship` | **Post-Matric Scholarship (SC/ST)** | MoSJE | ₹14,000+ / year (Fees + Maintenance) | SC/ST students enrolled in recognized higher education; parental annual income $\le$ ₹2.50 Lakh. |
-| `post-matric-scholarship-minority` | **Post-Matric Scholarship (Minorities)** | Ministry of Minority Affairs | ₹10,000 / year (Fees + Maintenance) | Notified minority communities; parental income $\le$ ₹2.00 Lakh; $\ge$ 50% marks in previous examination. |
-| `pm-kcc` | **Kisan Credit Card (KCC)** | MoA&FW / NABARD | ₹1,50,000 - ₹3,00,000 credit limit @ 4% | Owner cultivators, tenant farmers, sharecroppers, animal husbandry & fisheries operators under RBI guidelines. |
-
----
-
-## 📱 Implemented Core Screens (15 Views)
-
-1. **Welcome Screen** (`/`) — Sovereign emblem, bilingual greeting, audio welcome, language selection gate.
-2. **Language Selection** (`/language`) — Dialect accent selection (*Standard Kannada / North Karnataka / Hindi / English*) with live audio sample preview.
-3. **Onboarding Carousel** (`/onboarding`) — 3-step walkthrough explaining statutory entitlements, fee caps, and document preparation.
-4. **Home Dashboard** (`/home`) — Responsive 2-column hero, voice search, category filters, and 6 life-event cards.
-5. **Scheme Discovery** (`/schemes`) — Multi-filter catalog, search query matching, and sorting by DBT amount or processing speed.
-6. **Scheme Detail** (`/schemes/:id`) — Plain-language specifications, DBT cash tags, "Who Can Apply / Who is Not Covered", statutory fee citations, and official helpline numbers.
-7. **Eligibility Checker** (`/eligibility`) — *"Bolo Aur Jano"* 5-step conversational questionnaire wizard with voice narration.
-8. **Eligibility Results** (`/eligibility/results`) — Scorecard with categorized benefit cockpit, eligible scheme cards, and statutory guidance disclaimers.
-9. **Document Checklist** (`/documents`) — Readiness meter, visual Do's/Don'ts modal, and camera blur detection pre-check.
-10. **Application Guidance** (`/guidance/:id`) — Dual pathway: Self-Service Online e-Sign vs. Assisted CSC Seva Kendra Slip.
-11. **CSC Token Slip** (`/csc-slip/:tokenId`) — Treasury-style printable summary slip with QR code and statutory fee cap guarantee.
-12. **Application Tracker** (`/tracker`) — Active application overview with SLA countdown and 4-stage progress steppers.
-13. **Tracker Detail** (`/tracker/:id`) — Granular officer audit log and 1-tap CPGRAMS complaint filing.
-14. **User Profile** (`/profile`) — Household family proxy manager (*e.g. Rameshwar, Sunita*) enabling a single device to manage multi-generational welfare entitlements.
-15. **Notifications** (`/notifications`) — Real-time event log for milestone updates, verification reminders, and DBT credit voice notes.
+| Scheme Code | Scheme Name | Benefit Category | Core Highlight |
+| :--- | :--- | :--- | :--- |
+| `pm-kisan` | **PM-KISAN Samman Nidhi** | DBT Cash | ₹6,000 / year (3 × ₹2,000 installments) |
+| `pm-jay` | **Ayushman Bharat PM-JAY** | Health Insurance | ₹5,00,000 / family / year hospital cover |
+| `pmmvy` | **Pradhan Mantri Matru Vandana Yojana** | DBT Cash | ₹5,000 (1st child) / ₹6,000 (2nd girl child) |
+| `pm-svanidhi` | **PM SVANidhi Micro-Credit** | Concessional Credit | ₹10,000 – ₹50,000 working capital + 7% subsidy |
+| `post-matric-scholarship` | **Post-Matric Scholarship (SC/ST)** | DBT Cash | Fees + maintenance allowance (income ≤ ₹2.5L) |
+| `post-matric-scholarship-minority` | **Post-Matric Scholarship (Minorities)** | DBT Cash | ₹10,000 / year (income ≤ ₹2.0L, ≥ 50% marks) |
+| `pm-kcc` | **Kisan Credit Card (KCC)** | Concessional Credit | ₹1,50,000 – ₹3,00,000 credit limit @ 4% |
+| `+ 5 more verified schemes` | **Multi-State & Sectoral Schemes** | Mixed | Covered in `src/data/` & `supabase/migrations/` |
 
 ---
 
-## 🛠 Tech Stack & Engineering Standards
+## 📱 Application Routes (15+ Lazy-Loaded Views)
 
-- **Core Framework**: React 18.3, TypeScript 5.6 (strict mode)
-- **Build Tool**: Vite 6.0
-- **Database & Cloud**: Supabase (PostgreSQL 15+, Row Level Security, Storage Buckets, Auth GoTrue)
-- **State Management**: Zustand 5.0 (optimistic caching, local storage persistence, and cloud sync hooks)
-- **Styling**: Tailwind CSS 3.4 with custom Sovereign Bharat Design Tokens (outdoor high-contrast mode, dark mode)
-- **Testing**: Vitest 5.1.1 (Unit, component, store, and backend integration test suites)
-- **Validation**: Zod (runtime validation for auth payloads, file uploads, and scheme criteria)
-- **Audio Engine**: Native Web Speech Synthesis API (`kn-IN`, `hi-IN`, `en-IN`)
-- **Icons**: Lucide React
-- **Accessibility**: WCAG 2.2 Level AA & Guidelines for Indian Government Websites and Apps (GIGW 3.0)
+Defined in [src/routes/AppRoutes.tsx](src/routes/AppRoutes.tsx) with route-level `React.lazy` code splitting:
+
+| Route | Screen | Purpose |
+| :--- | :--- | :--- |
+| `/welcome`, `/language`, `/onboarding` | **Entry & Dialect Gate** | Bilingual/multilingual greeting, audio preview, 3-step onboarding |
+| `/home` | **Sovereign Citizen Dashboard** | Hero voice-search cockpit, seasonal alerts, trust banner, 6 life events |
+| `/schemes`, `/schemes/:id` | **Scheme Directory & Detail** | Multi-facet filters (State, Category, Beneficiary), comparison, statutory specs |
+| `/eligibility`, `/eligibility/results` | **Bolo Aur Jano** | 5-step voice-guided wizard + 3-tier categorized eligibility results |
+| `/documents` | **Document Readiness** | Readiness meter, Passbook Do's/Don'ts modal, DigiLocker simulation |
+| `/guidance/:id`, `/csc-slip/:tokenId` | **Guided Filing & CSC Slip** | Self-service e-Sign vs. printable QR Seva Kendra slip with ₹30 fee cap |
+| `/tracker`, `/tracker/:id` | **Application Tracker** | 4-stage lifecycle stepper, SLA countdown, CPGRAMS/Sakala escalation |
+| `/profile`, `/notifications` | **Household & Alerts** | Multi-member household proxy profiles & DBT milestone notifications |
 
 ---
 
-## 🧪 Comprehensive Automated Test Suite
+## 🛠 Tech Stack & Performance Metrics
 
-SAHAYAK maintains an audit-grade automated test suite with **97 passing tests** across 7 test files:
+- **Frontend:** React 18.3, TypeScript 5.6 (strict mode), React Router v6 (`BrowserRouter`), Framer Motion 11.15
+- **Styling & Icons:** Tailwind CSS 3.4, custom Sovereign Design Tokens, Lucide React
+- **State & Validation:** Zustand 5.0, React Hook Form 7.54, Zod 3.24
+- **Backend & Auth:** Supabase (`@supabase/supabase-js` 2.119) — PostgreSQL, RLS, Storage (`user-documents`), GoTrue
+- **Testing & Build:** Vite 6, Vitest 5.1.1, Testing Library, JSDOM
+- **Deployment & CI:** Vercel (`vercel.json` SPA rewrites) + GitHub Actions (`.github/workflows/ci.yml`)
 
-```bash
- ✓ src/test/translations.test.ts (4 tests)          # Kannada, Hindi, English key parity & interpolations
- ✓ src/test/schemeSearch.test.ts (5 tests)          # Multilingual search & phonetic tag matching
- ✓ src/test/schemeValidation.test.ts (5 tests)      # Statutory rule integrity & primary source citations
- ✓ src/test/eligibilityEngine.test.ts (49 tests)    # 5-state logic, exclusions, boundary conditions
- ✓ src/test/securityAndPrivacy.test.ts (3 tests)    # Zero PII persistence & client storage safety
- ✓ src/test/store.test.ts (6 tests)                 # Zustand multi-profile state & guest mode caching
- ✓ src/test/supabaseBackend.test.ts (25 tests)      # Supabase client, Zod schemas, RLS, storage & guest fallback
+### Verified Quality Scorecard
 
- Test Files  7 passed (7)
-      Tests  97 passed (97)
-   Duration  6.48s
+```text
+TypeScript Check : tsc -b                  -> 0 errors (PASS)
+Automated Tests  : vitest run              -> 119 / 119 passed across 8 test files (PASS)
+Initial JS Chunk : dist/assets/index-*.js  -> 168.24 kB (43.03 kB gzip) via React.lazy
+Translation Parity: en / kn / hi / bn      -> 413 / 413 keys (100% Parity)
+Lighthouse Audit : Accessibility 100/100 | Best Practices 100/100 | SEO 100/100 | Desktop Perf 92+
 ```
 
 ---
 
-## 🚀 Quick Start & Development Setup
+## 🧪 Automated Test Suite (119 Tests / 8 Suites)
 
-### 1. Prerequisites
-- Node.js (v18.0.0 or higher; tested on Node v20/v24)
-- npm (v9.0.0 or higher)
-- Free Supabase project ([supabase.com](https://supabase.com)) or local Docker Supabase instance
+```text
+ ✓ src/test/schemeSearch.test.ts (5 tests)         — Multilingual search & phonetic tag matching
+ ✓ src/test/translations.test.ts (4 tests)         — 4-language (en/kn/hi/bn) 413-key parity
+ ✓ src/test/eligibilityEngine.test.ts (49 tests)   — 5-state logic, exclusions & edge cases
+ ✓ src/test/schemeValidation.test.ts (5 tests)     — Statutory rule integrity & citations
+ ✓ src/test/securityAndPrivacy.test.ts (3 tests)   — Zero PII persistence & client storage safety
+ ✓ src/test/store.test.ts (6 tests)                — Zustand household state & guest caching
+ ✓ src/test/backendCorrections.test.ts (22 tests)  — Backend hardening, RPC & error resilience
+ ✓ src/test/supabaseBackend.test.ts (25 tests)     — Supabase client, Zod schemas, RLS & fallback
+```
 
-### 2. Installation
+---
+
+## 🚀 Quick Start & Deployment
+
+### 1. Local Development
 ```bash
-# Clone the repository
 git clone https://github.com/vachan18/Sahayak.git
-
-# Navigate into project directory
 cd Sahayak
-
-# Install dependencies
 npm install
-```
-
-### 3. Environment Configuration
-Create a `.env` file in the project root:
-```bash
 cp .env.example .env
 ```
-Fill in your Supabase project credentials:
+Configure `.env` (optional — leaves guest/offline mode active if omitted):
 ```dotenv
 VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-publishable-or-anon-key
+VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_SUPABASE_STORAGE_BUCKET=user-documents
 ```
-*(Note: If left empty, SAHAYAK automatically boots into Sovereign Guest Mode with complete offline mock fallbacks).*
-
-### 4. Database Setup (1-Click SQL)
-1. Open your [Supabase Project Dashboard](https://supabase.com/dashboard) ➔ **SQL Editor**.
-2. Copy and paste the contents of [supabase/full_schema_setup.sql](supabase/full_schema_setup.sql).
-3. Click **Run** to provision all 6 tables, triggers, RLS policies, storage bucket, and seed data.
-
-### 5. Run & Test
+Run locally:
 ```bash
-# Start Vite development server
-npm run dev
-
-# Run full Vitest test suite
-npm run test
-
-# Run TypeScript static type check
-npx tsc --noEmit
-
-# Compile production build
-npm run build
-
-# Preview production build locally
-npm run preview
+npm run dev      # Start Vite dev server (http://localhost:3000)
+npm test         # Run 119 Vitest unit/integration tests
+npm run build    # Typecheck (tsc -b) + Vite production build -> dist/
+npm run preview  # Preview production build
 ```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### 2. Supabase 1-Click Schema Setup
+1. Open your [Supabase Dashboard](https://supabase.com/dashboard) ➔ **SQL Editor**.
+2. Run [`supabase/full_schema_setup.sql`](supabase/full_schema_setup.sql) to provision all tables, RLS policies, idempotency RPCs, storage bucket, and seeded schemes.
+
+### 3. Production Hosting (Vercel + GitHub Actions CI)
+- **SPA Routing:** [`vercel.json`](vercel.json) handles `BrowserRouter` rewrites (`/(.*)` ➔ `/index.html`) and immutable asset caching.
+- **CI Pipeline:** [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs `npm ci`, `npm test`, and `npm run build` on every push/PR to `main`.
 
 ---
 
-## 📚 Complete Project Documentation
+## 📚 Complete Documentation Index
 
-The repository houses audit-grade research, design, engineering, and database documentation:
-
-- **Phase 1: Research & Problem Definition**
-  - [Problem Definition & Ecosystem Analysis](docs/01-problem-definition-and-research.md)
-  - [Target Personas & Pain Points](docs/02-target-personas-and-pain-points.md)
-  - [User Journeys & Service Blueprint](docs/03-user-journeys-and-service-blueprint.md)
-  - [Product Objectives & Core Features](docs/04-product-objectives-and-core-features.md)
-  - [Information Architecture & Navigation](docs/05-information-architecture-and-navigation.md)
-  - [MVP Scope & Verified Showcase Schemes](docs/06-mvp-scope-and-roadmap.md)
-  - [Measurable UX Success Criteria](docs/07-ux-success-criteria-and-metrics.md)
-
-- **Phase 2: UX Architecture & Experience Design**
-  - [Information Architecture Specification](documentation/phase-2/information-architecture.md)
-  - [Application Sitemap & Route Mapping](documentation/phase-2/application-sitemap.md)
-  - [11 End-to-End User Journeys](documentation/phase-2/user-journeys.md)
-  - [15 Screen Detailed Specifications](documentation/phase-2/screen-specifications.md)
-  - [Interaction Design Guidelines](documentation/phase-2/interaction-design.md)
-  - [Accessibility & Multilingual Guidelines](documentation/phase-2/accessibility-guidelines.md)
-  - [Navigation & Routing Specification](documentation/phase-2/navigation-specification.md)
-
-- **Phase 3: Visual Identity & Design System**
-  - [Brand Guidelines & Visual Language](documentation/phase-3/brand-guidelines.md)
-  - [Semantic Color System (Outdoor Contrast)](documentation/phase-3/color-system.md)
-  - [Indic Typography System (1.75x Line-Height)](documentation/phase-3/typography-system.md)
-  - [Spacing Scale & Responsive Layouts](documentation/phase-3/spacing-and-layout.md)
-  - [Component Library Specification](documentation/phase-3/component-library.md)
-  - [Motion & Timing Guidelines](documentation/phase-3/motion-guidelines.md)
-  - [Responsive Guidelines](documentation/phase-3/responsive-guidelines.md)
-  - [Accessibility Design (GIGW 3.0 / WCAG AA)](documentation/phase-3/accessibility-design.md)
-  - [Machine-Readable Design Tokens JSON](documentation/phase-3/design-tokens.json)
-
-- **Phase 4: Frontend Development & UI Hardening**
-  - [Frontend Architecture](documentation/phase-4/frontend-architecture.md)
-  - [Component Inventory](documentation/phase-4/component-inventory.md)
-  - [Routing Documentation](documentation/phase-4/routing-documentation.md)
-  - [Implementation & Test Report](documentation/phase-4/implementation-report.md)
-  - [Known Limitations & Roadmap](documentation/phase-4/known-limitations.md)
-
-- **Phase 5: Supabase Backend & Database Integration**
-  - [Database Schema & ER Specification](documentation/phase-5/database-schema.md)
-  - [Supabase Setup & 1-Click Migration Guide](documentation/phase-5/supabase-setup.md)
-  - [Security Architecture & Row Level Security (RLS)](documentation/phase-5/security-and-rls.md)
-  - [Backend Implementation Report](documentation/phase-5/implementation-report.md)
-  - [Testing & Quality Assurance Report](documentation/phase-5/testing-report.md)
+- **[Project Map & Issue Hierarchy Matrix](documentation/SAHAYAK_PROJECT_MAP.md)** — Full Epic/Sub-Issue graph (#1–#24) and commit milestones.
+- **Phase 1 (`docs/`):** [Problem Definition](docs/01-problem-definition-and-research.md) • [Personas](docs/02-target-personas-and-pain-points.md) • [Service Blueprint](docs/03-user-journeys-and-service-blueprint.md) • [Objectives](docs/04-product-objectives-and-core-features.md) • [IA](docs/05-information-architecture-and-navigation.md) • [MVP Scope](docs/06-mvp-scope-and-roadmap.md) • [UX Metrics](docs/07-ux-success-criteria-and-metrics.md)
+- **Phase 2–3 (`documentation/phase-2/`, `phase-3/`):** Citizen Journeys, 15 Screen Specs, Sovereign Color System, 1.75x Indic Typography, Design Tokens (`design-tokens.json`), GIGW 3.0 / WCAG AA Accessibility.
+- **Phase 4–5 (`documentation/phase-4/`, `phase-5/`):** Frontend Architecture, 5-State Eligibility Hardening, Supabase Schema & RLS Security, SHA-256 Idempotency.
+- **Phase 6 (`documentation/phase-6.1/` – `phase-6.8/`):** Voice Cockpit, Scheme Catalog, *Bolo Aur Jano*, Passbook Visual Guide, 4-Stage Tracker, High-Contrast Mode, Indic Parity, and Responsive Overflow Audits.
 
 ---
 
-## ⚖️ Statutory Attribution & Sovereign Compliance
-
-All welfare schemes featured in SAHAYAK (*PM-KISAN, Ayushman Bharat PM-JAY, PMMVY, PM SVANidhi, Post-Matric Scholarship SC/ST, Post-Matric Scholarship Minority, and Kisan Credit Card*) are grounded strictly in published Government of India gazette criteria, Reserve Bank of India Master Directions, and official nodal portals.
-
-**Crafted with pride for Pixelcraft 2026 by [vachan18](https://github.com/vachan18)**.
+**Crafted for PixelCraft 2026 (Track DS-02) by [vachan18](https://github.com/vachan18)**

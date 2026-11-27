@@ -23,7 +23,7 @@ export const WelcomeScreen: React.FC = () => {
     <div className="min-h-[85vh] flex flex-col justify-between items-center max-w-md mx-auto py-6 text-center animate-fadeIn">
       {/* Top Sovereign Seal */}
       <div className="w-full flex flex-col items-center pt-4">
-        <SahayakLogo className="w-16 h-16 mb-4 drop-shadow-sm" />
+        <SahayakLogo className="w-20 h-20 mb-4 drop-shadow-sm" />
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 mb-2">
           <Shield className="w-3.5 h-3.5 text-emerald-600" />
           <span>{t('statutoryBadge', 'Official Sovereign Welfare Information Guide • Statutory Citizen Portal')}</span>

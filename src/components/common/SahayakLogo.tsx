@@ -4,10 +4,10 @@ interface SahayakLogoProps {
   className?: string;
 }
 
-export const SahayakLogo: React.FC<SahayakLogoProps> = ({ className = 'w-9 h-9' }) => (
+export const SahayakLogo: React.FC<SahayakLogoProps> = ({ className = 'w-10 h-10' }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 64 64"
+    viewBox="3 1 58 62"
     fill="none"
     className={className}
     role="img"
@@ -17,24 +17,24 @@ export const SahayakLogo: React.FC<SahayakLogoProps> = ({ className = 'w-9 h-9' 
       d="M32 4L56 13.5V30.5C56 44.8 45.8 55.6 32 60C18.2 55.6 8 44.8 8 30.5V13.5L32 4Z"
       fill="#FFFFFF"
       stroke="#0F172A"
-      strokeWidth="4"
+      strokeWidth="4.2"
       strokeLinejoin="round"
     />
     <path
-      d="M32 14.5C22.3 14.5 14.5 22.1 14.5 31.5C14.5 35.1 15.7 38.5 17.7 41.2L15.4 47.2L21.9 45.1C24.8 47.2 28.3 48.5 32 48.5C41.7 48.5 49.5 40.9 49.5 31.5C49.5 22.1 41.7 14.5 32 14.5Z"
+      d="M32 14C22 14 14 21.8 14 31.5C14 35.2 15.2 38.7 17.3 41.5L14.9 47.6L21.7 45.4C24.7 47.6 28.2 48.9 32 48.9C42 48.9 50 41.1 50 31.5C50 21.8 42 14 32 14Z"
       stroke="#10B981"
-      strokeWidth="3.6"
+      strokeWidth="3.8"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-    <circle cx="26" cy="26.5" r="2.8" fill="#F97316" />
+    <circle cx="25.8" cy="26.2" r="3" fill="#F97316" />
     <path
-      d="M19.5 27.5C21.8 30.5 23.6 32.8 24.4 35.5V43.5H28.8V35.2C29.4 31.8 30.2 28.5 30.8 25.2C29.3 28.2 28.1 30.2 26.8 31.5C25.1 31.5 22.5 29.8 19.5 27.5Z"
+      d="M19 27.3C21.5 30.4 23.4 32.8 24.2 35.6V43.8H28.8V35.3C29.4 31.8 30.2 28.4 30.8 25C29.3 28.1 28 30.2 26.7 31.6C24.9 31.6 22.2 29.7 19 27.3Z"
       fill="#F97316"
     />
-    <circle cx="38.5" cy="27.5" r="2.8" fill="#F97316" />
+    <circle cx="38.6" cy="27.2" r="3" fill="#F97316" />
     <path
-      d="M33.2 29.5C34.4 32 35.2 34 35.6 36.2V44.2H40V36.2C40.8 33.4 42.6 31.1 45 28.2C42 30.5 39.6 32 37.8 32C36.4 32 34.8 31 33.2 29.5Z"
+      d="M33.1 29.4C34.4 32 35.2 34.1 35.6 36.4V44.4H40.2V36.4C41 33.5 42.8 31.1 45.3 28.1C42.2 30.5 39.7 32 37.9 32C36.4 32 34.8 31 33.1 29.4Z"
       fill="#F97316"
     />
   </svg>

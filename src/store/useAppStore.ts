@@ -104,7 +104,7 @@ function getInitialLanguage(): SupportedLanguage {
     if (saved && SUPPORTED_LANGUAGES.includes(saved as SupportedLanguage)) {
       const lang = saved as SupportedLanguage;
       if (lang !== 'en') {
-        import('../data/translations').then(({ loadLanguageTranslations }) =>
+        import('../data/translationLoader').then(({ loadLanguageTranslations }) =>
           loadLanguageTranslations(lang).then((changed) => {
             if (changed) {
               useAppStore.setState((state) => ({ translationsVersion: state.translationsVersion + 1 }));
@@ -201,7 +201,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     document.documentElement.lang = lang;
     set({ language: lang });
     if (lang !== 'en') {
-      import('../data/translations').then(({ loadLanguageTranslations }) =>
+      import('../data/translationLoader').then(({ loadLanguageTranslations }) =>
         loadLanguageTranslations(lang).then((changed) => {
           if (changed) {
             set((state) => ({ translationsVersion: state.translationsVersion + 1 }));

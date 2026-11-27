@@ -96,7 +96,7 @@ export const VisualDosAndDontsModal: React.FC<VisualDosAndDontsModalProps> = ({
             <div className="flex items-center justify-between">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-600 text-white uppercase tracking-wider">
                 <CheckCircle2 className="w-4 h-4" />
-                <span>CORRECT (Do This / ಸರಿ)</span>
+                <span>CORRECT (Do This)</span>
               </span>
               <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300">
                 100% Legible
@@ -170,7 +170,7 @@ export const VisualDosAndDontsModal: React.FC<VisualDosAndDontsModalProps> = ({
             <div className="flex items-center justify-between">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-black bg-rose-600 text-white uppercase tracking-wider">
                 <XCircle className="w-4 h-4" />
-                <span>WRONG (Avoid This / ತಪ್ಪು)</span>
+                <span>WRONG (Avoid This)</span>
               </span>
               <span className="text-[11px] font-bold text-rose-800 dark:text-rose-300">
                 Will Cause Rejection
@@ -246,7 +246,7 @@ export const VisualDosAndDontsModal: React.FC<VisualDosAndDontsModalProps> = ({
             onClick={onClose}
             className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-brand-navy-900 hover:bg-brand-navy-800 text-white font-black text-xs sm:text-sm shadow-crisp-sm transition-all min-h-[48px]"
           >
-            I Understand the Guidelines (ಅರ್ಥವಾಯಿತು)
+            I Understand the Guidelines
           </button>
         </div>
       </div>

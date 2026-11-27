@@ -11,6 +11,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
 import { speakVernacularText, stopSpeech } from '../utils/audioSpeech';
 import { LANGUAGE_META } from '../data/languages';
+import { matchTranscriptToOption } from '../utils/voiceMatcher';
 
 type VoiceState = 'idle' | 'listening' | 'processing' | 'recognized' | 'error';
 
@@ -28,6 +29,8 @@ export const EligibilityCheckerScreen: React.FC = () => {
 
   const recognitionRef = useRef<any>(null);
   const simulationTimerRef = useRef<any>(null);
+  const voiceStateRef = useRef<VoiceState>(voiceState);
+  voiceStateRef.current = voiceState;
 
   useEffect(() => {
     return () => {
@@ -110,62 +113,7 @@ export const EligibilityCheckerScreen: React.FC = () => {
   };
 
   const findBestOptionMatch = (transcript: string): QuestionOption | null => {
-    const clean = transcript.toLowerCase().trim();
-    if (!question.options || question.options.length === 0) return null;
-
-    // 1. Direct match on labelKey or sublabelKey text
-    for (const opt of question.options) {
-      const label = (opt.labelKey || '').toLowerCase();
-      const sublabel = (opt.sublabelKey || '').toLowerCase();
-      if (clean.includes(label) || (label.length > 2 && label.includes(clean))) return opt;
-      if (sublabel && (clean.includes(sublabel) || (sublabel.length > 2 && sublabel.includes(clean)))) return opt;
-    }
-
-    // 2. Vernacular keyword intent matching per field
-    if (question.fieldName === 'occupation') {
-      if (clean.includes('farmer') || clean.includes('farm') || clean.includes('ರೈತ') || clean.includes('ಕೃಷಿ') || clean.includes('किसान') || clean.includes('কৃষক')) {
-        return question.options.find(o => o.value === 'farmer') || question.options[0];
-      }
-      if (clean.includes('vendor') || clean.includes('street') || clean.includes('ವ್ಯಾಪಾರ') || clean.includes('दुकान') || clean.includes('ব্যবসায়ী')) {
-        return question.options.find(o => o.value === 'street_vendor') || question.options[1];
-      }
-      if (clean.includes('artisan') || clean.includes('weaver') || clean.includes('ಕುಶಲಕರ್ಮಿ') || clean.includes('ಕಾರಿಗರ') || clean.includes('ਕਾਰੀಗರ್') || clean.includes('শিল্পী')) {
-        return question.options.find(o => o.value === 'artisan') || question.options[2];
-      }
-      if (clean.includes('student') || clean.includes('college') || clean.includes('ವಿದ್ಯಾರ್ಥಿ') || clean.includes('छात्र') || clean.includes('ছাত্র')) {
-        return question.options.find(o => o.value === 'student') || question.options[3];
-      }
-    }
-
-    // Boolean questions across all 11 languages
-    if (
-      ['yes', 'ಹೌದು', 'हाँ', 'হ্যাঁ', 'ஆம்', 'అవును', 'होय', 'അതെ', 'હા', 'ହଁ', 'ਹਾਂ', 'true'].some((w) =>
-        clean.includes(w)
-      )
-    ) {
-      return question.options.find(o => o.value === true) || question.options[0];
-    }
-    if (
-      ['no', 'ಇಲ್ಲ', 'नहीं', 'না', 'இல்லை', 'కాదు', 'नाही', 'ഇല്ല', 'ના', 'ନା', 'ਨਹੀਂ', 'false'].some((w) =>
-        clean.includes(w)
-      )
-    ) {
-      return question.options.find(o => o.value === false) || question.options[1];
-    }
-
-    // Numeric scales
-    if (question.fieldName === 'landholdingAcres') {
-      if (clean.includes('small') || clean.includes('ಕಡಿಮೆ') || clean.includes('कम') || clean.includes('কম') || clean.includes('1') || clean.includes('2')) {
-        return question.options.find(o => o.value === 1.5) || question.options[0];
-      }
-    }
-    if (question.fieldName === 'annualIncome') {
-      if (clean.includes('bpl') || clean.includes('low') || clean.includes('ಕಡಿಮೆ') || clean.includes('कम') || clean.includes('লাখ')) {
-        return question.options.find(o => o.value === 100000) || question.options[0];
-      }
-    }
-
-    return question.options[0];
+    return matchTranscriptToOption(transcript, question);
   };
 
   // Voice Interaction Logic with browser speech recognition & explicit user confirmation
@@ -222,9 +170,10 @@ export const EligibilityCheckerScreen: React.FC = () => {
         };
 
         recognition.onend = () => {
-          // If ended without transcript and still listening, transition to error
-          if (voiceState === 'listening' && !candidateOption) {
-            setVoiceState('idle');
+          // If ended without transcript and still listening, prompt manual selection
+          if (voiceStateRef.current === 'listening') {
+            setVoiceErrorMsg(t('voiceFallbackNote', 'Speech not detected clearly. Please tap an option below.'));
+            setVoiceState('error');
           }
         };
 

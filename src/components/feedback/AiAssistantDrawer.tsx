@@ -1,28 +1,94 @@
-import React, { useState, useEffect } from 'react';
-import { X, Mic, Send, Bot, Volume2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { X, Mic, MicOff, Send, Bot, Volume2, VolumeX, ArrowRight, AlertCircle } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useTranslation } from '../../hooks/useTranslation';
-import { speakVernacularText } from '../../utils/audioSpeech';
+import { speakVernacularText, stopSpeech } from '../../utils/audioSpeech';
 import { SupportedLanguage } from '../../types';
 import { LANGUAGE_META } from '../../data/languages';
+import { useSpeechRecognition, SpeechErrorCode } from '../../hooks/useSpeechRecognition';
+import { buildAssistantReply, AssistantReply } from '../../utils/assistantResponder';
+
+interface ChatMessage {
+  sender: 'user' | 'assistant';
+  text: string;
+  time: string;
+  actionLink?: AssistantReply['actionLink'];
+}
 
 function getInitialGreeting(language: SupportedLanguage): string {
   return (LANGUAGE_META[language] || LANGUAGE_META.en).aiGreeting;
 }
 
+function getSpeechErrorMessage(error: SpeechErrorCode, t: (key: string, fallback?: string) => string): string {
+  switch (error) {
+    case 'not-allowed':
+      return t('voicePermDenied', 'Microphone permission was denied. Please allow mic access or type below.');
+    case 'no-speech':
+      return t('voiceFallbackNote', 'No speech detected clearly. Please tap the mic and try again, or type below.');
+    case 'audio-capture':
+      return 'No microphone detected on this device. You can type your question below.';
+    case 'unsupported':
+      return 'Live voice recognition is not supported in this browser. Please use Chrome/Edge or type below.';
+    case 'network':
+      return 'Network issue while recognizing speech. Please check your connection or type below.';
+    default:
+      return 'Could not capture voice clearly. Please try again or type below.';
+  }
+}
+
 export const AiAssistantDrawer: React.FC = () => {
+  const navigate = useNavigate();
   const { isAiDrawerOpen, setAiDrawerOpen, language } = useAppStore();
   const { t } = useTranslation();
 
   const [inputQuery, setInputQuery] = useState('');
-  const [isListening, setIsListening] = useState(false);
-  const [messages, setMessages] = useState<{ sender: 'user' | 'assistant'; text: string; time: string }[]>([
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
       sender: 'assistant',
       text: getInitialGreeting(language),
-      time: "Just now"
-    }
+      time: 'Just now',
+    },
   ]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const handleSend = (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+
+    const userMsg: ChatMessage = { sender: 'user', text: trimmed, time: 'Just now' };
+    setMessages((prev) => [...prev, userMsg]);
+    setInputQuery('');
+
+    setTimeout(() => {
+      const reply = buildAssistantReply(trimmed, language);
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: 'assistant',
+          text: reply.text,
+          time: 'Just now',
+          actionLink: reply.actionLink,
+        },
+      ]);
+      speakVernacularText(reply.text, language);
+    }, 350);
+  };
+
+  const {
+    isListening,
+    interimTranscript,
+    error: speechError,
+    startListening,
+    stopListening,
+    reset: resetSpeech,
+  } = useSpeechRecognition({
+    language,
+    onFinalResult: (spoken) => {
+      setInputQuery(spoken);
+      handleSend(spoken);
+    },
+  });
 
   useEffect(() => {
     setMessages((prev) => {
@@ -33,73 +99,36 @@ export const AiAssistantDrawer: React.FC = () => {
     });
   }, [language]);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isListening, interimTranscript]);
+
   if (!isAiDrawerOpen) return null;
 
   const quickPrompts = [
-    t('promptChip1', "When will the next PM-KISAN installment arrive?"),
-    t('promptChip2', "What documents are needed for Ayushman Bharat?"),
-    t('promptChip3', "Can a tenant farmer get crop assistance?")
+    t('promptChip1', 'When will the next PM-KISAN installment arrive?'),
+    t('promptChip2', 'What documents are needed for Ayushman Bharat?'),
+    t('promptChip3', 'Can a tenant farmer get crop assistance?'),
   ];
-
-  const handleSend = (text: string) => {
-    if (!text.trim()) return;
-
-    const userMsg = { sender: 'user' as const, text, time: "Just now" };
-    setMessages(prev => [...prev, userMsg]);
-    setInputQuery('');
-
-    // Generate grounded sovereign answer based on official gazette rules
-    setTimeout(() => {
-      let botResponse = "";
-      if (text.toLowerCase().includes('kisan') || text.includes('ಕಿಸಾನ್') || text.includes('किसान') || text.includes('কিসান')) {
-        botResponse = language === 'kn'
-          ? "ಪಿಎಂ-ಕಿಸಾನ್ ಯೋಜನೆಯಡಿ ವರ್ಷಕ್ಕೆ ₹6,000 ಹಣವನ್ನು 3 ಕಂತುಗಳಲ್ಲಿ (ಪ್ರತಿ 4 ತಿಂಗಳಿಗೆ ₹2,000) ನೇರವಾಗಿ ರೈತರ ಆಧಾರ್ ಲಿಂಕ್ ಬ್ಯಾಂಕ್ ಖಾತೆಗೆ ಜಮೆ ಮಾಡಲಾಗುತ್ತದೆ. ನಿಮ್ಮ ಭೂ ದಾಖಲೆ (RTC/ಪಹಣಿ) ಇ-ಕೆವೈಸಿ ಆಗಿರಬೇಕು."
-          : language === 'hi'
-          ? "पीएम-किसान योजना के अंतर्गत ₹6,000 प्रति वर्ष तीन किस्तों (₹2,000 प्रत्येक 4 माह में) में सीधे आधार-सीडेड बैंक खाते में भेजे जाते हैं. ज़मीन की खतौनी और eKYC अनिवार्य है."
-          : language === 'bn'
-          ? "পিএম-কিসান প্রকল্পের আওতায় বছরে ₹৬,০০০ টাকা ৩টি কিস্তিতে (প্রতি ৪ মাসে ₹২,০০০) সরাসরি কৃষকদের আধার-লিঙ্কড ব্যাংক অ্যাকাউন্টে পাঠানো হয়। জমির রেকর্ড (খতিয়ান) ও ই-কেওয়াইসি যাচাই করা আবশ্যক।"
-          : "Under PM-KISAN, ₹6,000 per year is disbursed in 3 equal installments of ₹2,000 every 4 months directly into your Aadhaar-linked bank account. Land title (Khatauni/RTC) must be verified.";
-      } else if (text.toLowerCase().includes('ayushman') || text.includes('ಆಯುಷ್ಮಾನ್') || text.includes('आयुष्मान') || text.includes('আয়ুষ্মান')) {
-        botResponse = language === 'kn'
-          ? "ಆಯುಷ್ಮಾನ್ ಭಾರತ್ (PM-JAY) ಅಡಿಯಲ್ಲಿ ಇಡೀ ಕುಟುಂಬಕ್ಕೆ ವಾರ್ಷಿಕ ₹5,00,000 ವರೆಗೆ ಉಚಿತ ಆಸ್ಪತ್ರೆ ಚಿಕಿತ್ಸೆ ಸಿಗುತ್ತದೆ. ಆಧಾರ್ ಕಾರ್ಡ್ ಮತ್ತು ರೇಷನ್ ಕಾರ್ಡ್ ಇದ್ದರೆ ಸಾಕು. 70 ವರ್ಷ ಮೇಲ್ಪಟ್ಟ ಎಲ್ಲಾ ಹಿರಿಯರಿಗೆ ಇದು ಸಂಪೂರ್ಣ ಉಚಿತ."
-          : language === 'hi'
-          ? "आयुष्मान भारत योजना में प्रति परिवार ₹5,00,000 तक का मुफ़्त अस्पताल इलाज मिलता है. आधार कार्ड और राशन कार्ड आवश्यक हैं. 70 वर्ष से अधिक आयु के वरिष्ठ नागरिकों के लिए यह बिना आय सीमा के उपलब्ध है."
-          : language === 'bn'
-          ? "আয়ুষ্মান ভারত (PM-JAY) প্রকল্পে প্রতি পরিবার বছরে ₹৫,০০,০০০ পর্যন্ত বিনামূল্যে ক্যাশলেস হাসপাতালে চিকিৎসা পায়। এর জন্য আধার কার্ড এবং রেশন কার্ড প্রয়োজন। ৭০ বছর বা তার বেশি বয়সী প্রবীণ নাগরিকদের জন্য এটি আয়-সীমাহীনভাবে উপলব্ধ।"
-          : "Ayushman Bharat PM-JAY provides up to ₹5,00,000 cashless hospital cover per family per year across 28,000+ empaneled hospitals. Only Aadhaar Card and Ration Card are required.";
-      } else {
-        botResponse = language === 'kn'
-          ? "ನಿಮ್ಮ ಪ್ರಶ್ನೆಗೆ ಅಧಿಕೃತ ಕಲ್ಯಾಣ ನಿಯಮಗಳ ಪ್ರಕಾರ ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ. ಸಾಮಾನ್ಯ ಅರ್ಹತೆಗೆ ಆಧಾರ್ ಮತ್ತು ಬ್ಯಾಂಕ್ ಖಾತೆ ಜೋಡಣೆ ಕಡ್ಡಾಯ. ಹೆಚ್ಚಿನ ವಿವರಕ್ಕೆ ನಿಮ್ಮ ತಾಲೂಕು ಸೇವಾ ಕೇಂದ್ರವನ್ನು ಭೇಟಿ ಮಾಡಿ."
-          : language === 'hi'
-          ? "आपके सवाल की सरकारी नियमों के अनुसार जांच की जा रही है. योजना का लाभ लेने हेतु आधार और बैंक खाता लिंक होना अनिवार्य है."
-          : language === 'bn'
-          ? "সরকারি নির্দেশিকা অনুযায়ী আপনার প্রশ্নটি যাচাই করা হচ্ছে। অধিকাংশ কল্যাণমূলক প্রকল্পের জন্য আধার ও ব্যাংক অ্যাকাউন্ট লিঙ্ক থাকা বাধ্যতামূলক এবং কোনো অতিরিক্ত এজেন্ট ফি দেবেন না।"
-          : "According to official government gazette guidelines, welfare entitlements require Aadhaar-NPCI seeded bank accounts. No agent fee should be paid.";
-      }
-
-      setMessages(prev => [...prev, { sender: 'assistant', text: botResponse, time: "Just now" }]);
-      speakVernacularText(botResponse, language);
-    }, 700);
-  };
 
   const handleToggleVoice = () => {
     if (isListening) {
-      setIsListening(false);
+      stopListening();
     } else {
-      setIsListening(true);
-      // Simulate speech input in vernacular
-      setTimeout(() => {
-        setIsListening(false);
-        const sampleQuery = (LANGUAGE_META[language] || LANGUAGE_META.en).aiVoiceSample;
-        setInputQuery(sampleQuery);
-        handleSend(sampleQuery);
-      }, 2500);
+      resetSpeech();
+      startListening();
     }
+  };
+
+  const handleClose = () => {
+    stopListening();
+    stopSpeech();
+    setAiDrawerOpen(false);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-      <div 
+      <div
         className="w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-3xl shadow-crisp-xl border border-slate-200 dark:border-slate-800 h-[88vh] flex flex-col"
         role="dialog"
         aria-modal="true"
@@ -114,21 +143,34 @@ export const AiAssistantDrawer: React.FC = () => {
             <div>
               <h2 id="ai-drawer-title" className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                 <span>{t('aiAssistantTitle', 'Sahayak Sathi')}</span>
-                <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-semibold px-2 py-0.5 rounded-full">AI Voice</span>
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-semibold px-2 py-0.5 rounded-full">
+                  {(LANGUAGE_META[language] || LANGUAGE_META.en).label}
+                </span>
               </h2>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 {t('aiAssistantSubtitle', 'Grounded strictly in government rules')}
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setAiDrawerOpen(false)}
-            className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-            aria-label="Close voice assistant"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={stopSpeech}
+              className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              aria-label="Stop speaking"
+              title="Stop voice playback"
+            >
+              <VolumeX className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleClose}
+              className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              aria-label="Close voice assistant"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Messages Container */}
@@ -145,7 +187,21 @@ export const AiAssistantDrawer: React.FC = () => {
                     : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-800 rounded-bl-none'
                 }`}
               >
-                {m.text}
+                <p>{m.text}</p>
+                {m.actionLink && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const dest = m.actionLink!.to;
+                      handleClose();
+                      navigate(dest);
+                    }}
+                    className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors"
+                  >
+                    <span>{m.actionLink.label}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
               <div className="flex items-center gap-2 mt-1">
                 {m.sender === 'assistant' && (
@@ -156,7 +212,7 @@ export const AiAssistantDrawer: React.FC = () => {
                     aria-label="Replay audio"
                   >
                     <Volume2 className="w-3 h-3" />
-                    <span>ಕೇಳಿ (Listen)</span>
+                    <span>{t('listenInLanguage', 'Listen')}</span>
                   </button>
                 )}
                 <span className="text-[10px] text-slate-400">{m.time}</span>
@@ -165,13 +221,38 @@ export const AiAssistantDrawer: React.FC = () => {
           ))}
 
           {isListening && (
-            <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 flex items-center gap-3 animate-pulse">
-              <Mic className="w-6 h-6 text-amber-600 animate-bounce" />
-              <div className="text-xs font-semibold text-amber-900 dark:text-amber-300">
-                {t('aiListening', 'Listening... speak now in your mother tongue')}
+            <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <Mic className="w-5 h-5 text-red-600 animate-pulse flex-shrink-0" />
+                  <span className="text-xs font-semibold text-amber-900 dark:text-amber-300">
+                    {t('aiListening', 'Listening... speak now in your mother tongue')}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={stopListening}
+                  className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-red-600 text-white hover:bg-red-700"
+                >
+                  {t('voiceCancel', 'Stop')}
+                </button>
               </div>
+              {interimTranscript && (
+                <p className="text-xs text-slate-700 dark:text-slate-200 italic pl-7">
+                  “{interimTranscript}”
+                </p>
+              )}
             </div>
           )}
+
+          {speechError && !isListening && (
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 flex items-start gap-2 text-xs text-rose-800 dark:text-rose-200">
+              <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+              <span>{getSpeechErrorMessage(speechError, t)}</span>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Quick Suggestion Chips */}
@@ -195,17 +276,17 @@ export const AiAssistantDrawer: React.FC = () => {
             onClick={handleToggleVoice}
             className={`p-3 rounded-full transition-all active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0 ${
               isListening
-                ? 'bg-red-600 text-white ring-4 ring-red-200'
+                ? 'bg-red-600 text-white ring-4 ring-red-200 dark:ring-red-900'
                 : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 hover:bg-amber-200'
             }`}
-            title="Speak into microphone"
-            aria-label="Toggle voice input"
+            title={isListening ? 'Stop listening' : 'Speak into microphone'}
+            aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
           >
-            <Mic className="w-5 h-5" />
+            {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
           </button>
           <input
             type="text"
-            value={inputQuery}
+            value={isListening && interimTranscript ? interimTranscript : inputQuery}
             onChange={(e) => setInputQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend(inputQuery)}
             placeholder={t('aiPlaceholder', 'Ask anything about government schemes...')}

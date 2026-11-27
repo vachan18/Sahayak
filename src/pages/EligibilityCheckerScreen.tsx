@@ -10,6 +10,7 @@ import { QuestionOption } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAppStore } from '../store/useAppStore';
 import { speakVernacularText, stopSpeech } from '../utils/audioSpeech';
+import { LANGUAGE_META } from '../data/languages';
 
 type VoiceState = 'idle' | 'listening' | 'processing' | 'recognized' | 'error';
 
@@ -108,13 +109,6 @@ export const EligibilityCheckerScreen: React.FC = () => {
     speakVernacularText(`${questionText}${helpText}`, language);
   };
 
-  const speechLangMap: Record<string, string> = {
-    kn: 'kn-IN',
-    hi: 'hi-IN',
-    bn: 'bn-IN',
-    en: 'en-IN',
-  };
-
   const findBestOptionMatch = (transcript: string): QuestionOption | null => {
     const clean = transcript.toLowerCase().trim();
     if (!question.options || question.options.length === 0) return null;
@@ -143,11 +137,19 @@ export const EligibilityCheckerScreen: React.FC = () => {
       }
     }
 
-    // Boolean questions
-    if (clean.includes('yes') || clean.includes('ಹೌದು') || clean.includes('हाँ') || clean.includes('হ্যাঁ') || clean.includes('true')) {
+    // Boolean questions across all 11 languages
+    if (
+      ['yes', 'ಹೌದು', 'हाँ', 'হ্যাঁ', 'ஆம்', 'అవును', 'होय', 'അതെ', 'હા', 'ହଁ', 'ਹਾਂ', 'true'].some((w) =>
+        clean.includes(w)
+      )
+    ) {
       return question.options.find(o => o.value === true) || question.options[0];
     }
-    if (clean.includes('no') || clean.includes('ಇಲ್ಲ') || clean.includes('नहीं') || clean.includes('না') || clean.includes('false')) {
+    if (
+      ['no', 'ಇಲ್ಲ', 'नहीं', 'না', 'இல்லை', 'కాదు', 'नाही', 'ഇല്ല', 'ના', 'ନା', 'ਨਹੀਂ', 'false'].some((w) =>
+        clean.includes(w)
+      )
+    ) {
       return question.options.find(o => o.value === false) || question.options[1];
     }
 
@@ -185,7 +187,7 @@ export const EligibilityCheckerScreen: React.FC = () => {
 
         const recognition = new SpeechRecognitionClass();
         recognitionRef.current = recognition;
-        recognition.lang = speechLangMap[language] || 'en-IN';
+        recognition.lang = (LANGUAGE_META[language] || LANGUAGE_META.en).speechLang;
         recognition.continuous = false;
         recognition.interimResults = false;
 

@@ -8,6 +8,7 @@ export interface LanguageMeta {
   speechLang: string;
   speechRate: number;
   greeting: string;
+  phoneticGreeting: string;
   welcomeVoice: string;
   activeBadge: string;
   signInLabel: string;
@@ -41,6 +42,7 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
     speechLang: 'en-IN',
     speechRate: 1.0,
     greeting: 'Welcome! I am your official welfare guide.',
+    phoneticGreeting: 'Welcome to Sahayak! English selected.',
     welcomeVoice: 'Welcome to Sahayak',
     activeBadge: 'Active',
     signInLabel: 'Sign In',
@@ -58,6 +60,7 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
     speechLang: 'kn-IN',
     speechRate: 0.9,
     greeting: 'ನಮಸ್ಕಾರ! ಸರ್ಕಾರದ ಯೋಜನೆಗಳನ್ನು ತಿಳಿಯಲು ಇದು ನಿಮ್ಮ ಸಹಾಯಕ.',
+    phoneticGreeting: 'Namaskara! Sahayak Kannada selected.',
     welcomeVoice: 'ಸಹಾಯಕಕ್ಕೆ ಸ್ವಾಗತ',
     activeBadge: 'ಸಕ್ರಿಯ',
     signInLabel: 'ಲಾಗಿನ್',
@@ -75,6 +78,7 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
     speechLang: 'hi-IN',
     speechRate: 0.95,
     greeting: 'नमस्ते! मैं आपकी सरकारी योजनाओं में सहायता करूँगा.',
+    phoneticGreeting: 'Namaste! Sahayak Hindi selected.',
     welcomeVoice: 'सहायक में आपका स्वागत है',
     activeBadge: 'सक्रिय',
     signInLabel: 'लॉग इन',
@@ -92,6 +96,7 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
     speechLang: 'bn-IN',
     speechRate: 0.95,
     greeting: 'নমস্কার! সরকারি প্রকল্প জানতে এটি আপনার সহায়ক।',
+    phoneticGreeting: 'Nomoshkar! Sahayak Bengali selected.',
     welcomeVoice: 'সহায়কে স্বাগতম',
     activeBadge: 'সক্রিয়',
     signInLabel: 'লগইন',
@@ -109,6 +114,7 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
     speechLang: 'ta-IN',
     speechRate: 0.95,
     greeting: 'வணக்கம்! அரசுத் திட்டங்களை அறிய இது உங்கள் சகாயக்.',
+    phoneticGreeting: 'Vanakkam! Sahayak Tamil selected.',
     welcomeVoice: 'சகாயக்கிற்கு வரவேற்கிறோம்',
     activeBadge: 'செயலில்',
     signInLabel: 'உள்நுழைக',
@@ -126,6 +132,7 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
     speechLang: 'te-IN',
     speechRate: 0.95,
     greeting: 'నమస్కారం! ప్రభుత్వ పథకాలను తెలుసుకోవడానికి ఇది మీ సహాయక్.',
+    phoneticGreeting: 'Namaskaram! Sahayak Telugu selected.',
     welcomeVoice: 'సహాయక్‌కు స్వాగతం',
     activeBadge: 'చురుకుగా ఉంది',
     signInLabel: 'లాగిన్',
@@ -143,6 +150,7 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
     speechLang: 'mr-IN',
     speechRate: 0.95,
     greeting: 'नमस्कार! शासकीय योजनांची माहिती मिळवण्यासाठी मी तुमचा सहायक आहे.',
+    phoneticGreeting: 'Namaskar! Sahayak Marathi selected.',
     welcomeVoice: 'सहायकमध्ये आपले स्वागत आहे',
     activeBadge: 'सक्रिय',
     signInLabel: 'लॉगिन',
@@ -160,6 +168,7 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
     speechLang: 'ml-IN',
     speechRate: 0.95,
     greeting: 'നമസ്കാരം! സർക്കാർ പദ്ധതികൾ അറിയാൻ ഇത് നിങ്ങളുടെ സഹായക്.',
+    phoneticGreeting: 'Namaskaram! Sahayak Malayalam selected.',
     welcomeVoice: 'സഹായക്കിലേക്ക് സ്വാഗതം',
     activeBadge: 'സജീവം',
     signInLabel: 'ലോഗിൻ',
@@ -177,6 +186,7 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
     speechLang: 'gu-IN',
     speechRate: 0.95,
     greeting: 'નમસ્તે! સરકારી યોજનાઓ જાણવા માટે આ તમારો સહાયક છે.',
+    phoneticGreeting: 'Namaste! Sahayak Gujarati selected.',
     welcomeVoice: 'સહાયકમાં આપનું સ્વાગત છે',
     activeBadge: 'સક્રિય',
     signInLabel: 'લોગિન',
@@ -194,6 +204,7 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
     speechLang: 'or-IN',
     speechRate: 0.95,
     greeting: 'ନମସ୍କାର! ସରକାରୀ ଯୋଜନା ବିଷୟରେ ଜାଣିବା ପାଇଁ ଏହା ଆପଣଙ୍କ ସହାୟକ।',
+    phoneticGreeting: 'Namaskar! Sahayak Odia selected.',
     welcomeVoice: 'ସହାୟକକୁ ସ୍ୱାଗତ',
     activeBadge: 'ସକ୍ରିୟ',
     signInLabel: 'ଲଗଇନ୍',
@@ -211,6 +222,7 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
     speechLang: 'pa-IN',
     speechRate: 0.95,
     greeting: 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਸਰਕਾਰੀ ਯੋਜਨਾਵਾਂ ਜਾਣਨ ਲਈ ਇਹ ਤੁਹਾਡਾ ਸਹਾਇਕ ਹੈ।',
+    phoneticGreeting: 'Sat Sri Akal! Sahayak Punjabi selected.',
     welcomeVoice: 'ਸਹਾਇਕ ਵਿੱਚ ਤੁਹਾਡਾ ਸੁਆਗਤ ਹੈ',
     activeBadge: 'ਸਰਗਰਮ',
     signInLabel: 'ਲਾਗਇਨ',

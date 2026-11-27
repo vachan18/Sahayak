@@ -766,3 +766,386 @@ if ((import.meta as any).env?.DEV) {
     }
   }).catch(() => {});
 }
+
+/**
+ * Catalogue extension (Aangan redesign).
+ * Five widely-used schemes that close real gaps in the catalogue — Housing had none, and the
+ * home screen's popular searches (Gruha Lakshmi, PM Surya Ghar, MUDRA) previously led nowhere.
+ *
+ * These are browsable and applicable, but are deliberately NOT part of `verifiedSchemes`:
+ * the deterministic eligibility engine only evaluates schemes it has statute-level rules for,
+ * so these are marked NEEDS_REVIEW until their rules are encoded and audited.
+ * Figures are conservative public facts from the official portals listed.
+ */
+export const catalogExtensionSchemes: Scheme[] = [
+  {
+    id: "pmay-g",
+    slug: "pradhan-mantri-awas-yojana-gramin",
+    titleKey: "PM Awas Yojana – Gramin (PMAY-G)",
+    shortDescKey: "Money to build a pucca house with a kitchen for rural families who are homeless or live in a kutcha or broken house.",
+    fullDescKey: "Pradhan Mantri Awas Yojana – Gramin gives financial assistance of ₹1,20,000 in plain areas and ₹1,30,000 in hilly states, difficult areas and IAP districts to construct a pucca house of at least 25 sq. m with a hygienic cooking space. Beneficiaries are identified from the SECC 2011 / Awaas+ surveys and verified by the Gram Sabha. The amount is paid directly into the beneficiary's bank account in instalments linked to construction progress. Convergence also provides 90–95 days of unskilled MGNREGA wages and ₹12,000 for a toilet under Swachh Bharat Mission (Gramin).",
+    lifeEventId: "housing_utilities",
+    ministryKey: "Ministry of Rural Development",
+    benefitType: "dbt_cash",
+    benefitCategory: "one_time_cash",
+    verificationStatus: "NEEDS_REVIEW",
+    financialBenefit: {
+      amount: 120000,
+      frequencyKey: "oneTime",
+      formattedDisplay: "₹1,20,000 (₹1,30,000 in hilly / difficult areas)"
+    },
+    statutoryFee: {
+      amount: 0,
+      isFree: true,
+      statutoryRuleCitation: "No application fee — beneficiaries are selected from the Awaas+ / SECC list and approved by the Gram Sabha",
+      cscAuthorizedCharge: "No charge for inclusion; CSC help for document upload at notified service rates"
+    },
+    feeStructure: {
+      governmentFee: 0,
+      isStatutoryFree: true,
+      statutoryRuleCitation: "PMAY-G Framework for Implementation, Ministry of Rural Development"
+    },
+    processingTimeline: {
+      slaDays: 90,
+      isStatutoryGuarantee: false,
+      timelineType: "administrative_estimate",
+      authorityCitation: "Sanction and first instalment follow Gram Sabha approval; timelines vary by state"
+    },
+    sourceAttribution: "Ministry of Rural Development, PMAY-G Framework for Implementation • pmayg.nic.in",
+    lastVerifiedDate: "November 2026",
+    processingSlaDays: 90,
+    handlingAuthorityKey: "Block Development Officer / Gram Panchayat",
+    helplinePhone: "1800-11-6446",
+    officialPortalUrl: "https://pmayg.nic.in",
+    documents: [
+      { id: "aadhaar", nameKey: "Aadhaar Card", descriptionKey: "Identity of the beneficiary, with consent for Aadhaar use.", isMandatory: true, acceptableFormats: ["PDF", "JPEG"], maxSizeMb: 2, digiLockerSupported: true },
+      { id: "bank_passbook", nameKey: "Bank Account Passbook", descriptionKey: "Front page with account number and IFSC — instalments are paid here.", isMandatory: true, acceptableFormats: ["JPEG", "PNG", "PDF"], maxSizeMb: 3, digiLockerSupported: false, commonErrorKey: "passbookDo" },
+      { id: "mgnrega_job_card", nameKey: "MGNREGA Job Card", descriptionKey: "Needed to receive wages for working on your own house.", isMandatory: true, acceptableFormats: ["PDF", "JPEG"], maxSizeMb: 2, digiLockerSupported: false },
+      { id: "sbm_number", nameKey: "Swachh Bharat Mission (Gramin) number", descriptionKey: "Only if you are also getting toilet assistance.", isMandatory: false, acceptableFormats: ["PDF", "JPEG"], maxSizeMb: 2, digiLockerSupported: false }
+    ],
+    eligibilityCriteria: {
+      socialCategories: ["all"],
+      requiresSeccOrBplRationCard: true
+    },
+    keyBenefitsListKeys: [
+      "₹1,20,000 to build your house (₹1,30,000 in hilly and difficult areas), paid into your bank in parts as the house is built",
+      "Wages for 90–95 days of your own work on the house through MGNREGA",
+      "₹12,000 extra for a toilet through Swachh Bharat Mission"
+    ],
+    whoIsEligibleListKeys: [
+      "Rural families with no house, or living in a kutcha or broken house with zero, one or two rooms",
+      "Families whose names are in the Awaas+ / SECC 2011 list, approved by the Gram Sabha"
+    ],
+    whoIsNotEligibleListKeys: [
+      "Families who already own a pucca house",
+      "Families with a member in a government job, paying income tax, or owning a motorised four-wheeler, mechanised farm equipment, or a Kisan Credit Card limit of ₹50,000 or more"
+    ],
+    rulesRegistry: [
+      {
+        ruleId: "PMAYG-R01",
+        ruleDescription: "Unit assistance of ₹1.20 lakh in plain areas and ₹1.30 lakh in hilly states, difficult areas and IAP districts.",
+        issuingAuthority: "Ministry of Rural Development, GoI",
+        officialDocumentTitle: "PMAY-G Framework for Implementation",
+        exactSourceUrl: "https://pmayg.nic.in",
+        lastVerifiedDate: "November 2026",
+        verificationStatus: "NEEDS_REVIEW"
+      }
+    ]
+  },
+  {
+    id: "pm-surya-ghar",
+    slug: "pm-surya-ghar-muft-bijli-yojana",
+    titleKey: "PM Surya Ghar: Muft Bijli Yojana",
+    shortDescKey: "Government pays up to ₹78,000 towards solar panels on your roof, so your home gets up to 300 units of free electricity a month.",
+    fullDescKey: "PM Surya Ghar: Muft Bijli Yojana supports households to install rooftop solar. Central Financial Assistance is ₹30,000 per kW for the first 2 kW and ₹18,000 for the third kW, capped at ₹78,000 for systems of 3 kW or more. Households apply on the national portal, choose a registered vendor, and the subsidy is credited to their bank account after the system is installed, inspected and net-metered by the electricity distribution company.",
+    lifeEventId: "housing_utilities",
+    ministryKey: "Ministry of New and Renewable Energy",
+    benefitType: "dbt_cash",
+    benefitCategory: "subsidy",
+    verificationStatus: "NEEDS_REVIEW",
+    financialBenefit: {
+      amount: 78000,
+      frequencyKey: "oneTime",
+      formattedDisplay: "Up to ₹78,000 solar subsidy"
+    },
+    statutoryFee: {
+      amount: 0,
+      isFree: true,
+      statutoryRuleCitation: "Free registration on the national portal pmsuryaghar.gov.in",
+      cscAuthorizedCharge: "CSC help with registration at notified service rates"
+    },
+    feeStructure: {
+      governmentFee: 0,
+      isStatutoryFree: true,
+      statutoryRuleCitation: "MNRE Operational Guidelines for PM Surya Ghar: Muft Bijli Yojana"
+    },
+    processingTimeline: {
+      slaDays: 30,
+      isStatutoryGuarantee: false,
+      timelineType: "administrative_estimate",
+      authorityCitation: "Subsidy is released after DISCOM inspection and net-meter installation"
+    },
+    sourceAttribution: "Ministry of New and Renewable Energy, Operational Guidelines • pmsuryaghar.gov.in",
+    lastVerifiedDate: "November 2026",
+    processingSlaDays: 30,
+    handlingAuthorityKey: "Electricity distribution company (DISCOM)",
+    helplinePhone: "15555",
+    officialPortalUrl: "https://pmsuryaghar.gov.in",
+    documents: [
+      { id: "electricity_bill", nameKey: "Latest electricity bill", descriptionKey: "Shows your consumer number — the connection must be in your name.", isMandatory: true, acceptableFormats: ["PDF", "JPEG"], maxSizeMb: 2, digiLockerSupported: false },
+      { id: "aadhaar", nameKey: "Aadhaar Card", descriptionKey: "Identity of the person who owns the connection.", isMandatory: true, acceptableFormats: ["PDF", "JPEG"], maxSizeMb: 2, digiLockerSupported: true },
+      { id: "bank_passbook", nameKey: "Bank Account Passbook", descriptionKey: "The subsidy is paid into this account.", isMandatory: true, acceptableFormats: ["JPEG", "PNG", "PDF"], maxSizeMb: 3, digiLockerSupported: false, commonErrorKey: "passbookDo" },
+      { id: "roof_ownership", nameKey: "Proof that you own the house / roof", descriptionKey: "Property tax receipt, sale deed or similar.", isMandatory: true, acceptableFormats: ["PDF", "JPEG"], maxSizeMb: 5, digiLockerSupported: false }
+    ],
+    eligibilityCriteria: {
+      socialCategories: ["all"]
+    },
+    keyBenefitsListKeys: [
+      "₹30,000 per kW for the first 2 kW and ₹18,000 for the 3rd kW — up to ₹78,000 in total",
+      "Up to 300 units of free electricity every month from your own roof",
+      "Low-interest bank loans are available for the remaining cost"
+    ],
+    whoIsEligibleListKeys: [
+      "Any Indian household that owns a house with a roof suitable for solar panels",
+      "Has a valid electricity connection in the household's name"
+    ],
+    whoIsNotEligibleListKeys: [
+      "Households that have already received a government subsidy for rooftop solar"
+    ],
+    rulesRegistry: [
+      {
+        ruleId: "PMSG-R01",
+        ruleDescription: "CFA of ₹30,000/kW up to 2 kW and ₹18,000/kW for additional capacity up to 3 kW; total CFA capped at ₹78,000.",
+        issuingAuthority: "Ministry of New and Renewable Energy, GoI",
+        officialDocumentTitle: "Operational Guidelines — PM Surya Ghar: Muft Bijli Yojana",
+        exactSourceUrl: "https://pmsuryaghar.gov.in",
+        lastVerifiedDate: "November 2026",
+        verificationStatus: "NEEDS_REVIEW"
+      }
+    ]
+  },
+  {
+    id: "gruha-lakshmi",
+    slug: "gruha-lakshmi-karnataka",
+    titleKey: "Gruha Lakshmi (Karnataka)",
+    shortDescKey: "₹2,000 every month into the bank account of the woman who heads the family on the ration card.",
+    fullDescKey: "Gruha Lakshmi is a Government of Karnataka guarantee scheme that pays ₹2,000 per month directly into the Aadhaar-linked bank account of the woman recorded as the head of the family on an Antyodaya, BPL or APL ration card. Registration is free through Seva Sindhu, Grama One, Karnataka One, Bangalore One or the Gram Panchayat.",
+    lifeEventId: "women_child",
+    ministryKey: "Department of Women and Child Development, Government of Karnataka",
+    benefitType: "dbt_cash",
+    benefitCategory: "annual_cash_transfer",
+    verificationStatus: "NEEDS_REVIEW",
+    financialBenefit: {
+      amount: 2000,
+      frequencyKey: "perMonth",
+      formattedDisplay: "₹2,000 / ತಿಂಗಳಿಗೆ (₹2,000 per month)"
+    },
+    statutoryFee: {
+      amount: 0,
+      isFree: true,
+      statutoryRuleCitation: "Free registration — Government of Karnataka guarantee scheme order",
+      cscAuthorizedCharge: "Registration at Grama One / Karnataka One / Bangalore One is free of charge"
+    },
+    feeStructure: {
+      governmentFee: 0,
+      isStatutoryFree: true,
+      statutoryRuleCitation: "Government of Karnataka, Gruha Lakshmi scheme order (2023)"
+    },
+    processingTimeline: {
+      slaDays: 30,
+      isStatutoryGuarantee: false,
+      timelineType: "administrative_estimate",
+      authorityCitation: "Monthly credit begins after verification of the ration card and bank seeding"
+    },
+    sourceAttribution: "Department of Women and Child Development, Government of Karnataka • sevasindhugs.karnataka.gov.in",
+    lastVerifiedDate: "November 2026",
+    processingSlaDays: 30,
+    handlingAuthorityKey: "CDPO, Women and Child Development Department",
+    helplinePhone: "1902",
+    officialPortalUrl: "https://sevasindhugs.karnataka.gov.in",
+    documents: [
+      { id: "ration_card", nameKey: "Ration Card (woman listed as head)", descriptionKey: "Antyodaya, BPL or APL card that names you as the head of the family.", isMandatory: true, acceptableFormats: ["PDF", "JPEG"], maxSizeMb: 2, digiLockerSupported: true },
+      { id: "aadhaar", nameKey: "Aadhaar Card", descriptionKey: "Yours, and your husband's if listed on the ration card.", isMandatory: true, acceptableFormats: ["PDF", "JPEG"], maxSizeMb: 2, digiLockerSupported: true },
+      { id: "bank_passbook", nameKey: "Aadhaar-linked Bank Passbook", descriptionKey: "Money is paid only to an account seeded with your Aadhaar.", isMandatory: true, acceptableFormats: ["JPEG", "PNG", "PDF"], maxSizeMb: 3, digiLockerSupported: false, commonErrorKey: "passbookDo" }
+    ],
+    eligibilityCriteria: {
+      genderAllowed: ["female"],
+      stateSpecific: ["Karnataka"],
+      socialCategories: ["all"]
+    },
+    keyBenefitsListKeys: [
+      "₹2,000 every month — ₹24,000 a year — straight into your bank account",
+      "Free to register at Grama One, Karnataka One, Bangalore One or your Gram Panchayat"
+    ],
+    whoIsEligibleListKeys: [
+      "Women who are named as head of the family on an Antyodaya, BPL or APL ration card in Karnataka",
+      "Only one woman per family"
+    ],
+    whoIsNotEligibleListKeys: [
+      "Families where the woman or her husband pays income tax or files GST returns"
+    ],
+    rulesRegistry: [
+      {
+        ruleId: "GL-R01",
+        ruleDescription: "₹2,000 per month to the woman head of family as recorded on the ration card; income-tax and GST payers excluded.",
+        issuingAuthority: "Department of Women and Child Development, Government of Karnataka",
+        officialDocumentTitle: "Gruha Lakshmi Scheme Government Order",
+        exactSourceUrl: "https://sevasindhugs.karnataka.gov.in",
+        lastVerifiedDate: "November 2026",
+        verificationStatus: "NEEDS_REVIEW"
+      }
+    ]
+  },
+  {
+    id: "pm-mudra",
+    slug: "pradhan-mantri-mudra-yojana",
+    titleKey: "PM MUDRA Yojana (Business Loan)",
+    shortDescKey: "Loans without collateral to start or grow a small shop, workshop or service — from ₹50,000 up to ₹20 lakh.",
+    fullDescKey: "Pradhan Mantri MUDRA Yojana provides collateral-free loans through banks, NBFCs and microfinance institutions to non-farm micro and small enterprises in manufacturing, trading and services, and to activities allied to agriculture. Loans are offered in four categories: Shishu (up to ₹50,000), Kishore (₹50,000 to ₹5 lakh), Tarun (₹5 lakh to ₹10 lakh) and Tarun Plus (₹10 lakh to ₹20 lakh, for those who have repaid a Tarun loan). There is no processing fee for Shishu loans.",
+    lifeEventId: "business_artisan",
+    ministryKey: "Department of Financial Services, Ministry of Finance",
+    benefitType: "credit_loan",
+    benefitCategory: "loan_credit_facility",
+    verificationStatus: "NEEDS_REVIEW",
+    financialBenefit: {
+      amount: 1000000,
+      frequencyKey: "oneTime",
+      formattedDisplay: "Up to ₹10 lakh (₹20 lakh under Tarun Plus)"
+    },
+    statutoryFee: {
+      amount: 0,
+      isFree: true,
+      statutoryRuleCitation: "No government fee; no processing fee for Shishu loans (bank charges for larger loans as per bank policy)",
+      cscAuthorizedCharge: "Apply directly at any bank branch or on jansamarth.in"
+    },
+    feeStructure: {
+      governmentFee: 0,
+      isStatutoryFree: true,
+      statutoryRuleCitation: "MUDRA Operational Guidelines, Department of Financial Services"
+    },
+    processingTimeline: {
+      slaDays: 14,
+      isStatutoryGuarantee: false,
+      timelineType: "administrative_estimate",
+      authorityCitation: "Lending institution appraisal timelines vary"
+    },
+    sourceAttribution: "Department of Financial Services, Ministry of Finance • mudra.org.in",
+    lastVerifiedDate: "November 2026",
+    processingSlaDays: 14,
+    handlingAuthorityKey: "Bank branch manager / lending institution",
+    helplinePhone: "1800-180-1111",
+    officialPortalUrl: "https://www.mudra.org.in",
+    documents: [
+      { id: "aadhaar", nameKey: "Aadhaar Card", descriptionKey: "Identity and address of the applicant.", isMandatory: true, acceptableFormats: ["PDF", "JPEG"], maxSizeMb: 2, digiLockerSupported: true },
+      { id: "business_proof", nameKey: "Proof of your business", descriptionKey: "Udyam registration, shop licence, artisan card or trade register — any one.", isMandatory: true, acceptableFormats: ["PDF", "JPEG"], maxSizeMb: 5, digiLockerSupported: false },
+      { id: "business_plan", nameKey: "Simple business plan or quotation", descriptionKey: "What you will buy with the loan — the bank can help you write this.", isMandatory: true, acceptableFormats: ["PDF", "JPEG"], maxSizeMb: 5, digiLockerSupported: false },
+      { id: "bank_statement", nameKey: "Bank statement (last 6 months)", descriptionKey: "Shows how money comes in and goes out of your business.", isMandatory: false, acceptableFormats: ["PDF"], maxSizeMb: 5, digiLockerSupported: false }
+    ],
+    eligibilityCriteria: {
+      occupations: ["street_vendor", "artisan", "daily_wage"],
+      socialCategories: ["all"]
+    },
+    keyBenefitsListKeys: [
+      "No property or guarantor needed (collateral-free)",
+      "Shishu: up to ₹50,000 · Kishore: ₹50,000–₹5 lakh · Tarun: ₹5–10 lakh · Tarun Plus: up to ₹20 lakh",
+      "No processing fee on Shishu loans"
+    ],
+    whoIsEligibleListKeys: [
+      "Anyone running or starting a small non-farm business — shop, tailoring, repair, weaving, food stall, transport",
+      "Activities allied to farming such as dairy, poultry or fisheries"
+    ],
+    whoIsNotEligibleListKeys: [
+      "People who have defaulted on an earlier bank loan",
+      "Large companies and corporate borrowers"
+    ],
+    rulesRegistry: [
+      {
+        ruleId: "MUDRA-R01",
+        ruleDescription: "Collateral-free loans to non-corporate, non-farm micro enterprises under Shishu, Kishore, Tarun and Tarun Plus categories.",
+        issuingAuthority: "Department of Financial Services, Ministry of Finance, GoI",
+        officialDocumentTitle: "Pradhan Mantri MUDRA Yojana — Scheme Guidelines",
+        exactSourceUrl: "https://www.mudra.org.in",
+        lastVerifiedDate: "November 2026",
+        verificationStatus: "NEEDS_REVIEW"
+      }
+    ]
+  },
+  {
+    id: "sukanya-samriddhi",
+    slug: "sukanya-samriddhi-yojana",
+    titleKey: "Sukanya Samriddhi Yojana (Savings for a Girl Child)",
+    shortDescKey: "A savings account for your daughter with one of the highest safe interest rates, tax-free, ready when she turns 21.",
+    fullDescKey: "Sukanya Samriddhi Account is a small savings scheme of the Government of India for a girl child below 10 years of age. Parents or guardians can open it at any post office or authorised bank with as little as ₹250, and deposit up to ₹1.5 lakh in a financial year for 15 years. The interest rate is notified every quarter by the Ministry of Finance; deposits, interest and maturity amount are tax-free. Up to 50% can be withdrawn for higher education after she turns 18, and the account matures at 21.",
+    lifeEventId: "women_child",
+    ministryKey: "Department of Economic Affairs, Ministry of Finance",
+    benefitType: "dbt_cash",
+    benefitCategory: "non_financial",
+    verificationStatus: "NEEDS_REVIEW",
+    financialBenefit: {
+      amount: 250,
+      frequencyKey: "schemes.freq.minDeposit",
+      formattedDisplay: "Open with ₹250 · tax-free interest"
+    },
+    statutoryFee: {
+      amount: 0,
+      isFree: true,
+      statutoryRuleCitation: "No fee to open the account at a post office or authorised bank",
+      cscAuthorizedCharge: "Open directly at your post office or bank — no agent needed"
+    },
+    feeStructure: {
+      governmentFee: 0,
+      isStatutoryFree: true,
+      statutoryRuleCitation: "Sukanya Samriddhi Account Scheme, 2019 (Ministry of Finance notification)"
+    },
+    processingTimeline: {
+      slaDays: 1,
+      isStatutoryGuarantee: false,
+      timelineType: "administrative_estimate",
+      authorityCitation: "Account is usually opened the same day at the post office"
+    },
+    sourceAttribution: "Department of Economic Affairs, Sukanya Samriddhi Account Scheme 2019 • indiapost.gov.in",
+    lastVerifiedDate: "November 2026",
+    processingSlaDays: 1,
+    handlingAuthorityKey: "Post office / authorised bank branch",
+    helplinePhone: "1800-266-6868",
+    officialPortalUrl: "https://www.indiapost.gov.in",
+    documents: [
+      { id: "birth_certificate", nameKey: "Girl child's birth certificate", descriptionKey: "She must be under 10 years old when the account is opened.", isMandatory: true, acceptableFormats: ["PDF", "JPEG"], maxSizeMb: 2, digiLockerSupported: true },
+      { id: "aadhaar", nameKey: "Parent or guardian's Aadhaar", descriptionKey: "Identity of the person opening the account.", isMandatory: true, acceptableFormats: ["PDF", "JPEG"], maxSizeMb: 2, digiLockerSupported: true },
+      { id: "address_proof", nameKey: "Address proof", descriptionKey: "Ration card, electricity bill or voter ID.", isMandatory: true, acceptableFormats: ["PDF", "JPEG"], maxSizeMb: 2, digiLockerSupported: false }
+    ],
+    eligibilityCriteria: {
+      maxAge: 10,
+      genderAllowed: ["female"],
+      socialCategories: ["all"]
+    },
+    keyBenefitsListKeys: [
+      "Start with just ₹250; save up to ₹1.5 lakh a year, for 15 years",
+      "Interest rate set by the government every quarter — among the highest for safe savings",
+      "Deposits, interest and the final amount are all tax-free",
+      "Withdraw up to half for her studies after she turns 18"
+    ],
+    whoIsEligibleListKeys: [
+      "A girl child below 10 years of age, through a parent or legal guardian",
+      "Up to two accounts per family (three if twins or triplets)"
+    ],
+    whoIsNotEligibleListKeys: [
+      "Girls aged 10 years or older",
+      "Non-resident Indians (NRIs)"
+    ],
+    rulesRegistry: [
+      {
+        ruleId: "SSA-R01",
+        ruleDescription: "Account for a girl child below 10 years; minimum ₹250 and maximum ₹1.5 lakh deposit per financial year for 15 years; maturity at 21 years.",
+        issuingAuthority: "Department of Economic Affairs, Ministry of Finance, GoI",
+        officialDocumentTitle: "Sukanya Samriddhi Account Scheme, 2019",
+        exactSourceUrl: "https://www.indiapost.gov.in",
+        lastVerifiedDate: "November 2026",
+        verificationStatus: "NEEDS_REVIEW"
+      }
+    ]
+  }
+];
+
+/** Everything a citizen can browse: engine-verified schemes first, then the reviewed extension. */
+export const allSchemes: Scheme[] = [...verifiedSchemes, ...catalogExtensionSchemes];

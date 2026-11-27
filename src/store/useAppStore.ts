@@ -5,9 +5,55 @@ import {
   Scheme, EligibilityAssessmentStatus, AssessmentHistoryRecord 
 } from '../types';
 import { SUPPORTED_LANGUAGES } from '../data/languages';
-import { verifiedSchemes } from '../data/schemes';
+import { allSchemes } from '../data/schemes';
 import { mockApplicationsData } from '../data/mockApplications';
 import { mockNotificationsData } from '../data/mockNotifications';
+import { ensureScriptFont } from '../lib/fonts';
+
+export type ThemePref = 'system' | 'light' | 'dark';
+export type TextSize = 'md' | 'lg' | 'xl';
+export type ToastTone = 'neutral' | 'success' | 'warning' | 'error';
+export interface ToastItem {
+  id: string;
+  message: string;
+  tone: ToastTone;
+  actionLabel?: string;
+  onAction?: () => void;
+}
+
+interface StoredPrefs {
+  theme?: ThemePref;
+  textSize?: TextSize;
+  lite?: boolean;
+  sunlight?: boolean;
+  audio?: boolean;
+}
+
+const PREFS_KEY = 'sahayak_prefs';
+function readPrefs(): StoredPrefs {
+  try {
+    return JSON.parse(window.localStorage.getItem(PREFS_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+function writePrefs(patch: StoredPrefs) {
+  try {
+    window.localStorage.setItem(PREFS_KEY, JSON.stringify({ ...readPrefs(), ...patch }));
+  } catch {
+    /* storage unavailable (private mode / kiosk lockdown) */
+  }
+}
+function systemPrefersDark() {
+  try {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  } catch {
+    return false;
+  }
+}
+const initialPrefs = typeof window !== 'undefined' ? readPrefs() : {};
+const initialDark =
+  initialPrefs.theme === 'dark' || ((initialPrefs.theme ?? 'system') === 'system' && typeof window !== 'undefined' && systemPrefersDark());
 
 interface AppState {
   // Authentication & Guest Mode
@@ -34,6 +80,27 @@ interface AppState {
   toggleDarkMode: () => void;
   isHighSunlightMode: boolean;
   toggleHighSunlightMode: () => void;
+  theme: ThemePref;
+  setTheme: (theme: ThemePref) => void;
+  textSize: TextSize;
+  setTextSize: (size: TextSize) => void;
+  isLiteMode: boolean;
+  toggleLiteMode: () => void;
+
+  // Global overlays (any screen can open these)
+  isLanguageSheetOpen: boolean;
+  setLanguageSheetOpen: (open: boolean) => void;
+  isNotificationsOpen: boolean;
+  setNotificationsOpen: (open: boolean) => void;
+  isComfortOpen: boolean;
+  setComfortOpen: (open: boolean) => void;
+  isCommandOpen: boolean;
+  setCommandOpen: (open: boolean) => void;
+
+  // Toasts
+  toasts: ToastItem[];
+  pushToast: (toast: Omit<ToastItem, 'id' | 'tone'> & { tone?: ToastTone }) => void;
+  dismissToast: (id: string) => void;
 
   // Onboarding
   hasCompletedOnboarding: boolean;
@@ -199,6 +266,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       // Ignore storage access errors
     }
     document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ur' ? 'rtl' : 'ltr';
+    ensureScriptFont(lang);
     set({ language: lang });
     if (lang !== 'en') {
       import('../data/translationLoader').then(({ loadLanguageTranslations }) =>
@@ -212,28 +281,69 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   setDialect: (dialect) => set({ dialect }),
 
-  isAudioAssistanceEnabled: true,
-  toggleAudioAssistance: () => set((state) => ({ isAudioAssistanceEnabled: !state.isAudioAssistanceEnabled })),
-  isDarkMode: false,
+  isAudioAssistanceEnabled: initialPrefs.audio ?? true,
+  toggleAudioAssistance: () => set((state) => {
+    const next = !state.isAudioAssistanceEnabled;
+    writePrefs({ audio: next });
+    if (!next && typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+    return { isAudioAssistanceEnabled: next };
+  }),
+  isDarkMode: initialDark,
   toggleDarkMode: () => set((state) => {
     const next = !state.isDarkMode;
-    if (next) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    return { isDarkMode: next };
+    document.documentElement.classList.toggle('dark', next);
+    writePrefs({ theme: next ? 'dark' : 'light' });
+    return { isDarkMode: next, theme: next ? 'dark' : 'light' };
   }),
-  isHighSunlightMode: false,
+  theme: initialPrefs.theme ?? 'system',
+  setTheme: (theme) => {
+    const dark = theme === 'dark' || (theme === 'system' && systemPrefersDark());
+    document.documentElement.classList.toggle('dark', dark && !get().isHighSunlightMode);
+    writePrefs({ theme });
+    set({ theme, isDarkMode: dark });
+  },
+  isHighSunlightMode: initialPrefs.sunlight ?? false,
   toggleHighSunlightMode: () => set((state) => {
     const next = !state.isHighSunlightMode;
-    if (next) {
-      document.documentElement.classList.add('high-contrast');
-    } else {
-      document.documentElement.classList.remove('high-contrast');
-    }
+    const root = document.documentElement;
+    root.classList.toggle('high-contrast', next);
+    // Sunlight is a light-only theme; restore dark afterwards if the user had it
+    root.classList.toggle('dark', !next && state.isDarkMode);
+    writePrefs({ sunlight: next });
     return { isHighSunlightMode: next };
   }),
+  textSize: initialPrefs.textSize ?? 'md',
+  setTextSize: (size) => {
+    const root = document.documentElement;
+    if (size === 'md') root.removeAttribute('data-text');
+    else root.setAttribute('data-text', size);
+    writePrefs({ textSize: size });
+    set({ textSize: size });
+  },
+  isLiteMode: initialPrefs.lite ?? false,
+  toggleLiteMode: () => set((state) => {
+    const next = !state.isLiteMode;
+    document.documentElement.classList.toggle('lite', next);
+    writePrefs({ lite: next });
+    return { isLiteMode: next };
+  }),
+
+  isLanguageSheetOpen: false,
+  setLanguageSheetOpen: (open) => set({ isLanguageSheetOpen: open }),
+  isNotificationsOpen: false,
+  setNotificationsOpen: (open) => set({ isNotificationsOpen: open }),
+  isComfortOpen: false,
+  setComfortOpen: (open) => set({ isComfortOpen: open }),
+  isCommandOpen: false,
+  setCommandOpen: (open) => set({ isCommandOpen: open }),
+
+  toasts: [],
+  pushToast: ({ tone = 'neutral', ...rest }) => {
+    const id = `t-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    set((state) => ({ toasts: [...state.toasts.slice(-2), { id, tone, ...rest }] }));
+    setTimeout(() => get().dismissToast(id), rest.actionLabel ? 6000 : 3800);
+  },
+  dismissToast: (id) => set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
 
   hasCompletedOnboarding: false,
   completeOnboarding: () => set({ hasCompletedOnboarding: true }),
@@ -297,7 +407,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     profiles: state.profiles.map(p => p.id === id ? { ...p, ...updates } : p)
   })),
 
-  schemes: verifiedSchemes,
+  schemes: allSchemes,
   savedSchemeIds: ["pm-kisan", "pm-jay"],
   toggleSaveScheme: (schemeId) => {
     const state = get();

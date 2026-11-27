@@ -1,88 +1,94 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Shield, ArrowRight } from 'lucide-react';
-import { useAppStore } from '../store/useAppStore';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { ArrowRight, SpeakerHigh, ShieldCheck, Translate, Microphone } from '@phosphor-icons/react';
 import { useTranslation } from '../hooks/useTranslation';
 import { speakVernacularText } from '../utils/audioSpeech';
-import { LANGUAGE_LIST, LANGUAGE_META } from '../data/languages';
-import { SupportedLanguage } from '../types';
+import { LANGUAGE_META } from '../data/languages';
 import { SahayakLogo } from '../components/common/SahayakLogo';
+import { EntryFrame } from '../components/entry/EntryFrame';
+import { Greetings, useGreetingCycle } from '../components/entry/Greetings';
+import { Button } from '../ui/Button';
+import { riseIn, staggerParent } from '../ui/motion';
+import { haptic } from '../lib/haptics';
 
+/**
+ * Welcome — the first five seconds.
+ * The greeting cycles through every script Sahayak speaks, so each person sees
+ * their own language within a few seconds, before reading a single English word.
+ */
 export const WelcomeScreen: React.FC = () => {
   const navigate = useNavigate();
-  const { setLanguage } = useAppStore();
   const { t } = useTranslation();
+  const { index, current } = useGreetingCycle(2400);
 
-  const handleSelectAndProceed = (langCode: SupportedLanguage) => {
-    setLanguage(langCode);
-    speakVernacularText(LANGUAGE_META[langCode].greeting, langCode);
-    navigate('/onboarding');
+  const hear = () => {
+    haptic('tap');
+    speakVernacularText((LANGUAGE_META[current.lang] || LANGUAGE_META.en).welcomeVoice, current.lang);
   };
 
+  const facts = [
+    { icon: Translate, label: t('entry.welcome.languages', '13 Indian languages') },
+    { icon: Microphone, label: t('shell.nav.speak', 'Speak') },
+    { icon: ShieldCheck, label: t('home.promise.fee', 'Government fee') + ' ₹0' },
+  ];
+
   return (
-    <div className="min-h-[85vh] flex flex-col justify-between items-center max-w-md mx-auto px-4 py-6 text-center animate-fadeIn">
-      {/* Top Sovereign Seal */}
-      <div className="w-full flex flex-col items-center pt-4">
-        <SahayakLogo className="w-20 h-20 mb-4 drop-shadow-sm" />
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 mb-2">
-          <Shield className="w-3.5 h-3.5 text-emerald-600" />
-          <span>{t('statutoryBadge', 'Official Sovereign Welfare Information Guide • Statutory Citizen Portal')}</span>
+    <EntryFrame
+      hideBrand
+      greetingIndex={index}
+      footer={
+        <div className="space-y-2">
+          <Button size="lg" block onClick={() => navigate('/language')} iconEnd={<ArrowRight size={20} weight="bold" className="flip-rtl" />}>
+            {t('entry.welcome.continue', 'Continue')}
+          </Button>
+          <Link to="/home" className="flex items-center justify-center h-12 rounded-md text-small font-semibold text-neel-ink hover:bg-sunken">
+            {t('entry.welcome.returning', 'I have used Sahayak before')}
+          </Link>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2">
-          {t('appName', 'SAHAYAK')}
-        </h1>
-        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 font-medium max-w-xs leading-relaxed">
-          {t('tagline', 'Government Schemes in Your Language')}
-        </p>
-      </div>
+      }
+    >
+      <motion.div variants={staggerParent(0.08, 0.1)} initial="hidden" animate="show" className="flex-1 flex flex-col justify-center py-6">
+        <motion.div variants={riseIn} className="lg:hidden">
+          <motion.div initial={{ scale: 0.6, rotate: -12, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 18 }} className="w-fit">
+            <SahayakLogo className="h-24 w-auto" />
+          </motion.div>
+        </motion.div>
 
-      {/* Language Selection Gate Cards */}
-      <div className="w-full space-y-2.5 my-6">
-        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-          {t('langSelectTitle', 'Choose Your Language')}
-        </p>
+        <motion.div variants={riseIn} className="mt-8 min-h-[7.5rem] lg:hidden">
+          <Greetings index={index} showLatin className="text-[clamp(3rem,2.2rem+4vw,4.75rem)] font-semibold leading-[1.15] text-ink" />
+        </motion.div>
 
-        {LANGUAGE_LIST.map((item) => (
-          <button
-            key={item.code}
-            type="button"
-            onClick={() => handleSelectAndProceed(item.code)}
-            className="w-full p-3.5 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 hover:border-amber-600 dark:hover:border-amber-500 shadow-crisp-sm hover:shadow-crisp-md transition-all flex items-center justify-between group active:scale-98 text-left min-h-[60px]"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 font-bold flex items-center justify-center text-base">
-                {item.shortCode}
-              </div>
-              <div>
-                <div className="font-bold text-base text-slate-900 dark:text-white leading-tight">
-                  {item.label}
-                </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  {item.sublabel}
-                </div>
-              </div>
-            </div>
-            <ArrowRight className="w-5 h-5 text-amber-600 group-hover:translate-x-1 transition-transform" />
+        <motion.h1 variants={riseIn} className="mt-4 text-h1 font-semibold">
+          {t('entry.welcome.tagline', 'Government schemes, in your language.')}
+        </motion.h1>
+        <motion.p variants={riseIn} className="mt-3 text-lead text-ink-2 max-w-md">
+          {t('entry.welcome.body')}
+        </motion.p>
+
+        <motion.div variants={riseIn} className="mt-6">
+          <button type="button" onClick={hear} className="inline-flex items-center gap-2.5 h-12 ps-2 pe-5 rounded-full bg-neel-tint text-neel-ink font-semibold active:scale-95 transition-transform">
+            <span className="w-9 h-9 rounded-full bg-neel text-on-neel grid place-items-center">
+              <SpeakerHigh size={20} weight="fill" />
+            </span>
+            {t('entry.welcome.hear', 'Tap to hear')}
+            <span lang={current.lang} className="text-ink-3 font-medium">
+              · {current.latin}
+            </span>
           </button>
-        ))}
-      </div>
+        </motion.div>
 
-      {/* Direct Dashboard Link */}
-      <div className="w-full text-center mb-6">
-        <button
-          type="button"
-          onClick={() => navigate('/home')}
-          className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline inline-flex items-center gap-1.5 py-1 px-3 rounded-full hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors"
-        >
-          <span>{t('navSkip', 'Skip')} — {t('navHome', 'Discover')}</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      {/* Footer Assurance */}
-      <div className="text-xs text-slate-500 dark:text-slate-400 max-w-xs">
-        {t('sovereignMotto', 'Sovereign Welfare Information Portal • Official Public Guide')}
-      </div>
-    </div>
+        <motion.ul variants={riseIn} className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-small text-ink-2">
+          {facts.map((f) => (
+            <li key={f.label} className="flex items-center gap-2">
+              <f.icon size={18} weight="duotone" className="text-patti" />
+              {f.label}
+            </li>
+          ))}
+        </motion.ul>
+      </motion.div>
+    </EntryFrame>
   );
 };
+
+export default WelcomeScreen;

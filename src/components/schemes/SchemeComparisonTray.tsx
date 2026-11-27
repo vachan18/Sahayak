@@ -1,265 +1,158 @@
 import React, { useState } from 'react';
-import { 
-  Scale, X, Check, ArrowRight 
-} from 'lucide-react';
-import { useAppStore } from '../../store/useAppStore';
 import { Link } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Scales, X, ArrowRight } from '@phosphor-icons/react';
+import { useAppStore } from '../../store/useAppStore';
+import { useTranslation } from '../../hooks/useTranslation';
+import { LifeGlyph } from '../../ui/domain';
+import { Sheet } from '../../ui/Sheet';
+import { Button } from '../../ui/Button';
+import { formatINR } from '../../ui/Feedback';
+import { spring, ease } from '../../ui/motion';
+import { benefitHeadline, cscCap, useCatalog } from './catalog';
 
+/**
+ * Compare tray.
+ * Floats above the phone dock (and bottom-centre on desktop) once a scheme is added to compare.
+ * Opens a side-by-side sheet so a family can weigh money, cost, time and paperwork at a glance.
+ */
 export const SchemeComparisonTray: React.FC = () => {
-  const { schemes, compareSchemeIds, toggleCompareScheme, clearCompareSchemes } = useAppStore();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { t } = useTranslation();
+  const { compareSchemeIds, toggleCompareScheme, clearCompareSchemes } = useAppStore();
+  const catalog = useCatalog();
+  const [open, setOpen] = useState(false);
+  const selected = compareSchemeIds.map((id) => catalog.find((s) => s.id === id)).filter(Boolean) as typeof catalog;
 
-  if (compareSchemeIds.length === 0) return null;
-
-  const comparedSchemes = schemes.filter(s => compareSchemeIds.includes(s.id));
+  const rows: { key: string; label: string; render: (s: (typeof catalog)[number]) => React.ReactNode }[] = [
+    {
+      key: 'benefit',
+      label: t('schemes.compare.benefit', 'You get'),
+      render: (s) => {
+        const h = benefitHeadline(s, t);
+        return (
+          <>
+            {h.prefix && <span className="block text-micro text-ink-3">{h.prefix}</span>}
+            <span className="block text-h3 font-semibold num-display">₹{formatINR(h.amount)}</span>
+            <span className="block text-micro text-ink-2">{h.unit}</span>
+          </>
+        );
+      },
+    },
+    { key: 'kind', label: t('schemes.compare.kind', 'Type of help'), render: (s) => benefitHeadline(s, t).kindLabel },
+    { key: 'fee', label: t('schemes.detail.govFee', 'Government fee'), render: () => <span className="num font-semibold text-patti">₹0</span> },
+    { key: 'csc', label: t('schemes.detail.cscCap', 'Most a CSC can charge'), render: (s) => <span className="num font-semibold">₹{cscCap(s)}</span> },
+    {
+      key: 'time',
+      label: t('schemes.detail.timeLimit', 'Time to decide'),
+      render: (s) => (
+        <span>
+          <span className="num font-semibold">{s.processingSlaDays}</span> {t('schemes.detail.days', 'days')}
+        </span>
+      ),
+    },
+    {
+      key: 'papers',
+      label: t('schemes.compare.papers', 'Papers needed'),
+      render: (s) => (
+        <ul className="space-y-1">
+          {s.documents
+            .filter((d) => d.isMandatory)
+            .map((d) => (
+              <li key={d.id} className="text-small">
+                {t(d.nameKey, d.nameKey)}
+              </li>
+            ))}
+        </ul>
+      ),
+    },
+    { key: 'office', label: t('schemes.compare.office', 'Office'), render: (s) => <span className="text-small">{t(s.handlingAuthorityKey, s.handlingAuthorityKey)}</span> },
+  ];
 
   return (
     <>
-      {/* Floating Bottom Comparison Tray Bar */}
-      <aside 
-        aria-label="Scheme Comparison Tray"
-        className="fixed bottom-16 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 w-[95%] max-w-2xl bg-slate-900/95 dark:bg-slate-950/95 text-white backdrop-blur-md rounded-2xl p-3 sm:p-4 shadow-crisp-xl border border-slate-700 animate-slideUp flex flex-col sm:flex-row items-center justify-between gap-3"
-      >
-        <div className="flex items-center gap-2.5 overflow-x-auto w-full sm:w-auto scrollbar-none">
-          <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 font-bold">
-            <Scale className="w-4 h-4" />
-          </div>
-          <div className="flex items-center gap-1.5 flex-nowrap">
-            {comparedSchemes.map((s) => (
-              <span
-                key={s.id}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-xs font-bold text-slate-200 whitespace-nowrap"
-              >
-                <span className="truncate max-w-[120px] sm:max-w-[150px]">{s.titleKey}</span>
-                <button
-                  type="button"
-                  onClick={() => toggleCompareScheme(s.id)}
-                  className="text-slate-400 hover:text-white"
-                  aria-label={`Remove ${s.titleKey} from comparison`}
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-          <button
-            type="button"
-            onClick={clearCompareSchemes}
-            className="px-2.5 py-1.5 rounded-xl text-slate-400 hover:text-slate-200 text-xs font-medium"
+      <AnimatePresence>
+        {selected.length > 0 && (
+          <motion.div
+            initial={{ y: 120, opacity: 0 }}
+            animate={{ y: 0, opacity: 1, transition: spring.gentle }}
+            exit={{ y: 120, opacity: 0, transition: { duration: 0.2, ease: ease.in } }}
+            className="fixed z-30 inset-x-3 bottom-[calc(var(--dock-h)+var(--safe-b)+12px)] lg:bottom-6 lg:start-[calc(var(--rail-w)+24px)] lg:end-6 flex justify-center pointer-events-none no-print"
           >
-            Clear
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="py-2 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition-all flex-shrink-0 min-h-[40px]"
-          >
-            <span>Compare ({comparedSchemes.length}/3)</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </aside>
-
-      {/* Side-by-Side Detailed Comparison Modal */}
-      {isModalOpen && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/75 backdrop-blur-sm animate-fadeIn overflow-y-auto"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="comparison-modal-title"
-        >
-          <div className="w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-crisp-xl space-y-4 my-auto max-h-[92vh] flex flex-col justify-between">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-800 text-amber-600 flex items-center justify-center">
-                  <Scale className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 id="comparison-modal-title" className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
-                    Direct Scheme Comparison Matrix
-                  </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Compare benefits, eligibility hurdles, required paperwork, and application modes
-                  </p>
-                </div>
+            <div className="pointer-events-auto w-full max-w-xl flex items-center gap-3 ps-3 pe-2 py-2 rounded-lg bg-ink text-paper shadow-float">
+              <div className="flex -space-x-2 rtl:space-x-reverse shrink-0">
+                <AnimatePresence initial={false}>
+                  {selected.map((s) => (
+                    <motion.span key={s.id} layout initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} className="rounded-sm ring-2 ring-ink">
+                      <LifeGlyph id={s.lifeEventId} size="sm" />
+                    </motion.span>
+                  ))}
+                </AnimatePresence>
               </div>
-
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-                aria-label="Close comparison view"
-              >
-                <X className="w-5 h-5" />
+              <p className="flex-1 min-w-0 text-small">
+                <span className="num font-semibold">{selected.length}</span>/3 <span className="opacity-75 hidden xs:inline">· {selected.length < 2 ? t('schemes.compare.addMore', 'Add one more scheme to compare') : t('schemes.compare.title', 'Compare schemes')}</span>
+              </p>
+              <button type="button" onClick={clearCompareSchemes} className="h-11 px-3 rounded-sm text-small font-semibold opacity-80 hover:opacity-100 hover:bg-white/10 dark:hover:bg-black/10">
+                {t('schemes.compare.clear', 'Clear')}
               </button>
+              <Button size="sm" onClick={() => setOpen(true)} disabled={selected.length < 2} iconStart={<Scales size={18} weight="bold" />} className="h-11">
+                {t('schemes.compare.open', 'Compare')}
+              </Button>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            {/* Comparison Grid (Responsive Table) */}
-            <div className="overflow-x-auto scrollbar-thin py-1">
-              <div className="min-w-[550px] divide-y divide-slate-100 dark:divide-slate-800">
-                {/* 1. Scheme Title Header Row */}
-                <div className="grid grid-cols-4 gap-2 pb-3 text-xs">
-                  <div className="font-extrabold text-slate-400 uppercase tracking-wider text-[11px] self-end">
-                    Criterion
-                  </div>
-                  {comparedSchemes.map((s) => (
-                    <div key={s.id} className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-                      <div className="font-mono text-[10px] text-amber-700 dark:text-amber-400 font-bold uppercase">
-                        {s.id}
-                      </div>
-                      <h3 className="font-black text-slate-900 dark:text-white text-xs sm:text-sm mt-0.5 leading-snug">
-                        {s.titleKey}
-                      </h3>
-                      <div className="text-[10px] text-slate-500 truncate mt-0.5">
-                        {s.ministryKey}
-                      </div>
+      <Sheet open={open && selected.length > 0} onClose={() => setOpen(false)} title={t('schemes.compare.title', 'Compare schemes')} closeLabel={t('navClose', 'Close')} size="lg">
+        <div className="-mx-5 md:mx-0 overflow-x-auto">
+          <table className="w-full min-w-[560px] border-separate border-spacing-0 text-start">
+            <thead>
+              <tr>
+                <th scope="col" className="w-36 sticky start-0 bg-surface" />
+                {selected.map((s) => (
+                  <th key={s.id} scope="col" className="align-top text-start p-3 min-w-[150px]">
+                    <div className="flex items-start justify-between gap-2">
+                      <LifeGlyph id={s.lifeEventId} size="sm" />
+                      <button type="button" onClick={() => toggleCompareScheme(s.id)} aria-label={`${t('schemes.compare.remove', 'Remove from compare')}: ${t(s.titleKey, s.titleKey)}`} className="w-9 h-9 -me-2 -mt-1 rounded-full grid place-items-center text-ink-3 hover:bg-sunken">
+                        <X size={16} weight="bold" />
+                      </button>
                     </div>
+                    <Link to={`/schemes/${s.id}`} onClick={() => setOpen(false)} className="mt-2 block font-semibold leading-snug hover:underline underline-offset-4">
+                      {t(s.titleKey, s.titleKey)}
+                    </Link>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.key}>
+                  <th scope="row" className="sticky start-0 bg-surface text-start align-top p-3 text-small font-medium text-ink-3 border-t border-line">
+                    {r.label}
+                  </th>
+                  {selected.map((s) => (
+                    <td key={s.id} className="align-top p-3 border-t border-line text-ink">
+                      {r.render(s)}
+                    </td>
                   ))}
-                </div>
-
-                {/* 2. Benefit Type & Amount */}
-                <div className="grid grid-cols-4 gap-2 py-3 text-xs">
-                  <div className="font-bold text-slate-700 dark:text-slate-300">
-                    Benefit Type & Amount
-                  </div>
-                  {comparedSchemes.map((s) => (
-                    <div key={s.id} className="text-slate-800 dark:text-slate-200">
-                      <div className="font-black text-sm text-emerald-700 dark:text-emerald-400">
-                        {s.financialBenefit.formattedDisplay}
-                      </div>
-                      <div className="text-[11px] text-slate-500 font-medium capitalize mt-0.5">
-                        {s.benefitType.replace('_', ' ')}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* 3. Core Eligibility Requirements */}
-                <div className="grid grid-cols-4 gap-2 py-3 text-xs">
-                  <div className="font-bold text-slate-700 dark:text-slate-300">
-                    Primary Eligibility
-                  </div>
-                  {comparedSchemes.map((s) => (
-                    <div key={s.id} className="text-slate-700 dark:text-slate-300 space-y-1">
-                      {s.eligibilityCriteria.occupations && (
-                        <div>
-                          <strong>Occupation: </strong>
-                          <span className="capitalize">{s.eligibilityCriteria.occupations.join(', ')}</span>
-                        </div>
-                      )}
-                      {s.eligibilityCriteria.requiresLandTitle && (
-                        <div className="text-amber-800 dark:text-amber-300">
-                          ✓ Agricultural Land Title (RTC) required
-                        </div>
-                      )}
-                      {s.eligibilityCriteria.requiresMaternityStatus && (
-                        <div className="text-rose-800 dark:text-rose-300">
-                          ✓ Pregnant / Lactating Mothers
-                        </div>
-                      )}
-                      {s.eligibilityCriteria.maxAnnualIncome && (
-                        <div>
-                          Income Cap: ₹{s.eligibilityCriteria.maxAnnualIncome.toLocaleString('en-IN')}/year
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {/* 4. Required Documents */}
-                <div className="grid grid-cols-4 gap-2 py-3 text-xs">
-                  <div className="font-bold text-slate-700 dark:text-slate-300">
-                    Required Documents
-                  </div>
-                  {comparedSchemes.map((s) => (
-                    <div key={s.id} className="space-y-1">
-                      {s.documents.map((d) => (
-                        <div key={d.id} className="flex items-center gap-1.5 text-[11px] text-slate-700 dark:text-slate-300">
-                          <Check className="w-3 h-3 text-emerald-600 flex-shrink-0" />
-                          <span className="truncate">{d.nameKey}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-
-                {/* 5. Application Mode & Statutory SLA */}
-                <div className="grid grid-cols-4 gap-2 py-3 text-xs">
-                  <div className="font-bold text-slate-700 dark:text-slate-300">
-                    Application Mode & SLA
-                  </div>
-                  {comparedSchemes.map((s) => (
-                    <div key={s.id} className="space-y-1 text-slate-700 dark:text-slate-300">
-                      <div>
-                        <strong>Mode: </strong> Self-Filing & Grama One / CSC
-                      </div>
-                      <div>
-                        <strong>SLA Guarantee: </strong> {s.processingSlaDays} Days
-                      </div>
-                      <div className="text-emerald-700 dark:text-emerald-400 font-semibold text-[11px]">
-                        Govt Fee: ₹0.00 (Statutory Free)
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* 6. Important Conditions */}
-                <div className="grid grid-cols-4 gap-2 py-3 text-xs">
-                  <div className="font-bold text-slate-700 dark:text-slate-300">
-                    Important Conditions
-                  </div>
-                  {comparedSchemes.map((s) => (
-                    <div key={s.id} className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                      {s.whoIsNotEligibleListKeys?.[0] || 'Government employees & high taxpayers are statutorily excluded.'}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Action Links */}
-                <div className="grid grid-cols-4 gap-2 pt-3 text-xs">
-                  <div className="font-bold text-slate-400">Actions</div>
-                  {comparedSchemes.map((s) => (
-                    <div key={s.id} className="flex flex-col gap-1.5">
-                      <Link
-                        to={`/schemes/${s.id}`}
-                        onClick={() => setIsModalOpen(false)}
-                        className="py-2 px-3 rounded-xl bg-brand-navy-900 text-white font-bold text-center text-xs hover:bg-slate-800 transition-colors"
-                      >
-                        View Full Details
-                      </Link>
-                      <Link
-                        to={`/eligibility?scheme=${s.id}`}
-                        onClick={() => setIsModalOpen(false)}
-                        className="py-1.5 px-3 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-center text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                      >
-                        Check Eligibility
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
-              <span className="text-[11px] text-slate-500">
-                Official statutory data verified from respective Ministry gazette notifications.
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="py-2 px-4 rounded-xl bg-slate-900 text-white font-bold"
-              >
-                Done Comparing
-              </button>
-            </div>
-          </div>
+                </tr>
+              ))}
+              <tr>
+                <td className="sticky start-0 bg-surface" />
+                {selected.map((s) => (
+                  <td key={s.id} className="p-3">
+                    <Link to={`/schemes/${s.id}`} onClick={() => setOpen(false)} className="inline-flex items-center gap-1 h-10 text-small font-semibold text-neel-ink">
+                      {t('schemes.card.details', 'See details')}
+                      <ArrowRight size={16} weight="bold" className="flip-rtl" />
+                    </Link>
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
         </div>
-      )}
+      </Sheet>
     </>
   );
 };
+
+export default SchemeComparisonTray;

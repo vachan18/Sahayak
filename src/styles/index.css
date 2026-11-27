@@ -2,237 +2,261 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   AANGAN — Sahayak design tokens, derived from the Sahayak emblem
+     Navy   #111E33  the shield — trust, the State's guarantee (text, navigation, deep panels)
+     Orange #FC7C24  the people — warmth & action (one primary action per screen, voice)
+     Teal   #1DAF8F  the speech bubble — help, conversation, "you qualify" (success)
+   60 · 30 · 10 — neutral canvas · navy structure · orange accent; teal carries meaning.
+   All text pairs meet WCAG 2.2 AA on their intended surface.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 :root {
-  /* Sovereign Color Tokens (Light Mode Default) */
-  --color-primary-navy: #0B2545;
-  --color-primary-navy-hover: #133966;
-  --color-saffron-ochre: #B45309;
-  --color-saffron-light: #FEF3C7;
-  --color-emerald-green: #065F46;
-  --color-emerald-light: #ECFDF5;
-  --color-amber-warning: #92400E;
-  --color-amber-light: #FFFBEB;
-  --color-crimson-error: #991B1B;
-  --color-crimson-light: #FEF2F2;
-  --color-sky-info: #0369A1;
-  --color-sky-light: #F0F9FF;
+  color-scheme: light;
 
-  /* Typography Stacks */
-  --font-kannada: "Noto Sans Kannada", "Tunga", system-ui, sans-serif;
-  --font-devanagari: "Noto Sans Devanagari", "Mangal", system-ui, sans-serif;
-  --font-bengali: "Noto Sans Bengali", system-ui, sans-serif;
-  --font-latin: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
+  --c-paper: 246 247 250;
+  --c-surface: 255 255 255;
+  --c-sunken: 238 241 246;
+  --c-line: 225 230 238;
+  --c-line-strong: 198 206 218;
+  --c-shadow: 17 30 51;
 
-.dark {
-  --color-primary-navy: #38BDF8;
-  --color-primary-navy-hover: #0284C7;
-  --color-saffron-ochre: #F59E0B;
-  --color-saffron-light: #78350F;
-  --color-emerald-green: #34D399;
-  --color-emerald-light: #064E3B;
-  --color-amber-warning: #FBBF24;
-  --color-amber-light: #78350F;
-  --color-crimson-error: #F87171;
-  --color-crimson-light: #7F1D1D;
-}
+  --c-ink: 17 30 51;
+  --c-ink-2: 71 84 103;
+  --c-ink-3: 98 109 130;
 
-/* Indic Line Height Enforcement */
-body[lang="kn"], .lang-kn {
-  font-family: var(--font-kannada);
-  line-height: 1.75 !important;
-  letter-spacing: 0.01em;
-}
+  --c-neel: 17 30 51;
+  --c-neel-deep: 9 17 32;
+  --c-neel-tint: 232 237 246;
+  --c-neel-ink: 27 58 112;
+  --c-on-neel: 255 255 255;
+  /* Deep 'hero' surfaces — stay saturated in every theme; text on them is always light */
+  --c-hero-neel: 17 30 51;
+  --c-hero-patti: 10 92 75;
+  --c-on-hero: 255 255 255;
 
-body[lang="hi"], .lang-hi {
-  font-family: var(--font-devanagari);
-  line-height: 1.65 !important;
-  letter-spacing: 0.005em;
-}
+  --c-haldi: 252 124 36;
+  --c-haldi-deep: 173 72 4;
+  --c-haldi-tint: 255 239 226;
 
-body[lang="bn"], .lang-bn {
-  font-family: var(--font-bengali);
-  line-height: 1.65 !important;
-  letter-spacing: 0.005em;
-}
+  --c-patti: 10 118 95;
+  --c-patti-tint: 222 245 238;
+  --c-kesar: 176 70 8;
+  --c-kesar-tint: 254 241 205;
+  --c-sindoor: 180 35 24;
+  --c-sindoor-tint: 254 229 226;
 
-body[lang="en"], .lang-en {
-  font-family: var(--font-latin);
-  line-height: 1.5;
-  letter-spacing: -0.01em;
-}
+  --c-khet: 140 90 4;
+  --c-khet-tint: 254 243 214;
+  --c-sehat: 12 112 104;
+  --c-sehat-tint: 220 244 240;
+  --c-mamta: 172 42 102;
+  --c-mamta-tint: 252 231 241;
+  --c-vidya: 52 72 168;
+  --c-vidya-tint: 230 234 250;
+  --c-kaarigar: 172 70 20;
+  --c-kaarigar-tint: 254 235 222;
+  --c-ghar: 22 100 146;
+  --c-ghar-tint: 223 239 250;
 
-/* Focus Outline Standard */
-:focus-visible {
-  outline: 3px solid #B45309;
-  outline-offset: 3px;
-  border-radius: 8px;
+  /* Typography */
+  --font-script: 'Plus Jakarta Sans';
+  --lh-body: 1.55;
+  --lh-head: 1.1;
+
+  /* Layout */
+  --rail-w: 264px;
+  --topbar-h: 64px;
+  --dock-h: 68px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
 }
 
-/* Screen reader only utility */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
+html.dark {
+  color-scheme: dark;
+
+  --c-paper: 9 14 25;
+  --c-surface: 16 24 40;
+  --c-sunken: 23 33 53;
+  --c-line: 36 48 72;
+  --c-line-strong: 58 73 101;
+  --c-shadow: 0 0 0;
+
+  --c-ink: 236 240 246;
+  --c-ink-2: 184 194 209;
+  --c-ink-3: 142 153 172;
+
+  --c-neel: 156 184 232;
+  --c-neel-deep: 186 207 242;
+  --c-neel-tint: 24 38 66;
+  --c-neel-ink: 166 196 244;
+  --c-on-neel: 9 14 25;
+  --c-hero-neel: 21 35 62;
+  --c-hero-patti: 8 70 58;
+
+  --c-haldi: 253 138 58;
+  --c-haldi-deep: 255 168 106;
+  --c-haldi-tint: 58 31 12;
+
+  --c-patti: 64 204 168;
+  --c-patti-tint: 11 50 42;
+  --c-kesar: 246 172 84;
+  --c-kesar-tint: 60 39 10;
+  --c-sindoor: 246 132 116;
+  --c-sindoor-tint: 64 22 20;
+
+  --c-khet: 236 186 82;
+  --c-khet-tint: 50 38 12;
+  --c-sehat: 82 206 190;
+  --c-sehat-tint: 11 46 44;
+  --c-mamta: 242 142 188;
+  --c-mamta-tint: 58 22 40;
+  --c-vidya: 162 178 246;
+  --c-vidya-tint: 29 36 76;
+  --c-kaarigar: 246 158 108;
+  --c-kaarigar-tint: 58 30 15;
+  --c-ghar: 122 192 236;
+  --c-ghar-tint: 15 41 60;
 }
 
-/* Responsive Sovereign Layout Containers */
-.layout-container {
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
+/* ☀ Sunlight mode — engineered for midday outdoor use on budget LCDs.
+   Pure white canvas, pure black ink, 2px structural borders, heavier type.
+   Implemented as tokens (not a CSS filter) so it stays crisp and accessible. */
+html.high-contrast {
+  color-scheme: light;
+  --c-paper: 255 255 255;
+  --c-surface: 255 255 255;
+  --c-sunken: 236 236 236;
+  --c-line: 20 20 20;
+  --c-line-strong: 0 0 0;
+  --c-ink: 0 0 0;
+  --c-ink-2: 18 18 18;
+  --c-ink-3: 40 40 40;
+  --c-neel: 10 22 80;
+  --c-neel-deep: 0 10 60;
+  --c-neel-tint: 220 226 255;
+  --c-neel-ink: 10 22 80;
+  --c-on-neel: 255 255 255;
+  --c-hero-neel: 10 22 80;
+  --c-hero-patti: 0 80 36;
+  --c-haldi: 255 122 20;
+  --c-haldi-deep: 120 46 0;
+  --c-patti: 0 92 72;
+  --c-kesar: 130 60 0;
+  --c-sindoor: 150 20 0;
 }
+html.high-contrast body { font-weight: 500; }
+html.high-contrast .shadow-hair,
+html.high-contrast .shadow-lift,
+html.high-contrast .shadow-float { box-shadow: 0 0 0 2px #000 !important; }
+html.high-contrast .border,
+html.high-contrast .border-t,
+html.high-contrast .border-b { border-width: 2px; }
 
-@media (min-width: 400px) {
-  .layout-container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-}
+/* ── Script-aware typography ─────────────────────────────────────────────── */
+html:lang(hi), html:lang(mr) { --font-script: 'Noto Sans Devanagari'; --lh-body: 1.7; --lh-head: 1.3; }
+html:lang(kn) { --font-script: 'Noto Sans Kannada'; --lh-body: 1.75; --lh-head: 1.35; }
+html:lang(bn), html:lang(as) { --font-script: 'Noto Sans Bengali'; --lh-body: 1.7; --lh-head: 1.3; }
+html:lang(ta) { --font-script: 'Noto Sans Tamil'; --lh-body: 1.75; --lh-head: 1.35; }
+html:lang(te) { --font-script: 'Noto Sans Telugu'; --lh-body: 1.75; --lh-head: 1.35; }
+html:lang(ml) { --font-script: 'Noto Sans Malayalam'; --lh-body: 1.75; --lh-head: 1.35; }
+html:lang(gu) { --font-script: 'Noto Sans Gujarati'; --lh-body: 1.7; --lh-head: 1.3; }
+html:lang(or) { --font-script: 'Noto Sans Oriya'; --lh-body: 1.75; --lh-head: 1.35; }
+html:lang(pa) { --font-script: 'Noto Sans Gurmukhi'; --lh-body: 1.7; --lh-head: 1.3; }
+html:lang(ur) { --font-script: 'Noto Nastaliq Urdu'; --lh-body: 2.15; --lh-head: 1.9; }
 
-@media (min-width: 640px) {
-  .layout-container {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-  }
-}
+/* Text-size preference (A · A+ · A++). Everything is rem-based so it all scales. */
+html[data-text='lg'] { font-size: 112.5%; }
+html[data-text='xl'] { font-size: 125%; }
 
-@media (min-width: 1024px) {
-  .layout-container {
-    max-width: 1140px;
-    padding-left: 2rem;
-    padding-right: 2rem;
-  }
-}
-
-@media (min-width: 1280px) {
-  .layout-container {
-    max-width: 1280px;
-    padding-left: 2.5rem;
-    padding-right: 2.5rem;
-  }
-}
-
-@media (min-width: 1536px) {
-  .layout-container {
-    max-width: 1400px;
-    padding-left: 3rem;
-    padding-right: 3rem;
-  }
-}
-
-@media (min-width: 1800px) {
-  .layout-container {
-    max-width: 1400px;
-    padding-left: 3rem;
-    padding-right: 3rem;
-  }
-}
-
-/* Custom Scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #F1F5F9;
-}
-::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
-}
-
-/* No Scrollbar Utility for smooth touch rails */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* Mobile Scrolling & Touch Responsiveness */
-html, body {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-}
-*, *::before, *::after {
-  box-sizing: inherit;
-}
-button, a, input, select, textarea {
-  touch-action: manipulation;
-}
-.overflow-x-auto {
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
-}
-
-/* CSC Kiosk Print Media Optimization */
-@media print {
-  header, nav, aside, .no-print {
-    display: none !important;
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-tap-highlight-color: transparent;
+    scroll-padding-top: calc(var(--topbar-h) + 16px);
   }
   body {
-    background: white !important;
-    color: black !important;
-    font-size: 12pt;
+    @apply bg-paper text-ink font-sans antialiased;
+    font-size: 1.0625rem;
+    line-height: var(--lh-body);
+    font-feature-settings: 'kern', 'liga', 'calt';
+    overflow-x: hidden;
   }
-  .layout-container {
-    padding: 0 !important;
-    max-width: 100% !important;
+  h1, h2, h3, h4 {
+    font-family: theme('fontFamily.display');
+    letter-spacing: -0.011em;
+    text-wrap: balance;
   }
+  html:not(:lang(en)) h1, html:not(:lang(en)) h2, html:not(:lang(en)) h3 { letter-spacing: 0; }
+  p { text-wrap: pretty; }
+  button, a, input, select, textarea, [role='button'] { touch-action: manipulation; }
+  ::selection { background: rgb(var(--c-haldi) / 0.45); color: rgb(var(--c-ink)); }
+
+  :focus-visible {
+    outline: 3px solid rgb(var(--c-neel));
+    outline-offset: 3px;
+    border-radius: 10px;
+  }
+  html.high-contrast :focus-visible { outline: 4px solid #000; }
 }
 
-/* High-Contrast / Bright-Sunlight Display Mode */
-html.high-contrast {
-  filter: contrast(115%);
-}
-html.high-contrast body {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-}
-html.high-contrast.dark body {
-  background-color: #000000 !important;
-  color: #ffffff !important;
-}
-html.high-contrast article,
-html.high-contrast .bg-white,
-html.high-contrast .bg-slate-50,
-html.high-contrast .bg-slate-100 {
-  border: 2px solid #000000 !important;
-  box-shadow: none !important;
-}
-html.high-contrast.dark article,
-html.high-contrast.dark .bg-slate-900,
-html.high-contrast.dark .bg-slate-950 {
-  border: 2px solid #ffffff !important;
-  box-shadow: none !important;
-}
-html.high-contrast button,
-html.high-contrast a {
-  font-weight: 800 !important;
-}
-html.high-contrast :focus-visible {
-  outline: 4px solid #000000 !important;
-  outline-offset: 3px !important;
-}
-html.high-contrast.dark :focus-visible {
-  outline: 4px solid #ffffff !important;
-  outline-offset: 3px !important;
+/* Indic headings need extra vertical room for matras & conjuncts */
+.text-display, .text-h1, .text-h2, .text-h3 { line-height: var(--lh-head) !important; }
+html:lang(en) .text-display { line-height: 0.98 !important; }
+html:lang(en) .text-h1 { line-height: 1.06 !important; }
+.leading-body { line-height: var(--lh-body); }
+
+@layer utilities {
+  .num { font-family: theme('fontFamily.num'); font-variant-numeric: tabular-nums lining-nums; font-feature-settings: 'tnum', 'lnum'; }
+  .num-display { font-family: theme('fontFamily.num'); font-variant-numeric: tabular-nums lining-nums; letter-spacing: -0.035em; font-weight: 700; }
+  .stretch-wide { letter-spacing: -0.01em; }
+  .stretch-narrow { letter-spacing: -0.02em; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .pb-safe { padding-bottom: var(--safe-b); }
+  .pt-safe { padding-top: var(--safe-t); }
+  .snap-rail { scroll-snap-type: x mandatory; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+  .snap-rail > * { scroll-snap-align: start; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;
+  }
+  .mask-fade-x { mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%); }
 }
 
-/* Reduced Motion Standard */
+#root { position: relative; z-index: 1; }
+
+/* Skeleton shimmer */
+.skeleton {
+  background: linear-gradient(90deg, rgb(var(--c-sunken)) 0%, rgb(var(--c-line) / 0.7) 50%, rgb(var(--c-sunken)) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+html.lite .skeleton { animation: none; }
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgb(var(--c-line-strong) / 0.6); border-radius: 999px; border: 3px solid rgb(var(--c-paper)); }
+
+/* Lite mode (2GB phones, metered data): no blur, no grain, near-instant motion */
+html.lite *, html.lite *::before, html.lite *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* RTL (Urdu) — logical properties are used throughout; flip directional glyphs */
+[dir='rtl'] .flip-rtl { transform: scaleX(-1); }
+
+/* Print: CSC slip & checklists */
+@media print {
+  .no-print, header, nav, aside { display: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+  body::before { display: none; }
+  .print-sheet { box-shadow: none !important; border: 1px solid #000 !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

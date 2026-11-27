@@ -9,7 +9,9 @@ export type SupportedLanguage =
   | 'ml'
   | 'gu'
   | 'or'
-  | 'pa';
+  | 'pa'
+  | 'ur'
+  | 'as';
 
 export type LifeEventId = 
   | 'farming'

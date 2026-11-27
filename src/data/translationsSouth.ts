@@ -1,8 +1,8 @@
-import { eligibilityEn } from './eligibilityTranslations';
+import { eligibilityTa, eligibilityTe, eligibilityMl } from './eligibilityRegional2';
 
 export const southTranslations = {
   ta: {
-    ...eligibilityEn,
+    ...eligibilityTa,
     appName: "சகாயக்",
     tagline: "உங்கள் மொழியில் அரசுத் திட்டங்கள்",
     statutoryBadge: "பொது நல தகவல் தளம் • மாதிரி பதிப்பு",
@@ -235,7 +235,7 @@ export const southTranslations = {
     homeAssessmentIntro: "4 எளிய கேள்விகளுக்குப் பதிலளிக்கவும். மத்திய மற்றும் மாநிலத் திட்டங்களின் கீழ் ஆரம்பத் தகுதி வழிகாட்டுதலைப் பெறுங்கள்.",
   },
   te: {
-    ...eligibilityEn,
+    ...eligibilityTe,
     appName: "సహాయక్",
     tagline: "మీ భాషలో ప్రభుత్వ పథకాలు",
     statutoryBadge: "ప్రజా సంక్షేమ సమాచార వేదిక • నమూనా",
@@ -468,7 +468,7 @@ export const southTranslations = {
     homeAssessmentIntro: "4 సులభమైన ప్రశ్నలకు సమాధానమివ్వండి. కేంద్ర మరియు రాష్ట్ర పథకాల కింద ప్రాథమిక మార్గదర్శకత్వం పొందండి.",
   },
   ml: {
-    ...eligibilityEn,
+    ...eligibilityMl,
     appName: "സഹായക്",
     tagline: "നിങ്ങളുടെ ഭാഷയിൽ സർക്കാർ പദ്ധതികൾ",
     statutoryBadge: "പൊതുജന ക്ഷേമ വിവര പ്ലാറ്റ്‌ഫോം • മാതൃക",

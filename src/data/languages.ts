@@ -17,6 +17,12 @@ export interface LanguageMeta {
   dashboardSubtitle: string;
   aiGreeting: string;
   aiVoiceSample: string;
+  /** Writing direction — Urdu is right-to-left */
+  dir?: 'ltr' | 'rtl';
+  /** Native-script name of the writing system, shown in the language picker */
+  script?: string;
+  /** Approximate number of speakers in India (millions) — used to order the picker */
+  speakersM?: number;
 }
 
 export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
@@ -31,11 +37,15 @@ export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
   'gu',
   'or',
   'pa',
+  'ur',
+  'as',
 ];
 
 export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
   en: {
     code: 'en',
+    script: 'Latin',
+    speakersM: 129,
     label: 'English',
     sublabel: 'English (Pan-India)',
     shortCode: 'EN',
@@ -54,6 +64,8 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
   },
   kn: {
     code: 'kn',
+    script: 'ಕನ್ನಡ',
+    speakersM: 44,
     label: 'ಕನ್ನಡ',
     sublabel: 'Kannada (Karnataka)',
     shortCode: 'ಕ',
@@ -72,6 +84,8 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
   },
   hi: {
     code: 'hi',
+    script: 'देवनागरी',
+    speakersM: 528,
     label: 'हिन्दी',
     sublabel: 'Hindi (National / Central)',
     shortCode: 'हि',
@@ -90,6 +104,8 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
   },
   bn: {
     code: 'bn',
+    script: 'বাংলা',
+    speakersM: 97,
     label: 'বাংলা',
     sublabel: 'Bengali (West Bengal / Pan-India)',
     shortCode: 'বা',
@@ -108,6 +124,8 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
   },
   ta: {
     code: 'ta',
+    script: 'தமிழ்',
+    speakersM: 69,
     label: 'தமிழ்',
     sublabel: 'Tamil (Tamil Nadu)',
     shortCode: 'த',
@@ -126,6 +144,8 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
   },
   te: {
     code: 'te',
+    script: 'తెలుగు',
+    speakersM: 81,
     label: 'తెలుగు',
     sublabel: 'Telugu (Andhra Pradesh / Telangana)',
     shortCode: 'తె',
@@ -144,6 +164,8 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
   },
   mr: {
     code: 'mr',
+    script: 'देवनागरी',
+    speakersM: 83,
     label: 'मराठी',
     sublabel: 'Marathi (Maharashtra)',
     shortCode: 'म',
@@ -162,6 +184,8 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
   },
   ml: {
     code: 'ml',
+    script: 'മലയാളം',
+    speakersM: 35,
     label: 'മലയാളം',
     sublabel: 'Malayalam (Kerala)',
     shortCode: 'മ',
@@ -180,6 +204,8 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
   },
   gu: {
     code: 'gu',
+    script: 'ગુજરાતી',
+    speakersM: 55,
     label: 'ગુજરાતી',
     sublabel: 'Gujarati (Gujarat)',
     shortCode: 'ગુ',
@@ -198,6 +224,8 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
   },
   or: {
     code: 'or',
+    script: 'ଓଡ଼ିଆ',
+    speakersM: 38,
     label: 'ଓଡ଼ିଆ',
     sublabel: 'Odia (Odisha)',
     shortCode: 'ଓ',
@@ -216,6 +244,8 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
   },
   pa: {
     code: 'pa',
+    script: 'ਗੁਰਮੁਖੀ',
+    speakersM: 33,
     label: 'ਪੰਜਾਬੀ',
     sublabel: 'Punjabi (Punjab)',
     shortCode: 'ਪੰ',
@@ -232,6 +262,50 @@ export const LANGUAGE_META: Record<SupportedLanguage, LanguageMeta> = {
     aiGreeting: 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਤੁਹਾਡਾ ਸਹਾਇਕ ਸਾਥੀ ਹਾਂ। ਸਰਕਾਰੀ ਯੋਜਨਾਵਾਂ ਬਾਰੇ ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਕੋਈ ਵੀ ਸਵਾਲ ਪੁੱਛੋ।',
     aiVoiceSample: 'ਪੀਐਮ ਕਿਸਾਨ ਦੀ ਅਗਲੀ ਕਿਸ਼ਤ ਕਦੋਂ ਆਵੇਗੀ?',
   },
+  ur: {
+    code: 'ur',
+    script: 'نستعلیق',
+    speakersM: 51,
+    label: 'اردو',
+    sublabel: 'Urdu (Pan-India)',
+    shortCode: 'ار',
+    speechLang: 'ur-IN',
+    speechRate: 0.92,
+    greeting: 'آداب! سرکاری اسکیموں کی معلومات کے لیے میں آپ کا سہایک ہوں۔',
+    phoneticGreeting: 'Adaab! Sahayak Urdu selected.',
+    welcomeVoice: 'سہایک میں خوش آمدید',
+    activeBadge: 'فعال',
+    signInLabel: 'لاگ اِن',
+    brandSubtitle: 'سہایک • بھارت',
+    popularLabel: 'مقبول:',
+    dashboardSubtitle: 'آپ کے لیے موزوں اسکیمیں، محفوظ فہرست اور درخواست کی صورتِ حال یہاں دیکھیں',
+    aiGreeting: 'آداب! میں آپ کا سہایک ساتھی ہوں۔ سرکاری اسکیموں کے بارے میں اپنی زبان میں کوئی بھی سوال پوچھیں۔',
+    aiVoiceSample: 'پی ایم کسان کی اگلی قسط کب آئے گی؟',
+    dir: 'rtl',
+  },
+  as: {
+    code: 'as',
+    script: 'অসমীয়া',
+    speakersM: 15,
+    label: 'অসমীয়া',
+    sublabel: 'Assamese (Assam)',
+    shortCode: 'অ',
+    speechLang: 'as-IN',
+    speechRate: 0.95,
+    greeting: 'নমস্কাৰ! চৰকাৰী আঁচনিৰ বিষয়ে জানিবলৈ এইটো আপোনাৰ সহায়ক।',
+    phoneticGreeting: 'Nomoskar! Sahayak Assamese selected.',
+    welcomeVoice: 'সহায়কলৈ আদৰণি',
+    activeBadge: 'সক্ৰিয়',
+    signInLabel: 'লগ ইন',
+    brandSubtitle: 'সহায়ক • ভাৰত',
+    popularLabel: 'জনপ্ৰিয়:',
+    dashboardSubtitle: 'আপোনাৰ বাবে উপযুক্ত আঁচনি, সংৰক্ষিত তালিকা আৰু আবেদনৰ স্থিতি ইয়াত চাওক',
+    aiGreeting: 'নমস্কাৰ! মই আপোনাৰ সহায়ক সাথী। চৰকাৰী আঁচনিৰ বিষয়ে আপোনাৰ ভাষাত যিকোনো প্ৰশ্ন সোধক।',
+    aiVoiceSample: 'পিএম কিষাণৰ পৰৱৰ্তী কিস্তি কেতিয়া আহিব?',
+  },
 };
 
 export const LANGUAGE_LIST: LanguageMeta[] = SUPPORTED_LANGUAGES.map((code) => LANGUAGE_META[code]);
+
+/** Right-to-left languages */
+export const isRtl = (code: SupportedLanguage) => LANGUAGE_META[code]?.dir === 'rtl';

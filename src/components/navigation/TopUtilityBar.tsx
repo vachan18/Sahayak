@@ -66,7 +66,7 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
           ) : (
             <Link to="/home" className="flex items-center gap-1.5 sm:gap-2.5 group">
               {/* Official SAHAYAK Emblem */}
-              <SahayakLogo className="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 group-hover:scale-105 transition-transform flex-shrink-0" />
+              <SahayakLogo className="w-9 h-9 sm:w-10 sm:h-10 lg:w-11 lg:h-11 group-hover:scale-105 transition-transform flex-shrink-0 drop-shadow-sm" />
               <div className="flex flex-col min-w-0">
                 <span className="font-extrabold text-sm sm:text-base lg:text-lg xl:text-xl leading-tight tracking-tight text-slate-900 dark:text-white truncate">
                   {t('appName', 'SAHAYAK')}

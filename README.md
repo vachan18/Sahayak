@@ -9,12 +9,12 @@
 **Project: PIXEL THEORY** | **PixelCraft 2026 UI/UX Competition** | **Track DS-02: Public Good & Digital Inclusion**
 
 [![PixelCraft 2026](https://img.shields.io/badge/PixelCraft_2026-Track_DS--02-F97316?style=for-the-badge)](https://github.com/vachan18/Sahayak)
-[![Tests Passing](https://img.shields.io/badge/Vitest-119%20Passed%20(8%20Suites)-065F46?style=for-the-badge&logo=vitest)](https://vitest.dev/)
+[![Tests Passing](https://img.shields.io/badge/Vitest-125%20Passed%20(10%20Suites)-065F46?style=for-the-badge&logo=vitest)](https://vitest.dev/)
 [![Lighthouse](https://img.shields.io/badge/Lighthouse-100%20A11y%20%7C%20100%20SEO%20%7C%2092%2B%20Perf-0B2545?style=for-the-badge&logo=lighthouse)](https://developer.chrome.com/docs/lighthouse)
-[![Languages](https://img.shields.io/badge/Indic_Parity-4_Languages_(413_Keys)-B45309?style=for-the-badge)](https://github.com/vachan18/Sahayak)
+[![Languages](https://img.shields.io/badge/Indic_Parity-11_Languages_(230_Keys)-B45309?style=for-the-badge)](https://github.com/vachan18/Sahayak)
 [![React 18](https://img.shields.io/badge/React_18-TypeScript_5.6-0B2545?style=for-the-badge&logo=react)](https://reactjs.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL_%26_RLS-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
-[![CI](https://img.shields.io/badge/CI-GitHub_Actions_%2B_Vercel-0F172A?style=for-the-badge&logo=vercel)](https://github.com/vachan18/Sahayak/actions)
+[![CI](https://img.shields.io/badge/CI-3_GitHub_Actions_%2B_Vercel-0F172A?style=for-the-badge&logo=vercel)](https://github.com/vachan18/Sahayak/actions)
 
 ---
 
@@ -24,8 +24,9 @@
 | :--- | :--- |
 | **The Problem** | Over **₹4.5 lakh crore** flows through Direct Benefit Transfer (DBT) annually, yet up to **40% of eligible citizens** face exclusion, document rejections, or *dalal* (middleman) overcharging due to English-first jargon and department silos. |
 | **The Solution** | A **multilingual, voice-assisted, life-event-first** welfare platform that lets citizens discover schemes, run a deterministic 5-state eligibility check, pre-validate documents, print a fee-capped CSC token slip, and track applications end-to-end. |
-| **UI/UX Craft** | **4-language parity** (`en`, `kn`, `hi`, `bn` — 413 keys each), **Bright-Sunlight High-Contrast Mode**, `1.75x` Indic line-height, `prefers-reduced-motion` Framer Motion transitions, and non-overlapping safe-area assistant docking. |
-| **Engineering Proof** | **119/119** Vitest tests passing (8 suites), **0** TypeScript errors (`tsc -b`), **168 kB** initial JS chunk (`React.lazy`), **100/100** Lighthouse Accessibility, Best Practices & SEO, **92+** Desktop Performance. |
+| **UI/UX Craft** | **11-language parity** (`en`, `kn`, `hi`, `bn`, `ta`, `te`, `mr`, `ml`, `gu`, `or`, `pa` — 230 keys each), English-first default with `localStorage` persistence, strict single-language UI, **Bright-Sunlight High-Contrast Mode**, `Noto Sans` Indic typography (`1.75x` line-height), and non-overlapping safe-area assistant docking. |
+| **Voice & AI** | Real **Web Speech API** (`SpeechRecognition` + live interim transcript) in *Sahayak Sathi* & *Bolo Aur Jano*, 12-scheme grounded responder with 1-tap navigation links, `"Welcome to Sahayak"` entry greeting, and audible phonetic TTS fallback when OS regional voice packs are absent. |
+| **Engineering Proof** | **125/125** Vitest tests passing (10 suites), **0** TypeScript errors (`tsc -b`), **100/100** Lighthouse Accessibility, Best Practices & SEO, **92+** Desktop Performance, and 3 automated GitHub Actions workflows. |
 | **Kiosk & Cloud Ready** | **Zero-trust Supabase** (PostgreSQL + RLS + SHA-256 idempotency) with automatic **Sovereign Guest / Offline Mode** for rural Gram One & CSC kiosks. |
 
 > **Submission Links:** [GitHub Repository](https://github.com/vachan18/Sahayak) • [Project Board](https://github.com/users/vachan18/projects/4) • [Project Map & Issue Matrix](documentation/SAHAYAK_PROJECT_MAP.md)
@@ -36,8 +37,8 @@
 
 ```mermaid
 flowchart LR
-    A["1. Welcome & Dialect Gate<br/>(kn / hi / bn / en + Voice)"] --> B["2. Jeevan Ke Padav<br/>(6 Life-Event Milestones)"]
-    B --> C["3. Bolo Aur Jano<br/>(Voice-Guided 5-State Engine)"]
+    A["1. Welcome & 11-Language Gate<br/>(en/kn/hi/bn/ta/te/mr/ml/gu/or/pa)"] --> B["2. Jeevan Ke Padav<br/>(6 Life-Event Milestones)"]
+    B --> C["3. Bolo Aur Jano<br/>(Real Voice + 5-State Engine)"]
     C --> D["4. Document Pre-Flight<br/>(Passbook Do's/Don'ts + DigiLocker)"]
     D --> E["5. Seva Kendra Slip<br/>(QR Token + ₹30 Fee Cap Banner)"]
     E --> F["6. 4-Stage Lifecycle Tracker<br/>(SLA Countdown + CPGRAMS)"]
@@ -47,10 +48,11 @@ flowchart LR
 
 ## ✨ Key UX Innovations & Architectural Pillars
 
-### 1. 🗣 4-Language Sovereign Parity & Voice Integrity (`ಕನ್ನಡ • हिन्दी • বাংলা • English`)
-- **100% Translation Key Parity**: **413 verified keys** across English (`en`), Kannada (`kn`), Hindi (`hi`), and Bengali (`bn`) with zero hardcoded UI strings.
-- **Voice-First with Transcript Confirmation**: *Bolo Aur Jano* uses the Web Speech API (`kn-IN`, `hi-IN`, `en-IN`) with explicit manual transcript confirmation so misheard speech never silently corrupts eligibility inputs.
-- **Indic Typography System**: `1.75x` line-height prevents vertical clipping of Kannada *vattugalu* (conjuncts) and Devanagari/Bengali *matras*.
+### 1. 🗣 11-Language Sovereign Parity & Real Voice Assistant
+- **100% Translation Key Parity across 11 Languages**: **230 verified keys** each across English (`en`), Kannada (`kn`), Hindi (`hi`), Bengali (`bn`), Tamil (`ta`), Telugu (`te`), Marathi (`mr`), Malayalam (`ml`), Gujarati (`gu`), Odia (`or`), and Punjabi (`pa`), with strict single-language UI rendering and `localStorage` preference persistence.
+- **Real Speech-to-Text + Voice Integrity**: *Sahayak Sathi* (`useSpeechRecognition.ts`) and *Bolo Aur Jano* use real `SpeechRecognition` with live interim transcripts, mic error recovery, and explicit confirmation, backed by a 12-scheme grounded responder (`assistantResponder.ts`).
+- **Audible TTS with Phonetic Fallback**: Native Web Speech synthesis (`*-IN` BCP-47 tags) with `"Welcome to Sahayak"` entry greeting and automatic phonetic fallback when regional OS voice packs are absent.
+- **Indic Typography System**: `Noto Sans` font stack across all Indic scripts with `1.75x` line-height to prevent vertical clipping of conjuncts and *matras*.
 
 ### 2. ☀️ Outdoor & Accessibility-First Design System (WCAG 2.2 AA & GIGW 3.0)
 - **Bright-Sunlight High-Contrast Mode**: Dedicated high-contrast theme engineered for outdoor mobile usage in rural sunlit conditions.
@@ -126,29 +128,30 @@ Defined in [src/routes/AppRoutes.tsx](src/routes/AppRoutes.tsx) with route-level
 - **State & Validation:** Zustand 5.0, React Hook Form 7.54, Zod 3.24
 - **Backend & Auth:** Supabase (`@supabase/supabase-js` 2.119) — PostgreSQL, RLS, Storage (`user-documents`), GoTrue
 - **Testing & Build:** Vite 6, Vitest 5.1.1, Testing Library, JSDOM
-- **Deployment & CI:** Vercel (`vercel.json` SPA rewrites) + GitHub Actions (`.github/workflows/ci.yml`)
+- **Deployment & CI:** Vercel (`vercel.json` SPA rewrites) + GitHub Actions (`ci.yml`, `lighthouse.yml`, `security-audit.yml`)
 
 ### Verified Quality Scorecard
 
 ```text
-TypeScript Check : tsc -b                  -> 0 errors (PASS)
-Automated Tests  : vitest run              -> 119 / 119 passed across 8 test files (PASS)
-Initial JS Chunk : dist/assets/index-*.js  -> 168.24 kB (43.03 kB gzip) via React.lazy
-Translation Parity: en / kn / hi / bn      -> 413 / 413 keys (100% Parity)
-Lighthouse Audit : Accessibility 100/100 | Best Practices 100/100 | SEO 100/100 | Desktop Perf 92+
+TypeScript Check   : tsc -b                  -> 0 errors (PASS)
+Automated Tests    : vitest run              -> 125 / 125 passed across 10 test files (PASS)
+Translation Parity : 11 Indian Languages     -> 230 / 230 keys each (100% Parity)
+Lighthouse Audit   : Accessibility 100/100 | Best Practices 100/100 | SEO 100/100 | Desktop Perf 92+
 ```
 
 ---
 
-## 🧪 Automated Test Suite (119 Tests / 8 Suites)
+## 🧪 Automated Test Suite (125 Tests / 10 Suites)
 
 ```text
  ✓ src/test/schemeSearch.test.ts (5 tests)         — Multilingual search & phonetic tag matching
- ✓ src/test/translations.test.ts (4 tests)         — 4-language (en/kn/hi/bn) 413-key parity
+ ✓ src/test/translations.test.ts (4 tests)         — 11-language (en/kn/hi/bn/ta/te/mr/ml/gu/or/pa) parity
  ✓ src/test/eligibilityEngine.test.ts (49 tests)   — 5-state logic, exclusions & edge cases
  ✓ src/test/schemeValidation.test.ts (5 tests)     — Statutory rule integrity & citations
  ✓ src/test/securityAndPrivacy.test.ts (3 tests)   — Zero PII persistence & client storage safety
- ✓ src/test/store.test.ts (6 tests)                — Zustand household state & guest caching
+ ✓ src/test/store.test.ts (6 tests)                — Zustand household state, language & guest caching
+ ✓ src/test/welcomeVoice.test.ts (3 tests)         — Entry voice greeting & phonetic TTS fallback
+ ✓ src/test/voiceAssistant.test.ts (3 tests)       — SpeechRecognition STT hook & 12-scheme responder
  ✓ src/test/backendCorrections.test.ts (22 tests)  — Backend hardening, RPC & error resilience
  ✓ src/test/supabaseBackend.test.ts (25 tests)     — Supabase client, Zod schemas, RLS & fallback
 ```

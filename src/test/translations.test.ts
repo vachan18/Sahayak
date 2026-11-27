@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { translations, loadAllTranslations } from '../data/translations';
+import { translations } from '../data/translations';
+import { loadAllTranslations } from '../data/translationLoader';
 import { SUPPORTED_LANGUAGES } from '../data/languages';
 
 describe('Localization & Translation System', () => {

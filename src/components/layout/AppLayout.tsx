@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Bot, X } from 'lucide-react';
 import { TopUtilityBar } from '../navigation/TopUtilityBar';
 import { BottomNavBar } from '../navigation/BottomNavBar';
@@ -14,6 +14,7 @@ const AuthModal = lazy(() => import('../auth/AuthModal').then(m => ({ default: m
 const AiAssistantDrawer = lazy(() => import('../feedback/AiAssistantDrawer').then(m => ({ default: m.AiAssistantDrawer })));
 
 export const AppLayout: React.FC = () => {
+  const location = useLocation();
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [isNotifModalOpen, setIsNotifModalOpen] = useState(false);
   const { t } = useTranslation();
@@ -33,8 +34,10 @@ export const AppLayout: React.FC = () => {
     initializeAuth();
   }, [initializeAuth]);
 
-  // Adjust FAB position when comparison tray is active (tray occupies bottom on mobile)
+  // Adjust FAB position when comparison tray or SchemeDetail sticky action bar is active
   const isComparisonActive = compareSchemeIds.length > 0;
+  const isSchemeDetailBarActive = /^\/schemes\/[^/]+/.test(location.pathname);
+  const needsElevatedFab = isComparisonActive || isSchemeDetailBarActive;
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
@@ -56,7 +59,7 @@ export const AppLayout: React.FC = () => {
         <aside 
           aria-label={t('aiAssistantTitle', 'Sahayak Sathi')}
           className={`fixed z-30 flex items-center transition-all duration-300 right-3.5 sm:right-6 md:right-8 ${
-            isComparisonActive 
+            needsElevatedFab
               ? 'bottom-[calc(8.5rem+env(safe-area-inset-bottom,0px))] lg:bottom-24' 
               : 'bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] lg:bottom-8'
           }`}

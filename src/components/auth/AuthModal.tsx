@@ -121,7 +121,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         {/* Brand Header */}
         <div className="flex items-center gap-2.5 mb-5">
           <div className="w-8 h-8 rounded-xl bg-brand-navy-900 dark:bg-sky-500 text-white font-extrabold flex items-center justify-center text-sm shadow-sm">
-            ಸ
+            {language === 'kn' ? 'ಸ' : 'S'}
           </div>
           <div>
             <div className="text-sm font-extrabold text-slate-900 dark:text-white leading-tight">
@@ -144,7 +144,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
             }`}
           >
-            {language === 'kn' ? 'ಲಾಗಿನ್ (Sign In)' : 'Sign In'}
+            {language === 'kn' ? 'ಲಾಗಿನ್' : 'Sign In'}
           </button>
           <button
             type="button"
@@ -155,7 +155,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
             }`}
           >
-            {language === 'kn' ? 'ನೋಂದಣಿ (Register)' : 'Create Account'}
+            {language === 'kn' ? 'ನೋಂದಣಿ' : 'Create Account'}
           </button>
         </div>
 
@@ -179,7 +179,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {view === 'register' && (
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Full Name (ಪೂರ್ಣ ಹೆಸರು)
+                {language === 'kn' ? 'ಪೂರ್ಣ ಹೆಸರು' : 'Full Name'}
               </label>
               <div className="relative">
                 <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -197,7 +197,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Email Address (ಇಮೇಲ್)
+              {language === 'kn' ? 'ಇಮೇಲ್ ವಿಳಾಸ' : 'Email Address'}
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -216,7 +216,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Password (ಪಾಸ್ವರ್ಡ್)
+                  {language === 'kn' ? 'ಪಾಸ್‌ವರ್ಡ್' : 'Password'}
                 </label>
                 {view === 'login' && (
                   <button
@@ -281,7 +281,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             }}
             className="text-xs font-bold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:underline"
           >
-            {language === 'kn' ? 'ಅತಿಥಿಯಾಗಿ ಮುಂದುವರಿಯಿರಿ (Continue as Guest)' : 'Continue as Guest without signing in'}
+            {language === 'kn' ? 'ಅತಿಥಿಯಾಗಿ ಮುಂದುವರಿಯಿರಿ' : 'Continue as Guest without signing in'}
           </button>
         </div>
       </div>

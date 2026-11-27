@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { buildAssistantReply } from '../utils/assistantResponder';
+import { matchTranscriptToOption } from '../utils/voiceMatcher';
 
 describe('Voice Assistant Upgrade (STT Hook & Scheme Responder)', () => {
   beforeEach(() => {
@@ -108,5 +109,21 @@ describe('Voice Assistant Upgrade (STT Hook & Scheme Responder)', () => {
 
     const elig = buildAssistantReply('Check my eligibility', 'bn');
     expect(elig.actionLink?.to).toBe('/eligibility');
+  });
+
+  it('returns null (never options[0]) when speech transcript is unclear or unrecognized', () => {
+    const sampleQuestion = {
+      fieldName: 'occupation' as const,
+      options: [
+        { value: 'farmer', labelKey: 'Farmer' },
+        { value: 'student', labelKey: 'Student' },
+      ],
+    };
+
+    expect(matchTranscriptToOption('', sampleQuestion)).toBeNull();
+    expect(matchTranscriptToOption('   ', sampleQuestion)).toBeNull();
+    expect(matchTranscriptToOption('background noise static blah xyz', sampleQuestion)).toBeNull();
+    expect(matchTranscriptToOption('I am a farmer', sampleQuestion)?.value).toBe('farmer');
+    expect(matchTranscriptToOption('ವಿದ್ಯಾರ್ಥಿ', sampleQuestion)?.value).toBe('student');
   });
 });

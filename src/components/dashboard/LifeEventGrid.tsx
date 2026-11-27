@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { 
   Wheat, Heart, ShieldCheck, 
   GraduationCap, Briefcase, Home, ArrowUpRight 
@@ -17,25 +16,18 @@ const iconMap: Record<string, React.ElementType> = {
   Home
 };
 
-const MotionLink = motion.create(Link);
-
 export const LifeEventGrid: React.FC = () => {
   const { t } = useTranslation();
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-5">
-      {lifeEventsData.map((event, index) => {
+      {lifeEventsData.map((event) => {
         const IconComponent = iconMap[event.iconName] || Wheat;
         return (
-          <MotionLink
+          <Link
             key={event.id}
             to={`/schemes?category=${event.id}`}
-            whileHover={{ y: -4, transition: { duration: 0.15 } }}
-            whileTap={{ scale: 0.98 }}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: index * 0.04 }}
-            className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 flex flex-col justify-between hover:border-amber-500 dark:hover:border-amber-500 hover:shadow-crisp-md transition-all min-h-[145px] sm:min-h-[165px]"
+            className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 flex flex-col justify-between hover:-translate-y-1 hover:border-amber-500 dark:hover:border-amber-500 hover:shadow-crisp-md active:scale-[0.98] transition-all duration-150 min-h-[145px] sm:min-h-[165px]"
           >
             <div>
               <div className="w-10 h-10 sm:w-13 sm:h-13 rounded-2xl bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-400 flex items-center justify-center mb-2.5 sm:mb-3.5 group-hover:bg-amber-500 group-hover:text-white group-hover:scale-105 transition-all shadow-sm">
@@ -53,7 +45,7 @@ export const LifeEventGrid: React.FC = () => {
               <span className="truncate">{event.schemeCount} {t('catalogTitle', 'Schemes')}</span>
               <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all flex-shrink-0" />
             </div>
-          </MotionLink>
+          </Link>
         );
       })}
     </div>

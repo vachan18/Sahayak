@@ -1,9 +1,13 @@
-import { describe, it, expect } from 'vitest';
-import { translations } from '../data/translations';
+import { describe, it, expect, beforeAll } from 'vitest';
+import { translations, loadAllTranslations } from '../data/translations';
 import { SUPPORTED_LANGUAGES } from '../data/languages';
 
 describe('Localization & Translation System', () => {
   const languages = SUPPORTED_LANGUAGES;
+
+  beforeAll(async () => {
+    await loadAllTranslations();
+  });
 
   it('supports all required official languages (11 Indian languages)', () => {
     languages.forEach(lang => {

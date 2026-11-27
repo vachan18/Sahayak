@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Sparkles, Bookmark, Clock, History, FileText, 
   ArrowRight, Trash2, User, Compass 
@@ -185,17 +184,10 @@ export const PersonalizedDashboard: React.FC = () => {
 
       {/* Tab Panels */}
       <div className="min-h-[280px]">
-        <AnimatePresence mode="wait">
+        
           {/* 1. RECOMMENDED SCHEMES */}
           {activeTab === 'recommended' && (
-            <motion.div
-              key="recommended"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-4"
-            >
+            <div key="recommended" className="space-y-4 animate-fadeIn">
               {assessment.status === 'not_assessed' && (
                 <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200">
                   <div className="flex items-center gap-2.5">
@@ -219,18 +211,12 @@ export const PersonalizedDashboard: React.FC = () => {
                   <SchemeCard key={scheme.id} scheme={scheme} />
                 ))}
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* 2. SAVED SCHEMES */}
           {activeTab === 'saved' && (
-            <motion.div
-              key="saved"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
-            >
+            <div key="saved" className="animate-fadeIn">
               {savedSchemes.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
                   {savedSchemes.map((scheme) => (
@@ -257,19 +243,12 @@ export const PersonalizedDashboard: React.FC = () => {
                   </Link>
                 </div>
               )}
-            </motion.div>
+            </div>
           )}
 
           {/* 3. RECENTLY VIEWED SCHEMES */}
           {activeTab === 'recent' && (
-            <motion.div
-              key="recent"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-4"
-            >
+            <div key="recent" className="space-y-4 animate-fadeIn">
               {recentSchemes.length > 0 ? (
                 <>
                   <div className="flex justify-end">
@@ -308,18 +287,12 @@ export const PersonalizedDashboard: React.FC = () => {
                   </Link>
                 </div>
               )}
-            </motion.div>
+            </div>
           )}
 
           {/* 4. ASSESSMENT HISTORY */}
           {activeTab === 'assessments' && (
-            <motion.div
-              key="assessments"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
-            >
+            <div key="assessments" className="animate-fadeIn">
               {assessmentHistory.length > 0 ? (
                 <div className="space-y-3">
                   {assessmentHistory.map((item) => (
@@ -384,18 +357,12 @@ export const PersonalizedDashboard: React.FC = () => {
                   </Link>
                 </div>
               )}
-            </motion.div>
+            </div>
           )}
 
           {/* 5. APPLICATION PROGRESS */}
           {activeTab === 'applications' && (
-            <motion.div
-              key="applications"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
-            >
+            <div key="applications" className="animate-fadeIn">
               {applications.length > 0 ? (
                 <div className="space-y-4">
                   {applications.map((app) => (
@@ -481,9 +448,9 @@ export const PersonalizedDashboard: React.FC = () => {
                   </Link>
                 </div>
               )}
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        
       </div>
     </section>
   );

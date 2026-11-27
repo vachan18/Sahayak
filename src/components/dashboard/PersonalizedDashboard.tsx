@@ -125,7 +125,13 @@ export const PersonalizedDashboard: React.FC = () => {
             {language === 'kn' ? 'ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ಕಲ್ಯಾಣ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್' : language === 'hi' ? 'आपका व्यक्तिगत कल्याण डैशबोर्ड' : language === 'bn' ? 'আপনার ব্যক্তিগত কল্যাণ ড্যাশবোর্ড' : 'Your Personalized Welfare Hub'}
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            {language === 'kn' ? 'ಶಿಫಾರಸುಗಳು, ಉಳಿಸಿದ ಯೋಜನೆಗಳು ಮತ್ತು ಅರ್ಜಿಗಳ ಸ್ಥಿತಿಯನ್ನು ಇಲ್ಲಿ ನಿರ್ವಹಿಸಿ' : 'Track customized entitlements, saved bookmarks, and real statutory progress'}
+            {language === 'kn'
+              ? 'ಶಿಫಾರಸುಗಳು, ಉಳಿಸಿದ ಯೋಜನೆಗಳು ಮತ್ತು ಅರ್ಜಿಗಳ ಸ್ಥಿತಿಯನ್ನು ಇಲ್ಲಿ ನಿರ್ವಹಿಸಿ'
+              : language === 'hi'
+              ? 'अपने लिए उपयुक्त योजनाएं, सहेजे गए बुकमार्क और आवेदन की स्थिति यहाँ देखें'
+              : language === 'bn'
+              ? 'আপনার জন্য উপযুক্ত প্রকল্প, সংরক্ষিত তালিকা এবং আবেদনের অবস্থা এখানে দেখুন'
+              : 'Track customized entitlements, saved bookmarks, and real statutory progress'}
           </p>
         </div>
 

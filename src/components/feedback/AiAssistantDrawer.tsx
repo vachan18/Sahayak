@@ -1,8 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Mic, Send, Bot, Volume2 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useTranslation } from '../../hooks/useTranslation';
 import { speakVernacularText } from '../../utils/audioSpeech';
+import { SupportedLanguage } from '../../types';
+
+function getInitialGreeting(language: SupportedLanguage): string {
+  switch (language) {
+    case 'kn':
+      return "ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ ಸಹಾಯಕ ಸಾಥಿ. ಸರ್ಕಾರಿ ಯೋಜನೆಗಳ ಬಗ್ಗೆ ನಿಮ್ಮ ಯಾವುದೇ ಪ್ರಶ್ನೆಯನ್ನು ಇಲ್ಲಿ ಕೇಳಬಹುದು.";
+    case 'hi':
+      return "नमस्ते! मैं आपका सहायक साथी हूँ. सरकारी योजनाओं के बारे में अपनी भाषा में कोई भी सवाल पूछें.";
+    case 'bn':
+      return "নমস্কার! আমি আপনার সহায়ক সাথী। সরকারি প্রকল্প সম্পর্কে আপনার যেকোনো প্রশ্ন এখানে জিজ্ঞাসা করুন।";
+    default:
+      return "Hello! I am your Sahayak Sathi. Ask any question about government schemes in your mother tongue.";
+  }
+}
 
 export const AiAssistantDrawer: React.FC = () => {
   const { isAiDrawerOpen, setAiDrawerOpen, language } = useAppStore();
@@ -13,14 +27,19 @@ export const AiAssistantDrawer: React.FC = () => {
   const [messages, setMessages] = useState<{ sender: 'user' | 'assistant'; text: string; time: string }[]>([
     {
       sender: 'assistant',
-      text: language === 'kn' 
-        ? "ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ ಸಹಾಯಕ ಸಾಥಿ. ಸರ್ಕಾರಿ ಯೋಜನೆಗಳ ಬಗ್ಗೆ ನಿಮ್ಮ ಯಾವುದೇ ಪ್ರಶ್ನೆಯನ್ನು ಇಲ್ಲಿ ಕೇಳಬಹುದು."
-        : language === 'hi'
-        ? "नमस्ते! मैं आपका सहायक साथी हूँ. सरकारी योजनाओं के बारे में अपनी भाषा में कोई भी सवाल पूछें."
-        : "Hello! I am your Sahayak Sathi. Ask any question about government schemes in your mother tongue.",
+      text: getInitialGreeting(language),
       time: "Just now"
     }
   ]);
+
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length === 1 && prev[0].sender === 'assistant') {
+        return [{ ...prev[0], text: getInitialGreeting(language) }];
+      }
+      return prev;
+    });
+  }, [language]);
 
   if (!isAiDrawerOpen) return null;
 
@@ -40,23 +59,29 @@ export const AiAssistantDrawer: React.FC = () => {
     // Generate grounded sovereign answer based on official gazette rules
     setTimeout(() => {
       let botResponse = "";
-      if (text.toLowerCase().includes('kisan') || text.includes('ಕಿಸಾನ್') || text.includes('किसान')) {
+      if (text.toLowerCase().includes('kisan') || text.includes('ಕಿಸಾನ್') || text.includes('किसान') || text.includes('কিসান')) {
         botResponse = language === 'kn'
           ? "ಪಿಎಂ-ಕಿಸಾನ್ ಯೋಜನೆಯಡಿ ವರ್ಷಕ್ಕೆ ₹6,000 ಹಣವನ್ನು 3 ಕಂತುಗಳಲ್ಲಿ (ಪ್ರತಿ 4 ತಿಂಗಳಿಗೆ ₹2,000) ನೇರವಾಗಿ ರೈತರ ಆಧಾರ್ ಲಿಂಕ್ ಬ್ಯಾಂಕ್ ಖಾತೆಗೆ ಜಮೆ ಮಾಡಲಾಗುತ್ತದೆ. ನಿಮ್ಮ ಭೂ ದಾಖಲೆ (RTC/ಪಹಣಿ) ಇ-ಕೆವೈಸಿ ಆಗಿರಬೇಕು."
           : language === 'hi'
           ? "पीएम-किसान योजना के अंतर्गत ₹6,000 प्रति वर्ष तीन किस्तों (₹2,000 प्रत्येक 4 माह में) में सीधे आधार-सीडेड बैंक खाते में भेजे जाते हैं. ज़मीन की खतौनी और eKYC अनिवार्य है."
+          : language === 'bn'
+          ? "পিএম-কিসান প্রকল্পের আওতায় বছরে ₹৬,০০০ টাকা ৩টি কিস্তিতে (প্রতি ৪ মাসে ₹২,০০০) সরাসরি কৃষকদের আধার-লিঙ্কড ব্যাংক অ্যাকাউন্টে পাঠানো হয়। জমির রেকর্ড (খতিয়ান) ও ই-কেওয়াইসি যাচাই করা আবশ্যক।"
           : "Under PM-KISAN, ₹6,000 per year is disbursed in 3 equal installments of ₹2,000 every 4 months directly into your Aadhaar-linked bank account. Land title (Khatauni/RTC) must be verified.";
-      } else if (text.toLowerCase().includes('ayushman') || text.includes('ಆಯುಷ್ಮಾನ್') || text.includes('आयुष्मान')) {
+      } else if (text.toLowerCase().includes('ayushman') || text.includes('ಆಯುಷ್ಮಾನ್') || text.includes('आयुष्मान') || text.includes('আয়ুষ্মান')) {
         botResponse = language === 'kn'
           ? "ಆಯುಷ್ಮಾನ್ ಭಾರತ್ (PM-JAY) ಅಡಿಯಲ್ಲಿ ಇಡೀ ಕುಟುಂಬಕ್ಕೆ ವಾರ್ಷಿಕ ₹5,00,000 ವರೆಗೆ ಉಚಿತ ಆಸ್ಪತ್ರೆ ಚಿಕಿತ್ಸೆ ಸಿಗುತ್ತದೆ. ಆಧಾರ್ ಕಾರ್ಡ್ ಮತ್ತು ರೇಷನ್ ಕಾರ್ಡ್ ಇದ್ದರೆ ಸಾಕು. 70 ವರ್ಷ ಮೇಲ್ಪಟ್ಟ ಎಲ್ಲಾ ಹಿರಿಯರಿಗೆ ಇದು ಸಂಪೂರ್ಣ ಉಚಿತ."
           : language === 'hi'
           ? "आयुष्मान भारत योजना में प्रति परिवार ₹5,00,000 तक का मुफ़्त अस्पताल इलाज मिलता है. आधार कार्ड और राशन कार्ड आवश्यक हैं. 70 वर्ष से अधिक आयु के वरिष्ठ नागरिकों के लिए यह बिना आय सीमा के उपलब्ध है."
+          : language === 'bn'
+          ? "আয়ুষ্মান ভারত (PM-JAY) প্রকল্পে প্রতি পরিবার বছরে ₹৫,০০,০০০ পর্যন্ত বিনামূল্যে ক্যাশলেস হাসপাতালে চিকিৎসা পায়। এর জন্য আধার কার্ড এবং রেশন কার্ড প্রয়োজন। ৭০ বছর বা তার বেশি বয়সী প্রবীণ নাগরিকদের জন্য এটি আয়-সীমাহীনভাবে উপলব্ধ।"
           : "Ayushman Bharat PM-JAY provides up to ₹5,00,000 cashless hospital cover per family per year across 28,000+ empaneled hospitals. Only Aadhaar Card and Ration Card are required.";
       } else {
         botResponse = language === 'kn'
           ? "ನಿಮ್ಮ ಪ್ರಶ್ನೆಗೆ ಅಧಿಕೃತ ಕಲ್ಯಾಣ ನಿಯಮಗಳ ಪ್ರಕಾರ ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ. ಸಾಮಾನ್ಯ ಅರ್ಹತೆಗೆ ಆಧಾರ್ ಮತ್ತು ಬ್ಯಾಂಕ್ ಖಾತೆ ಜೋಡಣೆ ಕಡ್ಡಾಯ. ಹೆಚ್ಚಿನ ವಿವರಕ್ಕೆ ನಿಮ್ಮ ತಾಲೂಕು ಸೇವಾ ಕೇಂದ್ರವನ್ನು ಭೇಟಿ ಮಾಡಿ."
           : language === 'hi'
           ? "आपके सवाल की सरकारी नियमों के अनुसार जांच की जा रही है. योजना का लाभ लेने हेतु आधार और बैंक खाता लिंक होना अनिवार्य है."
+          : language === 'bn'
+          ? "সরকারি নির্দেশিকা অনুযায়ী আপনার প্রশ্নটি যাচাই করা হচ্ছে। অধিকাংশ কল্যাণমূলক প্রকল্পের জন্য আধার ও ব্যাংক অ্যাকাউন্ট লিঙ্ক থাকা বাধ্যতামূলক এবং কোনো অতিরিক্ত এজেন্ট ফি দেবেন না।"
           : "According to official government gazette guidelines, welfare entitlements require Aadhaar-NPCI seeded bank accounts. No agent fee should be paid.";
       }
 
@@ -77,6 +102,8 @@ export const AiAssistantDrawer: React.FC = () => {
           ? "ಪಿಎಂ ಕಿಸಾನ್ ಕಂತು ಯಾವಾಗ ಬರುತ್ತದೆ?"
           : language === 'hi'
           ? "पीएम किसान की अगली किस्त कब आएगी?"
+          : language === 'bn'
+          ? "পিএম কিসানের পরবর্তী কিস্তি কবে আসবে?"
           : "When will my next scheme payment arrive?";
         setInputQuery(sampleQuery);
         handleSend(sampleQuery);

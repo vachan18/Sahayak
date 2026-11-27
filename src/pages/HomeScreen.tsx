@@ -15,7 +15,7 @@ import { PersonalizedDashboard } from '../components/dashboard/PersonalizedDashb
 
 export const HomeScreen: React.FC = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { schemes, setAiDrawerOpen, eligibilityAnswers } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -98,15 +98,23 @@ export const HomeScreen: React.FC = () => {
 
             {/* Quick-Search Category Suggestion Pills */}
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-1 text-xs text-slate-300">
-              <span className="font-semibold text-amber-300 w-full sm:w-auto">ಜನಪ್ರಿಯ (Popular):</span>
-              {['PM-KISAN (ಕೃಷಿ)', 'Gruha Lakshmi (ಮಹಿಳೆ)', 'PM Surya Ghar (ಸೌರ)', 'Ayushman Bharat (ಆರೋಗ್ಯ)', 'Mudra Loan (ಉದ್ಯಮ)'].map((tag) => (
+              <span className="font-semibold text-amber-300 w-full sm:w-auto">
+                {language === 'kn' ? 'ಜನಪ್ರಿಯ:' : language === 'hi' ? 'लोकप्रिय:' : language === 'bn' ? 'জনপ্রিয়:' : 'Popular:'}
+              </span>
+              {[
+                { query: 'PM-KISAN', label: language === 'kn' ? 'PM-KISAN (ಕೃಷಿ)' : language === 'hi' ? 'PM-KISAN (कृषि)' : language === 'bn' ? 'PM-KISAN (কৃষি)' : 'PM-KISAN (Farming)' },
+                { query: 'Gruha', label: language === 'kn' ? 'Gruha Lakshmi (ಮಹಿಳೆ)' : language === 'hi' ? 'गृह लक्ष्मी (महिला)' : language === 'bn' ? 'গৃহ লক্ষ্মী (মহিলা)' : 'Gruha Lakshmi (Women)' },
+                { query: 'Surya', label: language === 'kn' ? 'PM Surya Ghar (ಸೌರ)' : language === 'hi' ? 'पीएम सूर्य घर (सौर)' : language === 'bn' ? 'পিএম সূর্য ঘর (সৌর)' : 'PM Surya Ghar (Solar)' },
+                { query: 'Ayushman', label: language === 'kn' ? 'Ayushman Bharat (ಆರೋಗ್ಯ)' : language === 'hi' ? 'आयुष्मान भारत (स्वास्थ्य)' : language === 'bn' ? 'আয়ুষ্মান ভারত (স্বাস্থ্য)' : 'Ayushman Bharat (Health)' },
+                { query: 'Mudra', label: language === 'kn' ? 'Mudra Loan (ಉದ್ಯಮ)' : language === 'hi' ? 'मुद्रा लोन (उद्यम)' : language === 'bn' ? 'মুদ্রা লোন (ব্যবসা)' : 'Mudra Loan (Business)' },
+              ].map((tag) => (
                 <button
-                  key={tag}
+                  key={tag.query}
                   type="button"
-                  onClick={() => navigate(`/schemes?q=${encodeURIComponent(tag.split(' ')[0])}`)}
+                  onClick={() => navigate(`/schemes?q=${encodeURIComponent(tag.query)}`)}
                   className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-200 transition-colors border border-white/10 text-xs font-medium max-w-full truncate min-h-[36px]"
                 >
-                  {tag}
+                  {tag.label}
                 </button>
               ))}
             </div>
@@ -160,7 +168,7 @@ export const HomeScreen: React.FC = () => {
                   to="/eligibility"
                   className="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
                 >
-                  <span>Check 2-Minute Eligibility</span>
+                  <span>{t('checkEligibilityBtn', 'Check 2-Minute Eligibility')}</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>

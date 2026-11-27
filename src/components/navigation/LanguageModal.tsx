@@ -92,7 +92,11 @@ export const LanguageModal: React.FC<LanguageModalProps> = ({ isOpen, onClose })
                 <div>
                   <div className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <span>{item.label}</span>
-                    {isSelected && <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded-full">ಸಕ್ರಿಯ (Active)</span>}
+                    {isSelected && (
+                      <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded-full">
+                        {language === 'kn' ? 'ಸಕ್ರಿಯ' : language === 'hi' ? 'सक्रिय' : language === 'bn' ? 'সক্রিয়' : 'Active'}
+                      </span>
+                    )}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">{item.sublabel}</div>
                 </div>

@@ -1,6 +1,15 @@
 import { SupportedLanguage } from '../types';
 import { LANGUAGE_META } from '../data/languages';
 
+function findVoiceForLocale(voices: SpeechSynthesisVoice[], locale: string): SpeechSynthesisVoice | undefined {
+  const normalized = locale.toLowerCase();
+  const prefix = normalized.split('-')[0];
+  return (
+    voices.find((v) => v.lang.toLowerCase() === normalized) ||
+    voices.find((v) => v.lang.toLowerCase().startsWith(prefix))
+  );
+}
+
 export const speakVernacularText = (
   text: string,
   language: SupportedLanguage,
@@ -13,26 +22,32 @@ export const speakVernacularText = (
     return;
   }
 
-  // Cancel any ongoing speech
-  window.speechSynthesis.cancel();
+  const synth = window.speechSynthesis;
+  const wasActive = Boolean(synth.speaking || synth.pending);
+  synth.cancel();
 
-  const utterance = new SpeechSynthesisUtterance(text);
   const meta = LANGUAGE_META[language] || LANGUAGE_META.en;
-  utterance.lang = meta.speechLang;
-  utterance.rate = meta.speechRate;
+  const voices = typeof synth.getVoices === 'function' ? synth.getVoices() : [];
+  const nativeVoice = findVoiceForLocale(voices, meta.speechLang);
 
-  // Prefer a matching installed voice if available
-  const voices = typeof window.speechSynthesis.getVoices === 'function'
-    ? window.speechSynthesis.getVoices()
-    : [];
-  if (voices.length > 0) {
-    const langPrefix = utterance.lang.split('-')[0].toLowerCase();
-    const matchedVoice =
-      voices.find((v) => v.lang.toLowerCase() === utterance.lang.toLowerCase()) ||
-      voices.find((v) => v.lang.toLowerCase().startsWith(langPrefix));
-    if (matchedVoice) {
-      utterance.voice = matchedVoice;
-    }
+  // If the OS/browser has no native Indic TTS voice installed, fall back to
+  // speaking the phonetic greeting in English so the user always hears audio.
+  const hasNonLatinChars = /[^\u0000-\u007F]/.test(text);
+  const usePhoneticFallback =
+    language !== 'en' && voices.length > 0 && !nativeVoice && hasNonLatinChars;
+
+  const spokenText = usePhoneticFallback ? meta.phoneticGreeting : text;
+  const utterance = new SpeechSynthesisUtterance(spokenText);
+
+  if (usePhoneticFallback) {
+    utterance.lang = 'en-IN';
+    utterance.rate = 0.95;
+    const enVoice = findVoiceForLocale(voices, 'en-IN') || findVoiceForLocale(voices, 'en');
+    if (enVoice) utterance.voice = enVoice;
+  } else {
+    utterance.lang = meta.speechLang;
+    utterance.rate = meta.speechRate;
+    if (nativeVoice) utterance.voice = nativeVoice;
   }
 
   utterance.onend = () => {
@@ -45,7 +60,12 @@ export const speakVernacularText = (
     if (onEnd) onEnd();
   };
 
-  window.speechSynthesis.speak(utterance);
+  // Chromium silently drops speak() if called synchronously right after cancelling active speech
+  if (wasActive) {
+    setTimeout(() => synth.speak(utterance), 40);
+  } else {
+    synth.speak(utterance);
+  }
 };
 
 export const stopSpeech = () => {

@@ -1,7 +1,9 @@
 import { SupportedLanguage } from '../types';
+import { eligibilityEn } from './eligibilityTranslations';
 
 export const translations: Record<SupportedLanguage, Record<string, string>> = {
   en: {
+    ...eligibilityEn,
     // Brand & App
     appName: "SAHAYAK",
     tagline: "Government Schemes in Your Language",

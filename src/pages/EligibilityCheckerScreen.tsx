@@ -197,22 +197,22 @@ export const EligibilityCheckerScreen: React.FC = () => {
 
         if (question.fieldName === 'occupation') {
           matchedOption = question.options?.find(o => o.value === 'farmer') || question.options?.[0] || null;
-          simulatedText = language === 'kn' ? 'ನಾನು ಸಣ್ಣ ರೈತ (Farmer)' : language === 'hi' ? 'मैं किसान हूँ (Farmer)' : language === 'bn' ? 'আমি কৃষক (Farmer)' : 'I am a farmer';
+          simulatedText = language === 'kn' ? 'ನಾನು ಸಣ್ಣ ರೈತ' : language === 'hi' ? 'मैं किसान हूँ' : language === 'bn' ? 'আমি কৃষক' : 'I am a farmer';
         } else if (question.fieldName === 'landholdingAcres') {
           matchedOption = question.options?.find(o => o.value === 1.5) || question.options?.[0] || null;
-          simulatedText = language === 'kn' ? '2.5 ಎಕರೆಗಿಂತ ಕಡಿಮೆ ಜಮೀನು' : language === 'hi' ? '2.5 एकड़ से कम' : 'Small holding under 2.5 acres';
+          simulatedText = language === 'kn' ? '2.5 ಎಕರೆಗಿಂತ ಕಡಿಮೆ ಜಮೀನು' : language === 'hi' ? '2.5 एकड़ से कम' : language === 'bn' ? '২.৫ একরের কম জমি' : 'Small holding under 2.5 acres';
         } else if (question.fieldName === 'gender') {
           matchedOption = question.options?.find(o => o.value === 'female') || question.options?.[0] || null;
-          simulatedText = language === 'kn' ? 'ಮಹಿಳೆ (Female)' : language === 'hi' ? 'महिला (Female)' : 'Female';
+          simulatedText = language === 'kn' ? 'ಮಹಿಳೆ' : language === 'hi' ? 'महिला' : language === 'bn' ? 'মহিলা' : 'Female';
         } else if (question.fieldName === 'annualIncome') {
           matchedOption = question.options?.find(o => o.value === 100000) || question.options?.[0] || null;
-          simulatedText = language === 'kn' ? '₹1.2 ಲಕ್ಷಕ್ಕಿಂತ ಕಡಿಮೆ ಆದಾಯ' : language === 'hi' ? '₹1.2 लाख से कम' : 'Income below ₹1.2 Lakh';
+          simulatedText = language === 'kn' ? '₹1.2 ಲಕ್ಷಕ್ಕಿಂತ ಕಡಿಮೆ ಆದಾಯ' : language === 'hi' ? '₹1.2 लाख से कम' : language === 'bn' ? '₹১.২ লক্ষের কম আয়' : 'Income below ₹1.2 Lakh';
         } else if (question.fieldName === 'isGovtEmployee') {
           matchedOption = question.options?.find(o => o.value === false) || question.options?.[0] || null;
-          simulatedText = language === 'kn' ? 'ಯಾರೂ ಇಲ್ಲ (No Govt Job)' : language === 'hi' ? 'कोई सरकारी नौकरी नहीं' : 'No Government Job';
+          simulatedText = language === 'kn' ? 'ಯಾರೂ ಇಲ್ಲ' : language === 'hi' ? 'कोई सरकारी नौकरी नहीं' : language === 'bn' ? 'কোনো সরকারি চাকরি নেই' : 'No Government Job';
         } else {
           matchedOption = question.options?.[0] || null;
-          simulatedText = language === 'kn' ? 'ಹೌದು, ಅನ್ವಯಿಸುತ್ತದೆ' : language === 'hi' ? 'हाँ, यह सही है' : 'Yes, this applies';
+          simulatedText = language === 'kn' ? 'ಹೌದು, ಅನ್ವಯಿಸುತ್ತದೆ' : language === 'hi' ? 'हाँ, यह सही है' : language === 'bn' ? 'হ্যাঁ, এটি প্রযোজ্য' : 'Yes, this applies';
         }
 
         if (matchedOption) {
@@ -220,7 +220,7 @@ export const EligibilityCheckerScreen: React.FC = () => {
           setCandidateOption(matchedOption);
           setVoiceState('recognized');
           // Audible read of candidate answer for low-literacy clarity
-          speakVernacularText(matchedOption.labelKey.split('(')[0], language);
+          speakVernacularText(t(matchedOption.labelKey), language);
           // NOTE: We DO NOT auto-select or auto-advance. Explicit citizen confirmation is required!
         } else {
           setVoiceState('error');
@@ -331,7 +331,7 @@ export const EligibilityCheckerScreen: React.FC = () => {
         {question.helpKey && (
           <div className="flex items-start gap-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-6 bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
             <HelpCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-            <p className="leading-relaxed">{question.helpKey}</p>
+            <p className="leading-relaxed">{t(question.helpKey)}</p>
           </div>
         )}
 
@@ -375,11 +375,11 @@ export const EligibilityCheckerScreen: React.FC = () => {
 
                   <div className="min-w-0 flex-1">
                     <div className="font-bold text-sm sm:text-base text-slate-900 dark:text-white leading-snug break-words">
-                      {opt.labelKey}
+                      {t(opt.labelKey)}
                     </div>
                     {opt.sublabelKey && (
                       <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                        {opt.sublabelKey}
+                        {t(opt.sublabelKey)}
                       </div>
                     )}
                   </div>
@@ -415,7 +415,7 @@ export const EligibilityCheckerScreen: React.FC = () => {
                 <span>{t('voiceTapToSpeak', 'Tap to Speak (Bolo Aur Jano)')}</span>
               </button>
               <p className="text-[11px] text-slate-400">
-                You can speak in Kannada, Hindi, Bengali, or English, or simply select an option above.
+                {t('voiceHelperHint', 'You can speak in Kannada, Hindi, Bengali, or English, or simply select an option above.')}
               </p>
             </div>
           )}
@@ -491,7 +491,7 @@ export const EligibilityCheckerScreen: React.FC = () => {
               <div className="text-xs text-emerald-900 dark:text-emerald-100 font-medium">
                 {t('voiceManualPrompt', 'Review and confirm this answer before proceeding:')}
                 <div className="mt-1.5 p-3 rounded-xl bg-emerald-100/70 dark:bg-emerald-900/50 border border-emerald-300 dark:border-emerald-700 font-bold text-sm text-emerald-950 dark:text-emerald-100 flex items-center justify-between">
-                  <span>{candidateOption.labelKey}</span>
+                  <span>{t(candidateOption.labelKey)}</span>
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                 </div>
               </div>

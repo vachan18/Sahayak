@@ -1,5 +1,8 @@
+import { eligibilityKn, eligibilityHi, eligibilityBn } from './eligibilityRegional';
+
 export const coreRegionalTranslations = {
   kn: {
+    ...eligibilityKn,
     // Brand & App
     appName: "ಸಹಾಯಕ",
     tagline: "ನಿಮ್ಮದೇ ಭಾಷೆಯಲ್ಲಿ ಸರ್ಕಾರದ ಯೋಜನೆಗಳು",
@@ -266,6 +269,7 @@ export const coreRegionalTranslations = {
   },
 
   hi: {
+    ...eligibilityHi,
     // Brand & App
     appName: "सहायक",
     tagline: "आपकी अपनी भाषा में सरकारी योजनाएं",
@@ -531,6 +535,7 @@ export const coreRegionalTranslations = {
     homeAssessmentIntro: "4 सरल प्रश्नों के उत्तर दें। सहायक केंद्र और राज्य नियमों के तहत नकद हस्तांतरण, सब्सिडी और मुफ्त स्वास्थ्य कवर पर मार्गदर्शन प्रदान करता है।",
   },
   bn: {
+    ...eligibilityBn,
     "appName": "সহায়ক",
     "tagline": "আপনার ভাষায় সরকারি যোজনা",
     "statutoryBadge": "সার্বভৌম কল্যাণ তথ্য নির্দেশিকা • সংবিধিবদ্ধ নাগরিক পোর্টাল",

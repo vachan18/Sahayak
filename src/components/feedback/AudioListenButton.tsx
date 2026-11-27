@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { speakVernacularText, stopSpeech } from '../../utils/audioSpeech';
+import { useTranslation } from '../../hooks/useTranslation';
 import { useAppStore } from '../../store/useAppStore';
 
 interface AudioListenButtonProps {
@@ -13,13 +14,17 @@ interface AudioListenButtonProps {
 
 export const AudioListenButton: React.FC<AudioListenButtonProps> = ({
   textToSpeak,
-  label = "ಕೇಳಿ (Listen)",
+  label,
   size = 'md',
   variant = 'pill',
   className = ''
 }) => {
-  const { language, isAudioAssistanceEnabled } = useAppStore();
+  const { t, language } = useTranslation();
+  const { isAudioAssistanceEnabled } = useAppStore();
   const [isPlaying, setIsPlaying] = useState(false);
+
+  const resolvedLabel = label || t('listenInLanguage', 'Listen');
+  const stopLabel = t('voiceCancel', 'Stop');
 
   const handleTogglePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -45,8 +50,8 @@ export const AudioListenButton: React.FC<AudioListenButtonProps> = ({
       <button
         type="button"
         onClick={handleTogglePlay}
-        aria-label="Listen in your language"
-        title="Listen in your language"
+        aria-label={resolvedLabel}
+        title={resolvedLabel}
         className={`${baseClasses} p-2 rounded-full ${isPlaying ? 'bg-amber-700 text-white animate-pulse' : 'bg-amber-100 dark:bg-amber-900/60 text-amber-950 dark:text-amber-200 hover:bg-amber-200'} ${className}`}
       >
         {isPlaying ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
@@ -71,12 +76,12 @@ export const AudioListenButton: React.FC<AudioListenButtonProps> = ({
             <span className="w-0.5 h-2 bg-white animate-bounce" style={{ animationDelay: '150ms' }} />
             <span className="w-0.5 h-3.5 bg-white animate-bounce" style={{ animationDelay: '300ms' }} />
           </div>
-          <span>ನಿಲ್ಲಿಸಿ (Stop)</span>
+          <span>{stopLabel}</span>
         </>
       ) : (
         <>
           <Volume2 className="w-4 h-4 text-amber-700 dark:text-amber-400" aria-hidden="true" />
-          <span>{label}</span>
+          <span>{resolvedLabel}</span>
         </>
       )}
     </button>

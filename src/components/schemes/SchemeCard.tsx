@@ -9,6 +9,7 @@ import { Scheme, BenefitType, LifeEventId } from '../../types';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useAppStore } from '../../store/useAppStore';
 import { AudioListenButton } from '../feedback/AudioListenButton';
+import { formatSchemeBenefit } from '../../utils/formatBenefit';
 
 interface SchemeCardProps {
   scheme: Scheme;
@@ -18,10 +19,7 @@ export const SchemeCard: React.FC<SchemeCardProps> = ({ scheme }) => {
   const { t, language } = useTranslation();
   const { savedSchemeIds, toggleSaveScheme, compareSchemeIds, toggleCompareScheme } = useAppStore();
 
-  const formattedBenefitDisplay =
-    language === 'kn'
-      ? scheme.financialBenefit.formattedDisplay
-      : `₹${scheme.financialBenefit.amount.toLocaleString('en-IN')} / ${t(scheme.financialBenefit.frequencyKey, scheme.financialBenefit.frequencyKey)}`;
+  const formattedBenefitDisplay = formatSchemeBenefit(scheme, language, t);
 
   const isSaved = savedSchemeIds.includes(scheme.id);
   const isCompared = compareSchemeIds.includes(scheme.id);

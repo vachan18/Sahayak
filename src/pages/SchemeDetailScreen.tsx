@@ -11,10 +11,11 @@ import { useAppStore } from '../store/useAppStore';
 import { AudioListenButton } from '../components/feedback/AudioListenButton';
 import { StatutoryFeeBadge } from '../components/feedback/StatutoryFeeBadge';
 import { LifeEventId } from '../types';
+import { formatSchemeBenefit } from '../utils/formatBenefit';
 
 export const SchemeDetailScreen: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { schemes, addRecentlyViewedScheme, savedSchemeIds, toggleSaveScheme } = useAppStore();
   const [copyFeedback, setCopyFeedback] = useState(false);
 
@@ -41,7 +42,8 @@ export const SchemeDetailScreen: React.FC = () => {
 
   const isSaved = savedSchemeIds.includes(scheme.id);
 
-  const audioFullSummary = `${scheme.titleKey}. ${scheme.shortDescKey}. Benefit: ${scheme.financialBenefit.formattedDisplay}. Expected approval in ${scheme.processingSlaDays} days. Official government fee is zero rupees.`;
+  const benefitDisplay = formatSchemeBenefit(scheme, language, t);
+  const audioFullSummary = `${scheme.titleKey}. ${scheme.shortDescKey}. Benefit: ${benefitDisplay}. Expected approval in ${scheme.processingSlaDays} days. Official government fee is zero rupees.`;
 
   const handleShare = () => {
     if (navigator.share) {
@@ -101,7 +103,7 @@ export const SchemeDetailScreen: React.FC = () => {
 
         {/* Action Controls: Audio, Save, Share */}
         <div className="flex items-center gap-2">
-          <AudioListenButton textToSpeak={audioFullSummary} label="Listen to Details (ಕೇಳಿ)" size="md" />
+          <AudioListenButton textToSpeak={audioFullSummary} size="md" />
 
           {/* Bookmark Button */}
           <button
@@ -192,7 +194,7 @@ export const SchemeDetailScreen: React.FC = () => {
                 Official Benefit Entitlement
               </div>
               <div className="text-2xl sm:text-3xl font-black text-emerald-950 dark:text-emerald-200 tabular-nums">
-                {scheme.financialBenefit.formattedDisplay}
+                {benefitDisplay}
               </div>
               <div className="text-xs text-emerald-700 dark:text-emerald-300">
                 Disbursed directly via National Automated Clearing House / PFMS to Aadhaar-linked account.
@@ -364,7 +366,7 @@ export const SchemeDetailScreen: React.FC = () => {
                 {t('directDbtBank', 'Direct Bank Transfer / Benefit')}
               </span>
               <div className="text-3xl sm:text-4xl font-black text-emerald-950 dark:text-emerald-200 tabular-nums mt-1">
-                {scheme.financialBenefit.formattedDisplay}
+                {benefitDisplay}
               </div>
               <div className="text-xs text-emerald-700 dark:text-emerald-400 mt-1 font-medium">
                 Direct to NPCI Aadhaar-seeded bank account

@@ -12,6 +12,7 @@ import { assessEligibility, AssessmentAnswers } from '../services/eligibilityEng
 import { saveAssessmentToDb } from '../services/assessmentDbService';
 import { AudioListenButton } from '../components/feedback/AudioListenButton';
 import { Scheme } from '../types';
+import { formatSchemeBenefit } from '../utils/formatBenefit';
 
 export const EligibilityResultsScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -475,7 +476,7 @@ export const EligibilityResultsScreen: React.FC = () => {
                         Benefit Entitlement
                       </div>
                       <div className="text-xl sm:text-2xl font-black text-emerald-950 dark:text-emerald-200 tabular-nums">
-                        {scheme.financialBenefit.formattedDisplay}
+                        {formatSchemeBenefit(scheme, language, t)}
                       </div>
                     </div>
                   </div>
@@ -596,7 +597,7 @@ export const EligibilityResultsScreen: React.FC = () => {
                         Potential Entitlement
                       </div>
                       <div className="text-xl sm:text-2xl font-black text-amber-950 dark:text-amber-200 tabular-nums">
-                        {scheme.financialBenefit.formattedDisplay}
+                        {formatSchemeBenefit(scheme, language, t)}
                       </div>
                     </div>
                   </div>

@@ -7,12 +7,14 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { QrCodeSvg } from '../components/common/QrCodeSvg';
+import { useTranslation } from '../hooks/useTranslation';
 
 export const CscSlipScreen: React.FC = () => {
   const { tokenId } = useParams<{ tokenId: string }>();
   const [searchParams] = useSearchParams();
   const schemeParam = searchParams.get('scheme');
   const { schemes, documentUploadStatus } = useAppStore();
+  const { t } = useTranslation();
 
   // Resolve current scheme
   const scheme = schemes.find(s => s.id === schemeParam) || schemes[0];
@@ -93,7 +95,7 @@ export const CscSlipScreen: React.FC = () => {
           <div className="flex items-center justify-between text-xs font-black uppercase tracking-wider border-b border-amber-200 pb-1.5">
             <span className="flex items-center gap-1.5 text-amber-900">
               <ShieldCheck className="w-4 h-4 text-emerald-700" />
-              <span>ಶಾಸನಬದ್ಧ ಶುಲ್ಕ ರಕ್ಷಣೆ / STATUTORY FEE GUARANTEE</span>
+              <span>{t('statutoryFreeFee', 'STATUTORY FEE GUARANTEE')}</span>
             </span>
             <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">
               Sakala Guarantee

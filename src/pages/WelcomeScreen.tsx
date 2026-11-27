@@ -74,7 +74,7 @@ export const WelcomeScreen: React.FC = () => {
           onClick={() => navigate('/home')}
           className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline inline-flex items-center gap-1.5 py-1 px-3 rounded-full hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors"
         >
-          <span>Skip to Main Dashboard / ನೇರವಾಗಿ ಮುಖಪುಟಕ್ಕೆ ತೆರಳಿ</span>
+          <span>{t('navSkip', 'Skip')} — {t('navHome', 'Discover')}</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>

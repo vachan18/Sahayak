@@ -22,6 +22,7 @@ interface AppState {
 
   // Localization
   language: SupportedLanguage;
+  translationsVersion: number;
   dialect: string;
   setLanguage: (lang: SupportedLanguage) => void;
   setDialect: (dialect: string) => void;
@@ -101,7 +102,17 @@ function getInitialLanguage(): SupportedLanguage {
   try {
     const saved = typeof window !== 'undefined' ? window.localStorage.getItem(LANGUAGE_STORAGE_KEY) : null;
     if (saved && SUPPORTED_LANGUAGES.includes(saved as SupportedLanguage)) {
-      return saved as SupportedLanguage;
+      const lang = saved as SupportedLanguage;
+      if (lang !== 'en') {
+        import('../data/translations').then(({ loadLanguageTranslations }) =>
+          loadLanguageTranslations(lang).then((changed) => {
+            if (changed) {
+              useAppStore.setState((state) => ({ translationsVersion: state.translationsVersion + 1 }));
+            }
+          })
+        );
+      }
+      return lang;
     }
   } catch {
     // Ignore storage access errors in restricted environments
@@ -119,6 +130,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   closeAuthModal: () => set({ isAuthModalOpen: false }),
   initializeAuth: async () => {
     try {
+      const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+      const supabaseUrl = env?.VITE_SUPABASE_URL;
+      const supabaseKey = env?.VITE_SUPABASE_ANON_KEY;
+      if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('your-project')) {
+        return;
+      }
       const { getCurrentUser, onAuthStateChange } = await import('../services/authService');
       const user = await getCurrentUser();
       if (user) {
@@ -171,6 +188,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // Defaults
   language: getInitialLanguage(),
+  translationsVersion: 0,
   dialect: 'standard',
   setLanguage: (lang) => {
     try {
@@ -182,6 +200,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
     document.documentElement.lang = lang;
     set({ language: lang });
+    if (lang !== 'en') {
+      import('../data/translations').then(({ loadLanguageTranslations }) =>
+        loadLanguageTranslations(lang).then((changed) => {
+          if (changed) {
+            set((state) => ({ translationsVersion: state.translationsVersion + 1 }));
+          }
+        })
+      );
+    }
   },
   setDialect: (dialect) => set({ dialect }),
 

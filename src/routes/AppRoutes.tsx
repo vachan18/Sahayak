@@ -1,12 +1,12 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
+import { HomeScreen } from '../pages/HomeScreen';
 
-// Route-level code splitting via React.lazy
+// Route-level code splitting via React.lazy for secondary screens
 const WelcomeScreen = lazy(() => import('../pages/WelcomeScreen').then(m => ({ default: m.WelcomeScreen })));
 const LanguageSelectionScreen = lazy(() => import('../pages/LanguageSelectionScreen').then(m => ({ default: m.LanguageSelectionScreen })));
 const OnboardingScreen = lazy(() => import('../pages/OnboardingScreen').then(m => ({ default: m.OnboardingScreen })));
-const HomeScreen = lazy(() => import('../pages/HomeScreen').then(m => ({ default: m.HomeScreen })));
 const SchemeDiscoveryScreen = lazy(() => import('../pages/SchemeDiscoveryScreen').then(m => ({ default: m.SchemeDiscoveryScreen })));
 const SchemeDetailScreen = lazy(() => import('../pages/SchemeDetailScreen').then(m => ({ default: m.SchemeDetailScreen })));
 const EligibilityCheckerScreen = lazy(() => import('../pages/EligibilityCheckerScreen').then(m => ({ default: m.EligibilityCheckerScreen })));

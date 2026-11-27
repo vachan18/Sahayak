@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Search, Mic, AlertTriangle, ArrowRight, Sparkles, 
@@ -11,8 +11,11 @@ import { LifeEventGrid } from '../components/dashboard/LifeEventGrid';
 import { SchemeCard } from '../components/schemes/SchemeCard';
 import { AudioListenButton } from '../components/feedback/AudioListenButton';
 import { TrustAndClarityBanner } from '../components/dashboard/TrustAndClarityBanner';
-import { PersonalizedDashboard } from '../components/dashboard/PersonalizedDashboard';
 import { speakVernacularText } from '../utils/audioSpeech';
+
+const PersonalizedDashboard = lazy(() =>
+  import('../components/dashboard/PersonalizedDashboard').then((m) => ({ default: m.PersonalizedDashboard }))
+);
 import { LANGUAGE_META } from '../data/languages';
 import { SupportedLanguage } from '../types';
 
@@ -61,17 +64,28 @@ export const HomeScreen: React.FC = () => {
       window.addEventListener('keydown', handleFirstInteraction, { once: true });
     };
 
-    markSpoken();
-    speakVernacularText(greeting, language, undefined, (reason) => {
-      if (reason === 'not-allowed') {
-        try {
-          window.sessionStorage.removeItem(WELCOME_SESSION_KEY);
-        } catch {
-          // Ignore
+    // Chrome deprecates speechSynthesis.speak() without user activation.
+    // Speak immediately only if the user has already interacted; otherwise wait for first gesture.
+    const hasUserActivation =
+      typeof navigator !== 'undefined' &&
+      'userActivation' in navigator &&
+      Boolean((navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive);
+
+    if (hasUserActivation) {
+      markSpoken();
+      speakVernacularText(greeting, language, undefined, (reason) => {
+        if (reason === 'not-allowed') {
+          try {
+            window.sessionStorage.removeItem(WELCOME_SESSION_KEY);
+          } catch {
+            // Ignore
+          }
+          attachInteractionFallback();
         }
-        attachInteractionFallback();
-      }
-    });
+      });
+    } else {
+      attachInteractionFallback();
+    }
 
     return () => {
       if (retryAttached) {
@@ -391,7 +405,9 @@ export const HomeScreen: React.FC = () => {
       </section>
 
       {/* 4. Personalized Citizen Dashboard Hub (Recommended, Saved, Recently Viewed, Assessments, Applications) */}
-      <PersonalizedDashboard />
+      <Suspense fallback={<div className="min-h-[280px] rounded-3xl bg-slate-100 dark:bg-slate-900 animate-pulse" />}>
+        <PersonalizedDashboard />
+      </Suspense>
 
       {/* 5. Life-Event Exploration Grid ("Jeevan Ke Padav") */}
       <section aria-labelledby="life-events-heading">

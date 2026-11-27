@@ -1,0 +1,41 @@
+import React from 'react';
+
+interface SahayakLogoProps {
+  className?: string;
+}
+
+export const SahayakLogo: React.FC<SahayakLogoProps> = ({ className = 'w-9 h-9' }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 64 64"
+    fill="none"
+    className={className}
+    role="img"
+    aria-label="SAHAYAK Logo"
+  >
+    <path
+      d="M32 4L56 13.5V30.5C56 44.8 45.8 55.6 32 60C18.2 55.6 8 44.8 8 30.5V13.5L32 4Z"
+      fill="#FFFFFF"
+      stroke="#0F172A"
+      strokeWidth="4"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M32 14.5C22.3 14.5 14.5 22.1 14.5 31.5C14.5 35.1 15.7 38.5 17.7 41.2L15.4 47.2L21.9 45.1C24.8 47.2 28.3 48.5 32 48.5C41.7 48.5 49.5 40.9 49.5 31.5C49.5 22.1 41.7 14.5 32 14.5Z"
+      stroke="#10B981"
+      strokeWidth="3.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <circle cx="26" cy="26.5" r="2.8" fill="#F97316" />
+    <path
+      d="M19.5 27.5C21.8 30.5 23.6 32.8 24.4 35.5V43.5H28.8V35.2C29.4 31.8 30.2 28.5 30.8 25.2C29.3 28.2 28.1 30.2 26.8 31.5C25.1 31.5 22.5 29.8 19.5 27.5Z"
+      fill="#F97316"
+    />
+    <circle cx="38.5" cy="27.5" r="2.8" fill="#F97316" />
+    <path
+      d="M33.2 29.5C34.4 32 35.2 34 35.6 36.2V44.2H40V36.2C40.8 33.4 42.6 31.1 45 28.2C42 30.5 39.6 32 37.8 32C36.4 32 34.8 31 33.2 29.5Z"
+      fill="#F97316"
+    />
+  </svg>
+);

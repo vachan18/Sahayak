@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/sahayak-logo-full.jpg" alt="SAHAYAK — People, Language & Government" width="420" />
+</p>
+
 # SAHAYAK (ಸಹಾಯಕ / सहायक / সহায়ক)
 
 ### Sovereign Digital Welfare Discovery, Voice-Guided Eligibility & Anti-Middleman Guidance for Bharat

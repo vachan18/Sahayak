@@ -4,6 +4,7 @@ import { Globe, Bell, Sun, Moon, Volume2, User, ChevronLeft, LogIn, SunMedium, B
 import { useAppStore } from '../../store/useAppStore';
 import { useTranslation } from '../../hooks/useTranslation';
 import { LANGUAGE_META } from '../../data/languages';
+import { SahayakLogo } from '../common/SahayakLogo';
 
 interface TopUtilityBarProps {
   onOpenLanguageModal: () => void;
@@ -64,10 +65,8 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
             </button>
           ) : (
             <Link to="/home" className="flex items-center gap-1.5 sm:gap-2.5 group">
-              {/* Sovereign Tricolor Accent Emblem */}
-              <div className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 rounded-xl bg-brand-navy-900 dark:bg-sky-500 flex items-center justify-center text-white font-extrabold text-sm sm:text-base lg:text-lg shadow-sm ring-2 ring-amber-500/50 group-hover:scale-105 transition-transform flex-shrink-0">
-                <span>{language === 'en' ? 'S' : (LANGUAGE_META[language] || LANGUAGE_META.en).shortCode}</span>
-              </div>
+              {/* Official SAHAYAK Emblem */}
+              <SahayakLogo className="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 group-hover:scale-105 transition-transform flex-shrink-0" />
               <div className="flex flex-col min-w-0">
                 <span className="font-extrabold text-sm sm:text-base lg:text-lg xl:text-xl leading-tight tracking-tight text-slate-900 dark:text-white truncate">
                   {t('appName', 'SAHAYAK')}
